@@ -1,0 +1,16 @@
+# Godot生成物
+.godot/
+*.tmp
+
+# ローカルビルド
+build/
+dist/
+*.exe
+*.pck
+
+# OS・エディター
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
