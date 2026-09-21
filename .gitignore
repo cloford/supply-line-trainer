@@ -7,10 +7,12 @@ build/
 dist/
 *.exe
 *.pck
+captures/
+.test-appdata*/
+docs/images/*.png.import
 
 # OS・エディター
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-
