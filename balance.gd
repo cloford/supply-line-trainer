@@ -1,7 +1,9 @@
 class_name Balance
 extends RefCounted
 
-const TRAINING_DURATIONS := [30,60]
+const TRAINING_DURATIONS := [30,60,0]
+const CREDIT_PER_POINT := [0.105,0.0175,0.075]
+const SCORING_VERSION := 3
 const DIFFICULTY := [
 	{"name":"初級","radius":0.62,"speed":2.3,"range":5.0,"reward":1.00,"description":"大きい的・狭い範囲・低速"},
 	{"name":"中級","radius":0.46,"speed":3.4,"range":6.5,"reward":1.08,"description":"標準サイズ・標準範囲・中速"},
@@ -57,15 +59,39 @@ static func cm_per_360(preset:int,sensitivity:float,dpi:float)->float:
 	return 914.4/maxf(0.001,dpi*effective_coefficient(preset)*sensitivity)
 static func effective_coefficient(preset:int)->float:return float(SENSITIVITY_PRESETS[clampi(preset,0,2)].coefficient)
 
-static func score_and_reward(weapon:int,difficulty:int,stats:Dictionary,front:int,duration:int,elapsed:float)->Dictionary:
-	var base_points:=float(stats.get("base_points",0.0))
-	var center_bonus:=float(stats.get("center_bonus",0.0))
-	var speed_bonus:=float(stats.get("speed_bonus",0.0))
-	var streak_bonus:=float(stats.get("streak_bonus",0.0))
-	var bonus:=minf(center_bonus+speed_bonus+streak_bonus,base_points*0.45)
-	var score:=int(round(base_points+bonus))
-	var accuracy:=float(stats.hits)/maxf(1.0,float(stats.shots)) if weapon!=1 else float(stats.track_time)/maxf(0.001,float(stats.fire_time))
-	var minutes:=maxf(0.0,elapsed)/60.0
-	var skill_rate:=clampf(float(score)/maxf(1.0,1000.0*maxf(minutes,0.1)),0.15,2.2)
-	var credits:=int(round(105.0*minutes*(0.72+0.28*skill_rate)*float(DIFFICULTY[difficulty].reward)))
-	return {"score":maxi(0,score),"supply":maxi(0,credits),"accuracy":accuracy,"base":int(base_points),"center":int(center_bonus),"speed":int(speed_bonus),"streak":int(streak_bonus),"duration":duration}
+static func duration_label(seconds:int)->String:
+	return "時間無制限" if seconds==0 else "%d秒"%seconds
+
+static func clock_text(seconds:float)->String:
+	var value:=maxi(0,int(seconds))
+	return "%02d:%02d:%02d"%[value/3600,(value/60)%60,value%60]
+
+static func battle_dps(recruit:int,gear:int,equipped:Array)->float:
+	return combat_power(recruit,gear,equipped)*0.18
+
+static func eta_text(hp:float,dps:float,running:bool)->String:
+	if not running:return "停止中"
+	if not is_finite(hp) or not is_finite(dps) or dps<=0:return "計算中"
+	var seconds:=ceili(maxf(0.0,hp)/dps)
+	return "約%d分%02d秒"%[seconds/60,seconds%60]
+
+static func center_precision(origin:Vector3,direction:Vector3,center:Vector3,radius:float)->float:
+	var ray:=direction.normalized()
+	var offset:=center-origin
+	var perpendicular:=offset-ray*offset.dot(ray)
+	return pow(1.0-clampf(perpendicular.length()/maxf(radius,0.001),0.0,1.0),1.5)
+
+static func score_and_reward(weapon:int,difficulty:int,stats:Dictionary,_front:int,duration:int,_elapsed:float)->Dictionary:
+	var base_points:=maxf(0.0,float(stats.get("base_points",0.0)))
+	var center_bonus:=clampf(float(stats.get("center_bonus",0.0)),0.0,base_points)
+	var speed_raw:=maxf(0.0,float(stats.get("speed_bonus",0.0)))
+	var streak_raw:=maxf(0.0,float(stats.get("streak_bonus",0.0)))
+	var other_scale:=minf(1.0,base_points*0.2/maxf(0.001,speed_raw+streak_raw))
+	var speed_bonus:=speed_raw*other_scale
+	var streak_bonus:=streak_raw*other_scale
+	var exact_score:=base_points+center_bonus+speed_bonus+streak_bonus
+	var score:=int(round(exact_score))
+	var accuracy:=float(stats.get("hits",0))/maxf(1.0,float(stats.get("shots",0))) if weapon!=1 else float(stats.get("track_time",0.0))/maxf(0.001,float(stats.get("fire_time",0.0)))
+	# No elapsed-time payment or short-session completion bonus.
+	var credits:=int(floor(exact_score*CREDIT_PER_POINT[weapon]*float(DIFFICULTY[difficulty].reward)+0.000001))
+	return {"score":score,"supply":maxi(0,credits),"accuracy":accuracy,"base":int(round(base_points)),"center":int(round(center_bonus)),"speed":int(round(speed_bonus)),"streak":int(round(streak_bonus)),"duration":duration}

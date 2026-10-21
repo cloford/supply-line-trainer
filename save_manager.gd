@@ -11,17 +11,27 @@ static func default_settings()->Dictionary:
 	return {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true}
 
 static func defaults()->Dictionary:
-	return {"version":VERSION,"migration":"growth_reset_v4","supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":60,"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system())}
+	return {"version":VERSION,"migration":"growth_reset_v4","supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":60,"training_schema":1,"bests_v3":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system())}
 
 static func load_data()->Dictionary:
 	var data:=defaults()
+	if not FileAccess.file_exists(PATH) and FileAccess.file_exists("user://save_v1.previous.json"):
+		DirAccess.copy_absolute(ProjectSettings.globalize_path("user://save_v1.previous.json"),ProjectSettings.globalize_path(PATH))
 	if not FileAccess.file_exists(PATH):return data
 	var f:=FileAccess.open(PATH,FileAccess.READ)
 	if f==null:return data
 	var raw_text:=f.get_as_text();f=null
-	var parsed=JSON.parse_string(raw_text)
+	var json:=JSON.new()
+	if json.parse(raw_text)!=OK:return data
+	var parsed=json.data
 	if typeof(parsed)!=TYPE_DICTIONARY:return data
 	var old_version:=int(parsed.get("version",1))
+	if old_version>=4 and not parsed.has("training_schema"):
+		var backup_path:="user://save_before_training_v3.json"
+		if not FileAccess.file_exists(backup_path):
+			if DirAccess.copy_absolute(ProjectSettings.globalize_path(PATH),ProjectSettings.globalize_path(backup_path))!=OK:
+				parsed["migration_failed"]=true
+				push_error("練習記録更新前のバックアップに失敗しました。保存を停止します。")
 	if old_version<VERSION:
 		if not _backup_before_migration(old_version):
 			for key in data.keys():
@@ -38,12 +48,19 @@ static func load_data()->Dictionary:
 	for key in data.keys():
 		if parsed.has(key):data[key]=parsed[key]
 	data.settings=_merged_settings(data.settings)
+	if bool(parsed.get("migration_failed",false)):data["migration_failed"]=true
 	if typeof(data.unlocked)!=TYPE_ARRAY or data.unlocked.size()!=3:data.unlocked=[true,false,false]
 	if typeof(data.commander_owned)!=TYPE_ARRAY:data.commander_owned=[]
 	if typeof(data.commander_equipped)!=TYPE_ARRAY or data.commander_equipped.size()!=3:data.commander_equipped=["","",""]
 	data.credits=BigUInt.normalize(str(data.credits));data.credit_fraction=clampf(float(data.credit_fraction),0.0,0.999999)
 	data.front=maxi(0,int(data.front));data.recruit=clampi(int(data.recruit),0,10000);data.gear=clampi(int(data.gear),0,10000);data.depot=0
-	data.selected_duration=30 if int(data.selected_duration)==30 else 60
+	data.selected_duration=int(data.selected_duration) if int(data.selected_duration) in Balance.TRAINING_DURATIONS else 60
+	if typeof(data.bests_v3)!=TYPE_DICTIONARY:data.bests_v3={}
+	if typeof(data.practice_totals)!=TYPE_DICTIONARY:data.practice_totals=TrainingLedger.totals()
+	for key in TrainingLedger.totals():
+		if not data.practice_totals.has(key):data.practice_totals[key]=TrainingLedger.totals()[key]
+	if typeof(data.training_history)!=TYPE_ARRAY:data.training_history=[]
+	if typeof(data.active_training)!=TYPE_DICTIONARY:data.active_training={}
 	if float(data.enemy_hp)<=0.0:data.enemy_hp=Balance.front_hp(int(data.front))
 	data.enemy_hp=clampf(float(data.enemy_hp),0.0,Balance.front_hp(int(data.front)))
 	data.version=VERSION;data.migration="growth_reset_v4"
@@ -84,7 +101,10 @@ static func save_data(data:Dictionary)->bool:
 	f.store_string(JSON.stringify(data));f.flush();f=null
 	var dir:=DirAccess.open("user://")
 	if dir==null:return false
-	if dir.file_exists("save_v1.json") and dir.remove("save_v1.json")!=OK:return false
+	if dir.file_exists("save_v1.json"):
+		if dir.file_exists("save_v1.previous.json") and dir.remove("save_v1.previous.json")!=OK:return false
+		if dir.rename("save_v1.json","save_v1.previous.json")!=OK:return false
 	var rename_result:=dir.rename("save_v1.tmp","save_v1.json")
-	if rename_result!=OK and FileAccess.file_exists(GROWTH_RESET_BACKUP):DirAccess.copy_absolute(ProjectSettings.globalize_path(GROWTH_RESET_BACKUP),ProjectSettings.globalize_path(PATH))
+	if rename_result!=OK and dir.file_exists("save_v1.previous.json"):
+		dir.rename("save_v1.previous.json","save_v1.json")
 	return rename_result==OK

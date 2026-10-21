@@ -32,7 +32,7 @@ func _init()->void:
 	check(defaults.unlocked==[true,false,false] and defaults.credits=="0" and defaults.version==4,"reset defaults")
 	check(defaults.settings.has("shot_sound") and defaults.settings.has("hit_pitch_combo"),"sound settings defaults")
 	if failures.is_empty():
-		print("TEST_OK: scoring v2, sensitivity, restrained growth, exact credits, sound defaults")
+		print("TEST_OK: scoring v3, sensitivity, restrained growth, exact credits, sound defaults")
 		quit(0)
 	else:
 		for failure in failures: push_error(failure)
