@@ -5,13 +5,14 @@ const PATH := "user://save_v1.json"
 const TEMP := "user://save_v1.tmp"
 const LEGACY_BACKUP := "user://save_v1.backup.json"
 const GROWTH_RESET_BACKUP := "user://save_before_growth_reset_v4.json"
+const POINTS_BACKUP := "user://save_before_v1_4.json"
 const VERSION := 4
 
 static func default_settings()->Dictionary:
-	return {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true}
+	return {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true}
 
 static func defaults()->Dictionary:
-	return {"version":VERSION,"migration":"growth_reset_v4","supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":60,"training_schema":1,"bests_v3":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system())}
+	return {"version":VERSION,"migration":"points_v1_4","scoring_version":4,"supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":0,"training_schema":2,"bests_v3":{},"bests_v4":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"legacy_training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system())}
 
 static func load_data()->Dictionary:
 	var data:=defaults()
@@ -19,32 +20,22 @@ static func load_data()->Dictionary:
 		DirAccess.copy_absolute(ProjectSettings.globalize_path("user://save_v1.previous.json"),ProjectSettings.globalize_path(PATH))
 	if not FileAccess.file_exists(PATH):return data
 	var f:=FileAccess.open(PATH,FileAccess.READ)
-	if f==null:return data
+	if f==null:
+		data["migration_failed"]=true
+		return data
 	var raw_text:=f.get_as_text();f=null
 	var json:=JSON.new()
-	if json.parse(raw_text)!=OK:return data
-	var parsed=json.data
-	if typeof(parsed)!=TYPE_DICTIONARY:return data
-	var old_version:=int(parsed.get("version",1))
-	if old_version>=4 and not parsed.has("training_schema"):
-		var backup_path:="user://save_before_training_v3.json"
-		if not FileAccess.file_exists(backup_path):
-			if DirAccess.copy_absolute(ProjectSettings.globalize_path(PATH),ProjectSettings.globalize_path(backup_path))!=OK:
-				parsed["migration_failed"]=true
-				push_error("練習記録更新前のバックアップに失敗しました。保存を停止します。")
-	if old_version<VERSION:
-		if not _backup_before_migration(old_version):
-			for key in data.keys():
-				if parsed.has(key):data[key]=parsed[key]
-			data.settings=_merged_settings(parsed.get("settings",{}));data["migration_failed"]=true
-			return data
-		data.settings=_merged_settings(parsed.get("settings",{}))
-		data.bests_v2=parsed.get("bests_v2",{}).duplicate(true) if typeof(parsed.get("bests_v2",{}))==TYPE_DICTIONARY else {}
-		data.legacy_bests=parsed.get("legacy_bests",{}).duplicate(true) if typeof(parsed.get("legacy_bests",{}))==TYPE_DICTIONARY else {}
-		if old_version<2 and typeof(parsed.get("bests",{}))==TYPE_DICTIONARY:data.legacy_bests=parsed.bests.duplicate(true)
-		data.selected_duration=30 if int(parsed.get("selected_duration",60))==30 else 60
-		if not save_data(data):data["migration_failed"]=true
+	if json.parse(raw_text)!=OK:
+		data["migration_failed"]=true
 		return data
+	var parsed=json.data
+	if typeof(parsed)!=TYPE_DICTIONARY:
+		data["migration_failed"]=true
+		return data
+	var needs_migration:=int(parsed.get("scoring_version",3))<4
+	var backup_ok:=true
+	if needs_migration:
+		backup_ok=_backup_before_points_migration()
 	for key in data.keys():
 		if parsed.has(key):data[key]=parsed[key]
 	data.settings=_merged_settings(data.settings)
@@ -52,24 +43,39 @@ static func load_data()->Dictionary:
 	if typeof(data.unlocked)!=TYPE_ARRAY or data.unlocked.size()!=3:data.unlocked=[true,false,false]
 	if typeof(data.commander_owned)!=TYPE_ARRAY:data.commander_owned=[]
 	if typeof(data.commander_equipped)!=TYPE_ARRAY or data.commander_equipped.size()!=3:data.commander_equipped=["","",""]
-	data.credits=BigUInt.normalize(str(data.credits));data.credit_fraction=clampf(float(data.credit_fraction),0.0,0.999999)
-	data.front=maxi(0,int(data.front));data.recruit=clampi(int(data.recruit),0,10000);data.gear=clampi(int(data.gear),0,10000);data.depot=0
-	data.selected_duration=int(data.selected_duration) if int(data.selected_duration) in Balance.TRAINING_DURATIONS else 60
-	if typeof(data.bests_v3)!=TYPE_DICTIONARY:data.bests_v3={}
+	data.credits=BigUInt.normalize(str(parsed.credits)) if parsed.has("credits") else BigUInt.from_float(float(parsed.get("supply",0.0)))
+	data.credit_fraction=clampf(float(data.credit_fraction),0.0,0.999999999)
+	data.front=maxi(0,int(data.front));data.recruit=maxi(0,int(data.recruit));data.gear=maxi(0,int(data.gear));data.depot=0
+	data.selected_duration=0
+	for key in ["bests","legacy_bests","bests_v2","bests_v3","bests_v4"]:
+		if typeof(data[key])!=TYPE_DICTIONARY:data[key]={}
 	if typeof(data.practice_totals)!=TYPE_DICTIONARY:data.practice_totals=TrainingLedger.totals()
 	for key in TrainingLedger.totals():
 		if not data.practice_totals.has(key):data.practice_totals[key]=TrainingLedger.totals()[key]
 	if typeof(data.training_history)!=TYPE_ARRAY:data.training_history=[]
+	if typeof(data.legacy_training_history)!=TYPE_ARRAY:data.legacy_training_history=[]
 	if typeof(data.active_training)!=TYPE_DICTIONARY:data.active_training={}
 	if float(data.enemy_hp)<=0.0:data.enemy_hp=Balance.front_hp(int(data.front))
 	data.enemy_hp=clampf(float(data.enemy_hp),0.0,Balance.front_hp(int(data.front)))
-	data.version=VERSION;data.migration="growth_reset_v4"
+	if needs_migration:
+		if not backup_ok:
+			data["migration_failed"]=true
+			push_error("v1.4更新前のバックアップに失敗しました。保存を停止します。")
+			return data
+		# 旧チェックポイントの補給・時間は既に反映済み。同じ値を確定して再加算を防ぐ。
+		data.legacy_training_history.append_array(data.training_history)
+		data.training_history=[]
+		TrainingLedger.recover(data)
+		data.legacy_training_history.append_array(data.training_history)
+		data.training_history=[]
+		data.scoring_version=4;data.training_schema=2
+		if not save_data(data):data["migration_failed"]=true
+	data.version=VERSION;data.migration="points_v1_4"
 	return data
 
-static func _backup_before_migration(old_version:int)->bool:
-	var destination:=GROWTH_RESET_BACKUP if old_version>=3 else LEGACY_BACKUP
-	if FileAccess.file_exists(destination):return true
-	return DirAccess.copy_absolute(ProjectSettings.globalize_path(PATH),ProjectSettings.globalize_path(destination))==OK
+static func _backup_before_points_migration()->bool:
+	if FileAccess.file_exists(POINTS_BACKUP):return true
+	return DirAccess.copy_absolute(ProjectSettings.globalize_path(PATH),ProjectSettings.globalize_path(POINTS_BACKUP))==OK
 
 static func _merged_settings(source:Variant)->Dictionary:
 	var settings:Dictionary=source.duplicate(true) if typeof(source)==TYPE_DICTIONARY else {}
@@ -91,11 +97,12 @@ static func _sanitize_settings(settings:Dictionary)->void:
 	var color_text:=str(settings.crosshair_color);settings.crosshair_color=color_text if Color.html_is_valid(color_text) else fallback.crosshair_color
 	settings.volume=clampf(float(settings.volume),0.0,1.0);settings.shot_sound=clampi(int(settings.shot_sound),0,3);settings.hit_sound=clampi(int(settings.hit_sound),0,3)
 	settings.shot_volume=clampf(float(settings.shot_volume),0.0,1.0);settings.hit_volume=clampf(float(settings.hit_volume),0.0,1.0);settings.hit_pitch_combo=bool(settings.hit_pitch_combo)
+	settings.score_details=bool(settings.score_details);settings.auto_update=bool(settings.auto_update)
 
 static func save_data(data:Dictionary)->bool:
 	if bool(data.get("migration_failed",false)):return false
 	if not data.has("credits"):data.credits=BigUInt.from_float(float(data.get("supply",0.0)))
-	data.version=VERSION;data.migration="growth_reset_v4";data.last_save=int(Time.get_unix_time_from_system());data.supply=BigUInt.to_float(str(data.credits));data.depot=0
+	data.version=VERSION;data.migration="points_v1_4";data.scoring_version=4;data.training_schema=2;data.selected_duration=0;data.last_save=int(Time.get_unix_time_from_system());data.supply=BigUInt.to_float(str(data.credits));data.depot=0
 	var f:=FileAccess.open(TEMP,FileAccess.WRITE)
 	if f==null:return false
 	f.store_string(JSON.stringify(data));f.flush();f=null

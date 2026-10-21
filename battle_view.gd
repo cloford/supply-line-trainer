@@ -2,6 +2,9 @@ class_name BattleView
 extends Control
 
 const MAX_ALLIES := 48
+const MAX_FIRE_EFFECTS := 10
+const FIRE_INTERVAL := 0.34
+const FIRE_DURATION := 0.08
 var state := {"soldiers":6,"soldier_label":"6人","gear":0,"front":0,"enemy_hp":70.0,"enemy_max":70.0}
 var anim_time := 0.0
 var march := 1.0
@@ -39,8 +42,24 @@ func set_state(next:Dictionary)->void:
 func visible_soldiers(count:int)->int:
 	return clampi(count, 1, MAX_ALLIES)
 
+func fire_effect_count(ally_count:int)->int:
+	if not bool(state.get("active",state.get("running",true))) or damage_age>0.48 or float(state.enemy_hp)<=0.0 or march<0.98:return 0
+	return mini(visible_soldiers(ally_count),clampi(int(ceil(float(visible_soldiers(ally_count))/5.0)),1,MAX_FIRE_EFFECTS))
+
+static func fire_participants_for_cycle(cycle:int,ally_count:int,effect_count:int)->Array[int]:
+	var participants:Array[int]=[]
+	if ally_count<=0:return participants
+	var bounded_count:=clampi(effect_count,0,mini(ally_count,MAX_FIRE_EFFECTS))
+	for shot in bounded_count:participants.append(posmod(cycle*bounded_count+shot,ally_count))
+	return participants
+
 func _process(delta:float)->void:
-	if not is_visible_in_tree() or not bool(state.get("running",true)):return
+	if not is_visible_in_tree():return
+	if not bool(state.get("active",state.get("running",true))):
+		hit_pulse=0.0
+		damage_age=99.0
+		queue_redraw()
+		return
 	anim_time += delta
 	damage_age+=delta
 	hit_pulse=maxf(0.0,hit_pulse-delta)
@@ -69,19 +88,42 @@ func _draw()->void:
 	var contact_x := w * 0.58
 	var group_x := lerpf(w*0.22,contact_x,march)
 	var gear_tier := Balance.visual_tier(int(state.gear))
+	var ally_positions:Array[Vector2]=[]
 	for i in ally_count:
-		var row:=i%6;var col:=i/6;_draw_soldier(Vector2(group_x-col*24.0,horizon+45+row*27.0),true,gear_tier,i)
+		var row:=i%6;var col:=i/6
+		var soldier_pos:=Vector2(group_x-col*24.0,horizon+45+row*27.0)
+		ally_positions.append(soldier_pos)
+	var combat_active:=bool(state.get("active",state.get("running",true))) and damage_age<=0.48 and float(state.enemy_hp)>0.0
+	var firing_count:=fire_effect_count(ally_count)
+	var fire_cycle:=int(floor(anim_time/FIRE_INTERVAL))
+	var cycle_phase:=fposmod(anim_time,FIRE_INTERVAL)/FIRE_INTERVAL
+	var participants:=fire_participants_for_cycle(fire_cycle,ally_count,firing_count)
+	for i in ally_count:
+		var recoil:=0.0
+		if firing_count>0:
+			for shot in firing_count:
+				var shot_phase:=cycle_phase-float(shot)/float(firing_count)
+				var participant: int=participants[shot]
+				if participant==i and shot_phase>=0.0 and shot_phase<FIRE_DURATION:
+					recoil=2.0*(1.0-shot_phase/FIRE_DURATION)
+		_draw_soldier(ally_positions[i]+Vector2(-recoil,0),true,gear_tier,i)
+		if firing_count>0:
+			for shot in firing_count:
+				var shot_phase:=cycle_phase-float(shot)/float(firing_count)
+				var participant: int=participants[shot]
+				if participant!=i or shot_phase<0.0 or shot_phase>=FIRE_DURATION:continue
+				var muzzle:=ally_positions[i]+Vector2(14.0+(16.0+gear_tier*4.0)-recoil,-3.0)
+				var target:=Vector2(w*0.80+(defeated/3)*28,horizon+59+(defeated%3)*42)
+				_draw_fire(muzzle,target,1.0-shot_phase/FIRE_DURATION)
 	if march>0.42:
 		for i in range(defeated,5):
 			var enemy_pos:=Vector2(w*0.80+(i/3)*28,horizon+64+(i%3)*42)
-			if i==defeated and hit_pulse>0:enemy_pos.x+=3.0
+			if i==defeated and hit_pulse>0 and combat_active:enemy_pos.x+=3.0
 			_draw_soldier(enemy_pos,false,1,i)
 			if i==defeated:
 				var segment_progress:=clampf((1.0-float(state.enemy_hp)/maxf(0.001,float(state.enemy_max)))*5.0-defeated,0.0,1.0)
 				draw_rect(Rect2(enemy_pos+Vector2(-4,-34),Vector2(28,4)),Color("3c2833"))
 				draw_rect(Rect2(enemy_pos+Vector2(-4,-34),Vector2(28*(1.0-segment_progress),4)),Color("ed8390"))
-		if march>=0.98 and hit_pulse>0:
-			_draw_fire(Vector2(contact_x+30,horizon+40),Vector2(w*0.80+(defeated/3)*28,horizon+59+(defeated%3)*42))
 	for entry in fallen:
 		var index:int=entry.index
 		var life:float=entry.life
@@ -94,7 +136,8 @@ func _draw()->void:
 	var progress:=clampf(1.0-float(state.enemy_hp)/maxf(0.001,float(state.enemy_max)),0.0,1.0)
 	draw_rect(Rect2(18,h-46,w-36,8),Color("233946"))
 	draw_rect(Rect2(18,h-46,(w-36)*progress,8),Color("55c9e8"))
-	draw_string(ThemeDB.fallback_font,Vector2(18,h-15),"戦線 %d　制圧 %.1f%%　%s"%[int(state.front)+1,progress*100.0,"前進中" if march<0.98 else "交戦中"],HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("ccecf5"))
+	var combat_label: String="停止中" if not bool(state.get("active",state.get("running",true))) else ("前進中" if march<0.98 else "交戦中")
+	draw_string(ThemeDB.fallback_font,Vector2(18,h-15),"戦線 %d　制圧 %.1f%%　%s"%[int(state.front)+1,progress*100.0,combat_label],HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("ccecf5"))
 
 func _draw_soldier(pos:Vector2,ally:bool,tier:int,index:int,scale:float=1.0)->void:
 	var bob := 0.0 if march>=0.98 else (2.0 if int(anim_time*7.0+index)%2==0 else -1.0)
@@ -116,7 +159,9 @@ func _draw_soldier(pos:Vector2,ally:bool,tier:int,index:int,scale:float=1.0)->vo
 	if ally:draw_rect(Rect2(pos+Vector2(14,-5),Vector2(gun_len,4+mini(tier,1))),Color("9ba9ad"))
 	else:draw_rect(Rect2(pos+Vector2(-gun_len,-5),Vector2(gun_len,4+mini(tier,1))),Color("9ba9ad"))
 
-func _draw_fire(from:Vector2,to:Vector2)->void:
-	draw_line(from,to,Color("ffd76c"),2.0)
-	draw_circle(from,6.0,Color("fff0a0"))
-	draw_circle(to,4.0,Color("ff826c"))
+func _draw_fire(from:Vector2,to:Vector2,intensity:float=1.0)->void:
+	var alpha:=clampf(intensity,0.0,1.0)
+	var tracer_end:=from+(to-from).normalized()*minf(80.0,from.distance_to(to))
+	draw_line(from,tracer_end,Color(1.0,0.843,0.424,alpha),2.0)
+	draw_rect(Rect2(from-Vector2(2,2),Vector2(4,4)),Color(1.0,0.941,0.627,alpha))
+	draw_rect(Rect2(to-Vector2(2,2),Vector2(4,4)),Color(1.0,0.51,0.424,alpha))

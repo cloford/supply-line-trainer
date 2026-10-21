@@ -1,9 +1,9 @@
 class_name Balance
 extends RefCounted
 
-const TRAINING_DURATIONS := [30,60,0]
-const CREDIT_PER_POINT := [0.105,0.0175,0.075]
-const SCORING_VERSION := 3
+const TRAINING_DURATIONS := [0]
+const POINT_WEIGHTS := [0.105,0.05,0.075]
+const SCORING_VERSION := 4
 const DIFFICULTY := [
 	{"name":"初級","radius":0.62,"speed":2.3,"range":5.0,"reward":1.00,"description":"大きい的・狭い範囲・低速"},
 	{"name":"中級","radius":0.46,"speed":3.4,"range":6.5,"reward":1.08,"description":"標準サイズ・標準範囲・中速"},
@@ -81,7 +81,7 @@ static func center_precision(origin:Vector3,direction:Vector3,center:Vector3,rad
 	var perpendicular:=offset-ray*offset.dot(ray)
 	return pow(1.0-clampf(perpendicular.length()/maxf(radius,0.001),0.0,1.0),1.5)
 
-static func score_and_reward(weapon:int,difficulty:int,stats:Dictionary,_front:int,duration:int,_elapsed:float)->Dictionary:
+static func score_and_reward(weapon:int,difficulty:int,stats:Dictionary,_front:int,_duration:int,_elapsed:float,carry:float=0.0)->Dictionary:
 	var base_points:=maxf(0.0,float(stats.get("base_points",0.0)))
 	var center_bonus:=clampf(float(stats.get("center_bonus",0.0)),0.0,base_points)
 	var speed_raw:=maxf(0.0,float(stats.get("speed_bonus",0.0)))
@@ -89,9 +89,17 @@ static func score_and_reward(weapon:int,difficulty:int,stats:Dictionary,_front:i
 	var other_scale:=minf(1.0,base_points*0.2/maxf(0.001,speed_raw+streak_raw))
 	var speed_bonus:=speed_raw*other_scale
 	var streak_bonus:=streak_raw*other_scale
-	var exact_score:=base_points+center_bonus+speed_bonus+streak_bonus
-	var score:=int(round(exact_score))
+	# 武器ごとの得点頻度を補正し、表示・獲得・購入に使うポイントを統一する。
+	var weight:=float(POINT_WEIGHTS[clampi(weapon,0,2)])*float(DIFFICULTY[clampi(difficulty,0,2)].reward)
+	var exact_score:=(base_points+center_bonus+speed_bonus+streak_bonus)*weight
+	var carried:=clampf(carry,0.0,0.999999999)
+	var cumulative:=exact_score+carried
+	var score:=int(floor(cumulative+0.000000001))
+	var fraction:=clampf(cumulative-float(score),0.0,0.999999999)
+	var center:=int(floor(center_bonus*weight))
+	var speed:=int(floor(speed_bonus*weight))
+	var combo:=int(floor(streak_bonus*weight))
+	# 端数は基本点へ配分し、内訳の和と上限を整数でも維持する。
+	var base:=score-center-speed-combo
 	var accuracy:=float(stats.get("hits",0))/maxf(1.0,float(stats.get("shots",0))) if weapon!=1 else float(stats.get("track_time",0.0))/maxf(0.001,float(stats.get("fire_time",0.0)))
-	# No elapsed-time payment or short-session completion bonus.
-	var credits:=int(floor(exact_score*CREDIT_PER_POINT[weapon]*float(DIFFICULTY[difficulty].reward)+0.000001))
-	return {"score":score,"supply":maxi(0,credits),"accuracy":accuracy,"base":int(round(base_points)),"center":int(round(center_bonus)),"speed":int(round(speed_bonus)),"streak":int(round(streak_bonus)),"duration":duration}
+	return {"score":score,"supply":score,"accuracy":clampf(accuracy,0.0,1.0),"base":base,"center":center,"speed":speed,"streak":combo,"duration":0,"fraction":fraction,"exact_points":exact_score}

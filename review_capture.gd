@@ -16,17 +16,22 @@ func _run()->void:
 	var main=load("res://main.tscn").instantiate();main.is_test_mode=true;root.add_child(main)
 	await process_frame;await process_frame
 	main.data.settings.shot_sound=3;main.data.settings.hit_sound=3
-	main._select_duration(0);main._refresh_prep()
+	main.data.settings.score_details=true;main._refresh_prep()
 	await snap("preparation")
 	main._start_training();main.countdown=0.0
 	await process_frame;await physics_frame
 	main.camera.look_at(main.targets[0].global_position);main._fire_shot()
 	main.training_elapsed=65.0;main.active_seconds=18.0;main._update_hud()
 	await snap("unlimited")
+	main._open_pause();main._open_settings_page();main._select_settings_tab(2)
+	await snap("sound_settings")
+	main._select_settings_tab(3)
+	await snap("update_settings")
+	main._settings_back();main._resume_pause()
 	main._finish_training(false)
 	await snap("result")
 	for index in 9:
-		TrainingLedger.finish(main.data,{"id":"capture_%d"%index,"started":"2026-10-21 13:%02d:00"%index,"weapon":index%3,"difficulty":index%3,"duration":0 if index%3==0 else 60,"elapsed":85.0+index,"active":24.0,"score":1340+index*20,"credits":100+index,"scoring_version":3},"終了")
+		TrainingLedger.finish(main.data,{"id":"capture_%d"%index,"started":"2026-10-22 02:%02d:00"%index,"weapon":index%3,"difficulty":index%3,"duration":0,"elapsed":85.0+index,"active":24.0,"score":100+index,"credits":100+index,"point_fraction":0.0,"accuracy":0.76,"scoring_version":4},"終了")
 	main._show_records()
 	await snap("records")
 	root.size=Vector2i(1024,768)
@@ -40,6 +45,7 @@ func _run()->void:
 	main._advance_front();main._refresh_army_runtime()
 	await create_timer(0.4).timeout
 	await snap("advance")
+	root.size=Vector2i(1920,1080);main._show_prep();await snap("preparation_1920")
 	main.queue_free()
 	for _frame in 5:await process_frame
 	print("REVIEW_CAPTURE_OK: ",output)

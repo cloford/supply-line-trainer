@@ -19,7 +19,7 @@ func _run()->void:
 		main._show_prep();main._start_training();main._open_pause();await process_frame
 		check(inside(main.pause_card.get_global_rect(),Rect2(Vector2.ZERO,Vector2(dimensions))),"pause outside %s"%dimensions)
 		main._close_pause();main._show_prep()
-	main._select_duration(30);main._start_training();check(main.training_duration==30 and is_equal_approx(main.time_left,30.0),"duration mismatch")
+	main._start_training();check(main.training_duration==0 and main.duration_buttons.is_empty(),"timed training still available")
 	main.stats.base_points=999;main.streak=8;main._start_training();check(float(main.stats.base_points)==0 and main.streak==0,"retry not reset")
 	main.mode=main.Mode.TRAINING;var time_before:float=main.time_left;var hp_before:float=float(main.data.enemy_hp);var target_before:Vector3=main.targets[0].position;main.stats.base_points=120.0
 	main._unhandled_input(esc);check(main.mode==main.Mode.PAUSED,"Esc did not pause training");main._process(1.0);check(is_equal_approx(main.time_left,time_before) and is_equal_approx(float(main.data.enemy_hp),hp_before) and main.targets[0].position.is_equal_approx(target_before) and float(main.stats.base_points)==120.0,"pause advanced state")
@@ -39,6 +39,24 @@ func _run()->void:
 	main.training_weapon=1;main.training_difficulty=1;main.target_phase=0;main._spawn_targets();var auto_start:Vector3=main.targets[0].position;main._update_targets(0.0);check(auto_start.is_equal_approx(main.targets[0].position),"auto target jumped")
 	main.data.credits="0";main.data.bests_v2={};main.training_weapon=0;main.training_duration=60;main.training_elapsed=15.0;main.stats={"shots":10,"hits":8,"kills":8,"track_time":0.0,"fire_time":0.0,"base_points":360.0,"center_bonus":60.0,"speed_bonus":20.0,"streak_bonus":10.0};main.reward_committed=false;main._finish_training(false);var early:=str(main.data.credits);main._finish_training(false);check(BigUInt.compare(early,"0")>0 and str(main.data.credits)==early and main.data.bests_v2.is_empty(),"early reward mismatch")
 	main._unhandled_input(esc);check(main.mode==main.Mode.RESULT,"Esc changed result screen")
+	main._start_training();main.mode=main.Mode.TRAINING;main.countdown=0;main.mouse_blocked=false
+	var right:=InputEventMouseButton.new();right.button_index=MOUSE_BUTTON_RIGHT;right.pressed=true
+	main._unhandled_input(right);main._process(0.4)
+	check(main.mode==main.Mode.TRAINING and main.exit_holding,"hold ended too soon")
+	right.pressed=false;main._unhandled_input(right)
+	check(not main.exit_holding and main.mouse_blocked,"cancel retained shooting")
+	main._process(0.1);check(main.mode==main.Mode.TRAINING,"cancel ended training")
+	right.pressed=true;main._unhandled_input(right);main._on_focus_lost()
+	check(main.mode==main.Mode.PAUSED and not main.exit_holding,"focus did not cancel hold")
+	main.app_focused=true;main._resume_pause();main.stats.base_points=900;main.training_elapsed=20
+	var shown:int=main._training_result().score;var credits_start:=str(main.data.credits)
+	main._unhandled_input(right);main._process(0.81)
+	check(main.mode==main.Mode.RESULT and main.reward_committed,"hold did not finalize")
+	check(str(main.data.credits)==BigUInt.add(credits_start,str(shown)),"display and credited points differ")
+	var final_points:=str(main.data.credits);main._process(0.81);main._finish_training(false)
+	check(str(main.data.credits)==final_points,"hold reward applied twice")
+	main._show_army();main._on_focus_lost();var focus_hp:float=main.data.enemy_hp;main._process(2)
+	check(float(main.data.enemy_hp)==focus_hp,"unfocused army advanced")
 	if failures.is_empty():
 		print("UI_TEST_OK: Esc states, pause freeze, no passive credits, no army scroll, audio settings and previews")
 		main.audio_player.stop();main.hit_audio_player.stop();main.audio_player.stream=null;main.hit_audio_player.stream=null;main.queue_free()

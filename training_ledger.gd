@@ -29,6 +29,8 @@ static func checkpoint(data:Dictionary, record:Dictionary)->void:
 		data.practice_totals.unlimited_elapsed+=elapsed_delta
 		data.practice_totals.unlimited_active+=active_delta
 	data.credits=BigUInt.add(str(data.credits),str(credit_delta))
+	if int(record.get("scoring_version",3))>=4:
+		data.credit_fraction=clampf(float(record.get("point_fraction",data.get("credit_fraction",0.0))),0.0,0.999999999)
 	data.active_training=record.duplicate(true)
 
 static func finish(data:Dictionary,record:Dictionary,status:String)->void:

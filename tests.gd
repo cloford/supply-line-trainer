@@ -14,7 +14,9 @@ func _init()->void:
 			s={"kills":18,"hits":24,"shots":30,"track_time":22.0,"fire_time":30.0,"base_points":900.0,"center_bonus":180.0,"speed_bonus":90.0,"streak_bonus":45.0}
 			var result:=Balance.score_and_reward(w,d,s,0,60,60.0)
 			check(result.score>0 and result.supply>0,"positive reward %d/%d"%[w,d])
-			check(result.score<=1305,"bonus cap")
+			check(result.score==result.supply,"score differs from spendable points")
+			check(result.base+result.center+result.speed+result.streak==result.score,"component sum differs")
+			check(result.center<=result.base and result.speed+result.streak<=floor(result.base*0.2),"integer bonus cap")
 	var first_reward:=Balance.score_and_reward(0,0,{"kills":12,"hits":12,"shots":18,"track_time":0.0,"fire_time":0.0,"base_points":540.0,"center_bonus":90.0,"speed_bonus":45.0,"streak_bonus":25.0},0,60,60.0)
 	check(float(first_reward.supply)>=Balance.recruit_cost(0),"first training cannot buy recruit")
 	check(Balance.recruit_cost(5)>Balance.recruit_cost(4),"recruit costs increase")
@@ -32,7 +34,7 @@ func _init()->void:
 	check(defaults.unlocked==[true,false,false] and defaults.credits=="0" and defaults.version==4,"reset defaults")
 	check(defaults.settings.has("shot_sound") and defaults.settings.has("hit_pitch_combo"),"sound settings defaults")
 	if failures.is_empty():
-		print("TEST_OK: scoring v3, sensitivity, restrained growth, exact credits, sound defaults")
+		print("TEST_OK: scoring v4, integer points, sensitivity, restrained growth, exact currency, settings")
 		quit(0)
 	else:
 		for failure in failures: push_error(failure)
