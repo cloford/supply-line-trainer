@@ -30,5 +30,4 @@ v1.4.0は一度だけ手動で導入してもらう。GitHub Releasesから `Sup
 
 現在、専用カテゴリは作成されておらず、GitHub Discussions の General を利用する。既存スレッドは[v1.3.0](https://github.com/cloford/supply-line-trainer/discussions/1)と[v1.4.0](https://github.com/cloford/supply-line-trainer/discussions/2)。新しいリリースの案内を作る前に Discussions 一覧で同じバージョンの既存スレッドを確認し、重複作成を避ける。
 
-各バージョンの案内スレッドは変更点、既知の制約、再現手順に含めてほしい情報を記載する。リリース本文とREADMEから同じスレッドへリンクする。ゲーム内の「意見を送る」ボタンは `main.gd` の `feedback_url` をそのバージョンのスレッドURLへ更新する。スレッドを作成しないリリースでは、既存のリンク先を維持する。
-
+各バージョンの案内スレッドは変更点、既知の制約、再現手順に含めてほしい情報を記載する。リリース本文とREADMEから同じスレッドへリンクする。ゲーム内の「意見を送る」ボタンは `main.gd` の `feedback_url` をそのバージョンのスレッドURLへ更新する。作成できない場合は完了と報告せず、必要な権限や利用者の操作を具体的に示す。
