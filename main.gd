@@ -143,10 +143,15 @@ var feedback_base:=0
 var feedback_center:=0
 var feedback_other:=0
 var app_focused:=true
-var feedback_url:="https://github.com/cloford/supply-line-trainer/discussions/3"
+var feedback_url:="https://github.com/cloford/supply-line-trainer/discussions/4"
 var updater:SupplyLineUpdater
 var update_labels:Array[Label]=[]
 var update_buttons:Array[Button]=[]
+var shooting_metrics:Dictionary={}
+var result_review:ShootingReview
+var intention_option:OptionButton
+var intention_label:Label
+var next_intention:="指定なし"
 
 func _ready()->void:
 	is_test_mode=is_test_mode or "--ui-test" in OS.get_cmdline_user_args()
@@ -260,6 +265,7 @@ func _build_ui()->void:
 	var feedback:=Button.new();feedback.text="意見を送る";feedback.custom_minimum_size=Vector2(160,44);feedback.pressed.connect(func():OS.shell_open(feedback_url));nav.add_child(feedback)
 	_build_update_controls(prep)
 	records_view=PracticeRecords.new();records_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);ui.add_child(records_view);records_view.closed.connect(_show_prep);records_view.hide()
+	records_view.record_selected.connect(func(record:Dictionary):records_view.show_detail(ShootingMetrics.presentation(record)))
 	_build_army_screen()
 
 	hud=Control.new(); hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); hud.mouse_filter=Control.MOUSE_FILTER_IGNORE; ui.add_child(hud)
@@ -272,16 +278,20 @@ func _build_ui()->void:
 	credit_hud=_label("",17);credit_hud.position=Vector2(24,94);hud.add_child(credit_hud)
 	goal_hud=_label("",15);goal_hud.position=Vector2(24,174);goal_hud.size=Vector2(510,48);goal_hud.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;hud.add_child(goal_hud)
 	goal_notification=_label("",15);goal_notification.position=Vector2(24,226);hud.add_child(goal_notification)
+	intention_label=_label("",17);intention_label.position=Vector2(24,310);hud.add_child(intention_label);intention_label.hide()
 	crosshair=AimCrosshair.new(); crosshair.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); hud.add_child(crosshair)
 	exit_ring=load("res://exit_ring.gd").new();exit_ring.position=Vector2(24,260);exit_ring.size=Vector2(40,40);hud.add_child(exit_ring);exit_ring.hide()
 	exit_hint=_label("離すとキャンセル",16);exit_hint.position=Vector2(72,267);hud.add_child(exit_hint);exit_hint.hide()
-	var result_parts:=_modal_overlay(570.0); result_panel=result_parts[0]; result_card=result_parts[1]; ui.add_child(result_panel)
-	var rv:=VBoxContainer.new(); rv.add_theme_constant_override("separation",14)
+	var result_parts:=_modal_overlay(740.0); result_panel=result_parts[0]; result_card=result_parts[1]; ui.add_child(result_panel)
+	var rv:=VBoxContainer.new(); rv.add_theme_constant_override("separation",10)
 	result_card.add_child(rv)
 	result_title=_label("訓練結果",28); result_title.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; rv.add_child(result_title)
 	result_detail=_label("",18); result_detail.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; rv.add_child(result_detail)
+	result_review=ShootingReview.new();rv.add_child(result_review)
 	result_goal=_label("",16);result_goal.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;rv.add_child(result_goal)
-	var retry:=Button.new(); retry.text="再挑戦"; retry.custom_minimum_size.y=48; retry.pressed.connect(_start_training); rv.add_child(retry)
+	var intention_row:=HBoxContainer.new();rv.add_child(intention_row);intention_row.add_child(_label("次に自分が意識すること",15))
+	intention_option=OptionButton.new();intention_option.size_flags_horizontal=Control.SIZE_EXPAND_FILL;intention_row.add_child(intention_option)
+	var retry:=Button.new(); retry.text="同じ条件で再挑戦"; retry.custom_minimum_size.y=44; retry.pressed.connect(_retry_training); rv.add_child(retry)
 	var back:=Button.new(); back.text="条件を変更"; back.pressed.connect(_show_prep); rv.add_child(back)
 	var army_result:=Button.new();army_result.text="部隊へ";army_result.pressed.connect(_army_from_goal);rv.add_child(army_result)
 	pause_panel=_build_pause_panel(); ui.add_child(pause_panel)
@@ -609,8 +619,17 @@ func _start_training()->void:
 	checkpoint_timer=0;active_seconds=0;activity_window=0;auto_points_pending=0;score_pulse=0;pulse_cooldown=0;last_hud_score=0;save_warning=false
 	records_view.hide()
 	training_weapon=selected_weapon;training_difficulty=selected_difficulty;training_duration=selected_duration;time_left=float(training_duration);training_elapsed=0.0;countdown=3.0;reward_committed=false;stats={"shots":0,"hits":0,"kills":0,"track_time":0.0,"fire_time":0.0,"base_points":0.0,"center_bonus":0.0,"speed_bonus":0.0,"streak_bonus":0.0};fire_cooldown=0;burst_remaining=0;burst_timer=0;target_phase=0;streak=0;last_success_time=-99.0;auto_streak_time=0;point_display_timer=0;hit_label.text="";hit_flash=0;player.position=Vector3(0,1.7,8);player.rotation=Vector3.ZERO;camera.rotation=Vector3.ZERO
+	var order:=int(Time.get_unix_time_from_system()*1000000.0)
+	for entry in data.training_history:order=maxi(order,int(entry.get("metrics",{}).get("order",0))+1)
+	shooting_metrics=ShootingMetrics.begin(training_weapon,training_difficulty,data.settings,next_intention,order)
+	intention_label.text="今回の意識："+next_intention if next_intention!="指定なし" else ""
+	intention_label.visible=next_intention!="指定なし";next_intention="指定なし"
 	audio_player.stop();hit_audio_player.stop();hit_sound_cooldown=0.0
 	prep_panel.hide(); army_panel.hide(); result_panel.hide(); pause_panel.hide(); hud.show(); crosshair.show(); mode=Mode.COUNTDOWN; mouse_blocked=true; Input.mouse_mode=Input.MOUSE_MODE_CAPTURED; _spawn_targets();_update_hud()
+
+func _retry_training()->void:
+	next_intention=intention_option.get_item_text(intention_option.selected)
+	_start_training()
 
 func _spawn_targets()->void:
 	_clear_targets(); var count:=3 if training_weapon==2 else 1
@@ -685,7 +704,7 @@ func _process(delta:float)->void:
 	if app_focused and mode in [Mode.PREP,Mode.ARMY,Mode.COUNTDOWN,Mode.TRAINING,Mode.RESULT,Mode.RECORDS]:_process_battle(delta)
 	if mode==Mode.COUNTDOWN:
 		countdown-=delta;countdown_label.text=str(max(1,ceili(countdown)))
-		if countdown<=0:mode=Mode.TRAINING;countdown_label.text="";mouse_blocked=Input.is_action_pressed("shoot")
+		if countdown<=0:mode=Mode.TRAINING;countdown_label.text="";intention_label.hide();mouse_blocked=Input.is_action_pressed("shoot")
 	elif mode==Mode.TRAINING:
 		var step:=delta
 		training_elapsed+=step
@@ -707,6 +726,7 @@ func _process_weapon(delta:float)->void:
 	if training_weapon==1 and Input.is_action_pressed("shoot") and not mouse_blocked:
 		var before:=_training_result()
 		stats.fire_time=float(stats.fire_time)+delta;var hit:=_ray_hit()
+		ShootingMetrics.tracking(shooting_metrics,float(hit.get("q",0.0)),delta)
 		if not hit.is_empty():
 			stats.track_time=float(stats.track_time)+delta;stats.base_points=float(stats.base_points)+100.0*delta;var precision:float=hit.precision;stats.center_bonus=float(stats.center_bonus)+100.0*delta*precision;auto_streak_time+=delta;stats.streak_bonus=float(stats.streak_bonus)+(5.0*delta if auto_streak_time>1.0 else 0.0)
 			_add_point_feedback(before,point_display_timer<=0)
@@ -720,6 +740,7 @@ func _fire_shot()->void:
 	if exit_holding:return
 	var before:=_training_result()
 	stats.shots=int(stats.shots)+1;var hit:=_ray_hit();_play_shot_sound()
+	if training_weapon!=1:ShootingMetrics.bullet(shooting_metrics,float(hit.get("q",0.0)))
 	if training_weapon!=1:activity_window=0.2
 	if hit.is_empty():
 		if training_weapon!=1:streak=0
@@ -754,7 +775,7 @@ func _ray_hit()->Dictionary:
 	query.collision_mask=1
 	var hit:=get_viewport().world_3d.direct_space_state.intersect_ray(query)
 	if hit and hit.collider.has_meta("target_index"):
-		var idx:=int(hit.collider.get_meta("target_index"));return {"index":idx,"precision":Balance.center_precision(from,to-from,targets[idx].global_position,float(Balance.DIFFICULTY[training_difficulty].radius))}
+		var idx:=int(hit.collider.get_meta("target_index"));var q:=Balance.center_quality(from,to-from,targets[idx].global_position,float(Balance.DIFFICULTY[training_difficulty].radius));return {"index":idx,"precision":pow(q,1.5),"q":q}
 	return {}
 func _ray_target_index()->int:
 	var hit:=_ray_hit();return -1 if hit.is_empty() else int(hit.index)
@@ -785,7 +806,7 @@ func _training_session_open()->bool:
 
 func _session_record()->Dictionary:
 	var result:=_training_result()
-	return {"id":session_id,"started":session_started,"weapon":training_weapon,"difficulty":training_difficulty,"duration":0,"elapsed":training_elapsed,"active":minf(active_seconds,training_elapsed),"score":int(result.score),"credits":int(result.supply),"point_fraction":float(result.fraction),"accuracy":float(result.accuracy),"base":result.base,"center":result.center,"speed":result.speed,"streak":result.streak,"scoring_version":Balance.SCORING_VERSION}
+	return {"id":session_id,"started":session_started,"weapon":training_weapon,"difficulty":training_difficulty,"duration":0,"elapsed":training_elapsed,"active":minf(active_seconds,training_elapsed),"score":int(result.score),"credits":int(result.supply),"point_fraction":float(result.fraction),"accuracy":float(result.accuracy),"base":result.base,"center":result.center,"speed":result.speed,"streak":result.streak,"scoring_version":Balance.SCORING_VERSION,"metrics":ShootingMetrics.snapshot(shooting_metrics,stats,training_elapsed)}
 
 func _checkpoint_training()->void:
 	checkpoint_timer=0.0
@@ -799,6 +820,9 @@ func _finish_training(_full_time:bool)->void:
 	var result:=_training_result()
 	var record:=_session_record()
 	var status:="終了"
+	record.status=status;record.metrics.complete=true
+	record.metrics.comparison_reason=ShootingMetrics.reason(record);record.metrics.comparison_eligible=str(record.metrics.comparison_reason).is_empty()
+	record.shooting_comparison=ShootingMetrics.comparison(record,data.training_history)
 	TrainingLedger.finish(data,record,status)
 	reward_committed=true
 	if not is_test_mode:save_warning=not SaveManager.save_data(data)
@@ -806,7 +830,13 @@ func _finish_training(_full_time:bool)->void:
 	var metric:="撃破 %d　命中率 %.1f%%"%[stats.kills,float(result.accuracy)*100.0] if training_weapon!=1 else "追従 %.1f秒　追従率 %.1f%%"%[stats.track_time,float(result.accuracy)*100.0]
 	result_title.text="訓練"+status
 	_refresh_goals()
-	result_detail.text="%s / %s\n練習 %s\n\n今回の獲得 %d P\n基本 %d　中心追加 %d　その他 %d\n%s\n\n所持ポイント %s P%s"%[Balance.WEAPONS[training_weapon],Balance.DIFFICULTY[training_difficulty].name,Balance.clock_text(training_elapsed),int(result.score),result.base,result.center,result.speed+result.streak,metric,_credit_text(),"\n保存に失敗しました。終了時に再試行します。" if save_warning else ""]
+	result_detail.text="今回の獲得 %d P　所持 %s P\n%s / %s　練習 %s"%[int(result.score),_credit_text(),Balance.WEAPONS[training_weapon],Balance.DIFFICULTY[training_difficulty].name,Balance.clock_text(training_elapsed)]
+	if bool(data.settings.score_details):result_detail.text+="\n基本 %d　中心追加 %d　その他 %d\n%s"%[result.base,result.center,result.speed+result.streak,metric]
+	if save_warning:result_detail.text+="\n保存に失敗しました。終了時に再試行します。"
+	result_review.set_review(ShootingMetrics.presentation(record))
+	intention_option.clear()
+	for text in ["指定なし","中心を意識","追従を途切れさせない" if training_weapon==1 else "テンポを意識"]:intention_option.add_item(text)
+	intention_option.select(0)
 
 func _reset_exit_hold()->void:
 	exit_holding=false;exit_hold=0.0
@@ -853,6 +883,7 @@ func _confirm_discard()->void:
 
 func _apply_settings()->void:
 	if not camera: return
+	if _training_session_open() and not shooting_metrics.is_empty() and ShootingMetrics.setting_key(training_weapon,training_difficulty,data.settings)!=str(shooting_metrics.setting_key):shooting_metrics.settings_changed=true
 	var h4:=deg_to_rad(float(data.settings.fov)); var aspect:=4.0/3.0; camera.fov=rad_to_deg(2.0*atan(tan(h4/2.0)/aspect))
 	AudioServer.set_bus_volume_db(0,linear_to_db(maxf(0.001,float(data.settings.volume)))); AudioServer.set_bus_mute(0,float(data.settings.volume)<=0.001)
 	if crosshair:crosshair.set_appearance(str(data.settings.crosshair_color),float(data.settings.crosshair_size),int(data.settings.crosshair_shape),bool(data.settings.crosshair_outline))

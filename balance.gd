@@ -76,10 +76,13 @@ static func eta_text(hp:float,dps:float,running:bool)->String:
 	return "約%d分%02d秒"%[seconds/60,seconds%60]
 
 static func center_precision(origin:Vector3,direction:Vector3,center:Vector3,radius:float)->float:
+	return pow(center_quality(origin,direction,center,radius),1.5)
+
+static func center_quality(origin:Vector3,direction:Vector3,center:Vector3,radius:float)->float:
 	var ray:=direction.normalized()
 	var offset:=center-origin
 	var perpendicular:=offset-ray*offset.dot(ray)
-	return pow(1.0-clampf(perpendicular.length()/maxf(radius,0.001),0.0,1.0),1.5)
+	return 1.0-clampf(perpendicular.length()/maxf(radius,0.001),0.0,1.0)
 
 static func score_and_reward(weapon:int,difficulty:int,stats:Dictionary,_front:int,_duration:int,_elapsed:float,carry:float=0.0)->Dictionary:
 	var base_points:=maxf(0.0,float(stats.get("base_points",0.0)))
