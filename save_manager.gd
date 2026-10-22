@@ -12,13 +12,14 @@ const METRICS_BACKUP := "user://save_before_metrics_v1_6.json"
 const REWARD_BACKUP := "user://save_before_reward_v1_7.json"
 
 static func default_settings()->Dictionary:
-	return {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true}
+	return {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true,"show_training_goal":false,"goal_notifications":true}
 
 static func defaults()->Dictionary:
-	var data:Dictionary={"version":VERSION,"migration":"points_v1_4","scoring_version":4,"supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":0,"training_schema":2,"bests_v3":{},"bests_v4":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"legacy_training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system()),"growth_schema":1,"legacy_army_multiplier":1.0,"growth_migration_notice":false,"upgrade_goal":{},"goal_notice_levels":[0,0]}
+	var data:Dictionary={"version":VERSION,"migration":"points_v1_4","scoring_version":4,"supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,true,true],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":0,"training_schema":2,"bests_v3":{},"bests_v4":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"legacy_training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system()),"growth_schema":1,"legacy_army_multiplier":1.0,"growth_migration_notice":false,"upgrade_goal":{},"goal_notice_levels":[0,0]}
 	GrowthGoal.ensure(data)
 	data["metrics_schema"]=1
 	data["scoring_capture_schema"]=1
+	data["selected_weapon"]=0;data["selected_difficulty"]=0;data["help_seen"]=false
 	return data
 
 static func load_data()->Dictionary:
@@ -63,8 +64,10 @@ static func load_data()->Dictionary:
 	for key in data.keys():
 		if parsed.has(key):data[key]=parsed[key]
 	data.settings=_merged_settings(data.settings)
+	data.selected_weapon=TrainingCatalog.safe_index(data.selected_weapon);data.selected_difficulty=TrainingCatalog.safe_index(data.selected_difficulty)
+	data.help_seen=bool(parsed.get("help_seen",true))
 	if bool(parsed.get("migration_failed",false)):data["migration_failed"]=true
-	if typeof(data.unlocked)!=TYPE_ARRAY or data.unlocked.size()!=3:data.unlocked=[true,false,false]
+	if typeof(data.unlocked)!=TYPE_ARRAY or data.unlocked.size()!=3:data.unlocked=[true,true,true]
 	if typeof(data.commander_owned)!=TYPE_ARRAY:data.commander_owned=[]
 	if typeof(data.commander_equipped)!=TYPE_ARRAY or data.commander_equipped.size()!=3:data.commander_equipped=["","",""]
 	data.credits=BigUInt.normalize(str(parsed.credits)) if parsed.has("credits") else BigUInt.from_float(float(parsed.get("supply",0.0)))
@@ -145,6 +148,7 @@ static func _sanitize_settings(settings:Dictionary)->void:
 	settings.volume=clampf(float(settings.volume),0.0,1.0);settings.shot_sound=clampi(int(settings.shot_sound),0,3);settings.hit_sound=clampi(int(settings.hit_sound),0,3)
 	settings.shot_volume=clampf(float(settings.shot_volume),0.0,1.0);settings.hit_volume=clampf(float(settings.hit_volume),0.0,1.0);settings.hit_pitch_combo=bool(settings.hit_pitch_combo)
 	settings.score_details=bool(settings.score_details);settings.auto_update=bool(settings.auto_update)
+	settings.show_training_goal=bool(settings.show_training_goal);settings.goal_notifications=bool(settings.goal_notifications)
 
 static func save_data(data:Dictionary)->bool:
 	if bool(data.get("migration_failed",false)):return false

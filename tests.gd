@@ -31,7 +31,7 @@ func _init()->void:
 	check(BigUInt.compare("999999999999999999","1000000000000000000")<0,"exact huge credit compare")
 	check(Balance.front_hp(100)<100000.0,"front growth remains bounded")
 	var defaults:=SaveManager.defaults()
-	check(defaults.unlocked==[true,false,false] and defaults.credits=="0" and defaults.version==4,"reset defaults")
+	check(defaults.unlocked==[true,true,true] and defaults.credits=="0" and defaults.version==4,"new data must allow all training")
 	check(defaults.settings.has("shot_sound") and defaults.settings.has("hit_pitch_combo"),"sound settings defaults")
 	if failures.is_empty():
 		print("TEST_OK: scoring v4, integer points, sensitivity, restrained growth, exact currency, settings")

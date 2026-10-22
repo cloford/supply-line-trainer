@@ -3,7 +3,7 @@ extends ColorRect
 
 signal closed
 signal record_selected(record:Dictionary)
-const PAGE_SIZE := 6
+const PAGE_SIZE := 5
 var page := 0
 var saved:Dictionary
 var summary:Label
@@ -24,6 +24,7 @@ func _ready()->void:
 	color=Color("071019")
 	var margin:=MarginContainer.new();margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left","right","top","bottom"]:margin.add_theme_constant_override("margin_"+side,24)
+	margin.add_theme_constant_override("margin_bottom",96)
 	add_child(margin)
 	var column:=VBoxContainer.new();column.add_theme_constant_override("separation",10);margin.add_child(column)
 	column.add_child(_text("練習記録",26))
@@ -42,7 +43,6 @@ func _ready()->void:
 	detail_review=ShootingReview.new();detail_view.add_child(detail_review)
 	detail_back=Button.new();detail_back.text="記録一覧へ戻る";detail_back.pressed.connect(_show_listing);detail_view.add_child(detail_back)
 	detail_view.hide()
-	var back:=Button.new();back.text="訓練準備へ戻る";back.custom_minimum_size.y=44;back.pressed.connect(func():closed.emit());column.add_child(back)
 
 func _text(value:String,font_size:int)->Label:
 	var label:=Label.new();label.text=value;label.add_theme_font_size_override("font_size",font_size);label.add_theme_color_override("font_color",Color("d4edf5"));label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART

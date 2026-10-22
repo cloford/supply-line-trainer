@@ -21,14 +21,14 @@ func _init()->void:
 		check(migrated.legacy_training_history==original.training_history and migrated.training_history.is_empty(),"history archive differs")
 	else:
 		check(migrated.training_history==original.training_history and migrated.legacy_training_history==original.legacy_training_history,"current history changed")
-	var backup_path:=SaveManager.REWARD_BACKUP if int(original.get("scoring_capture_schema",0))<1 else (SaveManager.METRICS_BACKUP if int(original.get("metrics_schema",0))<1 else (SaveManager.GROWTH_BACKUP if int(original.get("growth_schema",0))<1 else SaveManager.POINTS_BACKUP))
-	check(FileAccess.get_sha256(backup_path)==source_hash,"backup hash differs")
+	var backup_path:=SaveManager.REWARD_BACKUP if int(original.get("scoring_capture_schema",0))<1 else (SaveManager.METRICS_BACKUP if int(original.get("metrics_schema",0))<1 else (SaveManager.GROWTH_BACKUP if int(original.get("growth_schema",0))<1 else (SaveManager.POINTS_BACKUP if int(original.get("scoring_version",3))<4 else "")))
+	if not backup_path.is_empty():check(FileAccess.get_sha256(backup_path)==source_hash,"backup hash differs")
 	check(SaveManager.save_data(migrated),"second save failed")
 	var reloaded:=SaveManager.load_data()
 	for key in ["credits","credit_fraction","recruit","gear","front","enemy_hp","unlocked","settings","practice_totals","legacy_training_history","bests_v2","bests_v3"]:
 		check(reloaded[key]==migrated[key],"reload changed "+key)
 	check(FileAccess.get_sha256(source)==source_hash,"source changed")
-	check(FileAccess.get_sha256(backup_path)==source_hash,"backup overwritten")
+	if not backup_path.is_empty():check(FileAccess.get_sha256(backup_path)==source_hash,"backup overwritten")
 	if failures.is_empty():
 		print("REAL_SAVE_TEST_OK: source_sha256=",source_hash," credits=",reloaded.credits," recruit=",reloaded.recruit," gear=",reloaded.gear," front=",reloaded.front," archived=",reloaded.legacy_training_history.size()," elapsed=",reloaded.practice_totals.elapsed," active=",reloaded.practice_totals.active," sessions=",reloaded.practice_totals.sessions)
 		quit(0)
