@@ -12,7 +12,7 @@ func _run()->void:
 	battle.size=Vector2(1280,720)
 	root.add_child(battle)
 	await process_frame
-	check(battle.visible_soldiers(-2)==1 and battle.visible_soldiers(0)==1,"visible soldier minimum is not clamped")
+	check(battle.visible_soldiers(-2)==0 and battle.visible_soldiers(0)==0,"visible soldier minimum is not clamped")
 	check(battle.visible_soldiers(48)==48 and battle.visible_soldiers(200)==48,"visible soldier maximum is not clamped")
 
 	var initial:Dictionary={"soldiers":6,"soldier_label":"6人","gear":0,"front":0,"enemy_hp":70.0,"enemy_max":70.0,"running":true}
@@ -26,7 +26,7 @@ func _run()->void:
 	check(is_equal_approx(float(initial.enemy_hp),70.0),"BattleView animation mutated input HP")
 
 	var paused:Dictionary=initial.duplicate(true)
-	paused["active"]=false
+	paused["running"]=false
 	battle.set_state(paused)
 	battle.anim_time=1.0;battle.march=0.3;battle.world_scroll=12.0;battle.damage_age=0.1;battle.hit_pulse=0.1
 	battle.fallen=[{"index":0,"life":0.5}]
@@ -50,7 +50,7 @@ func _run()->void:
 
 	for troop_count in [1,6,48]:
 		var effect_count:=battle.fire_effect_count(troop_count)
-		battle.state["active"]=true
+		battle.state["running"]=true
 		battle.damage_age=0.0;battle.march=1.0
 		effect_count=battle.fire_effect_count(troop_count)
 		check(effect_count<=BattleView.MAX_FIRE_EFFECTS,"fire effect density exceeded cap for %d troops"%troop_count)
@@ -67,7 +67,7 @@ func _run()->void:
 	check(BattleView.fire_participants_for_cycle(0,0,1).is_empty(),"zero soldiers produced firing participants")
 	battle.damage_age=0.49
 	check(battle.fire_effect_count(48)==0,"firing continued after damage window expired")
-	battle.state["active"]=false
+	battle.state["running"]=false
 	battle.damage_age=0.0
 	check(battle.fire_effect_count(48)==0,"firing continued while inactive")
 

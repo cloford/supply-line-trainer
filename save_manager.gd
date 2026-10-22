@@ -7,12 +7,15 @@ const LEGACY_BACKUP := "user://save_v1.backup.json"
 const GROWTH_RESET_BACKUP := "user://save_before_growth_reset_v4.json"
 const POINTS_BACKUP := "user://save_before_v1_4.json"
 const VERSION := 4
+const GROWTH_BACKUP := "user://save_before_growth_v1_5.json"
 
 static func default_settings()->Dictionary:
 	return {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true}
 
 static func defaults()->Dictionary:
-	return {"version":VERSION,"migration":"points_v1_4","scoring_version":4,"supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":0,"training_schema":2,"bests_v3":{},"bests_v4":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"legacy_training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system())}
+	var data:Dictionary={"version":VERSION,"migration":"points_v1_4","scoring_version":4,"supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":0,"training_schema":2,"bests_v3":{},"bests_v4":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"legacy_training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system()),"growth_schema":1,"legacy_army_multiplier":1.0,"growth_migration_notice":false,"upgrade_goal":{},"goal_notice_levels":[0,0]}
+	GrowthGoal.ensure(data)
+	return data
 
 static func load_data()->Dictionary:
 	var data:=defaults()
@@ -32,6 +35,10 @@ static func load_data()->Dictionary:
 	if typeof(parsed)!=TYPE_DICTIONARY:
 		data["migration_failed"]=true
 		return data
+	var needs_growth:=int(parsed.get("growth_schema",0))<1
+	var growth_backup_ok:=true
+	if needs_growth and not FileAccess.file_exists(GROWTH_BACKUP):
+		growth_backup_ok=DirAccess.copy_absolute(ProjectSettings.globalize_path(PATH),ProjectSettings.globalize_path(GROWTH_BACKUP))==OK
 	var needs_migration:=int(parsed.get("scoring_version",3))<4
 	var backup_ok:=true
 	if needs_migration:
@@ -57,6 +64,12 @@ static func load_data()->Dictionary:
 	if typeof(data.active_training)!=TYPE_DICTIONARY:data.active_training={}
 	if float(data.enemy_hp)<=0.0:data.enemy_hp=Balance.front_hp(int(data.front))
 	data.enemy_hp=clampf(float(data.enemy_hp),0.0,Balance.front_hp(int(data.front)))
+	if needs_growth:
+		if not growth_backup_ok:
+			data["migration_failed"]=true
+			return data
+		_migrate_commander(data)
+	GrowthGoal.ensure(data)
 	if needs_migration:
 		if not backup_ok:
 			data["migration_failed"]=true
@@ -70,8 +83,23 @@ static func load_data()->Dictionary:
 		data.training_history=[]
 		data.scoring_version=4;data.training_schema=2
 		if not save_data(data):data["migration_failed"]=true
+	if needs_growth and not needs_migration:
+		if not save_data(data):data["migration_failed"]=true
 	data.version=VERSION;data.migration="points_v1_4"
 	return data
+
+static func _migrate_commander(data:Dictionary)->void:
+	var known:Array[String]=[]
+	for item in Balance.LEGACY_COMMANDER_ITEMS:
+		var id:=str(item.id)
+		var slot:=int(item.slot)
+		if id in data.commander_owned or str(data.commander_equipped[slot])==id:known.append(id)
+	var multiplier:=1.0
+	for item in Balance.LEGACY_COMMANDER_ITEMS:
+		if str(item.id) in known:multiplier*=float(item.combat)
+	data.legacy_army_multiplier=multiplier
+	data.growth_schema=1
+	data.growth_migration_notice=not known.is_empty()
 
 static func _backup_before_points_migration()->bool:
 	if FileAccess.file_exists(POINTS_BACKUP):return true

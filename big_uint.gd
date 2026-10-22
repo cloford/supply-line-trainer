@@ -40,5 +40,7 @@ static func format(value:String)->String:
 	var units:=[{"d":21,"u":"垓"},{"d":17,"u":"京"},{"d":13,"u":"兆"},{"d":9,"u":"億"},{"d":5,"u":"万"}]
 	for unit in units:
 		if length>=unit.d:
-			var lead:=value.substr(0,mini(3,length));return lead.substr(0,1)+("."+lead.substr(1) if lead.length()>1 else "")+unit.u
+			var whole_digits:=length-int(unit.d)+1
+			var fraction:=(value.substr(whole_digits,2)+"00").substr(0,2)
+			return value.substr(0,whole_digits)+"."+fraction+unit.u
 	return value

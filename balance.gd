@@ -17,7 +17,7 @@ const SENSITIVITY_PRESETS := [
 	{"name":"VALORANT","coefficient":0.07,"official":false},
 	{"name":"Apex Legends","coefficient":0.022,"official":false}
 ]
-const COMMANDER_ITEMS := [
+const LEGACY_COMMANDER_ITEMS := [
 	{"id":"radio_assault","slot":0,"name":"戦術通信機","cost":260,"combat":1.10,"description":"部隊の連携を改善：戦闘力×1.10"},
 	{"id":"tablet_tactical","slot":1,"name":"戦術端末","cost":520,"combat":1.14,"description":"射撃指示を高速化：戦闘力×1.14"},
 	{"id":"supply_front","slot":2,"name":"前線補給装置","cost":850,"combat":1.18,"description":"前線維持を強化：戦闘力×1.18"}
@@ -31,11 +31,13 @@ static func gear_multiplier(level:int)->float:return 1.0+level*0.16
 static func commander_multiplier(equipped:Array)->float:
 	var result:=1.0
 	for id in equipped:
-		for item in COMMANDER_ITEMS:
+		for item in LEGACY_COMMANDER_ITEMS:
 			if str(id)==item.id:result*=float(item.combat)
 	return result
-static func combat_power(recruit:int,gear:int,equipped:Array=[])->float:
-	return soldier_count(recruit)*gear_multiplier(gear)*commander_multiplier(equipped)
+static func combat_power(recruit:int,gear:int,legacy_multiplier:float=1.0)->float:
+	return soldier_count(recruit)*gear_multiplier(gear)*legacy_multiplier
+static func army_power(data:Dictionary)->float:
+	return combat_power(int(data.recruit),int(data.gear),float(data.get("legacy_army_multiplier",1.0)))
 static func front_hp(front:int)->float:
 	if front<FRONT_HP.size():return FRONT_HP[front]
 	var extra:=front-FRONT_HP.size()+1
@@ -44,9 +46,7 @@ static func front_name(front:int)->String:
 	if front<FRONT_NAMES.size():return FRONT_NAMES[front]
 	return "継続戦線 %d-%d"%[int((front-12)/10)+1,(front-12)%10+1]
 static func visual_tier(level:int)->int:
-	if level>=5:return 2
-	if level>=2:return 1
-	return 0
+	return ArmyAppearance.tier(level)
 static func format_number(value:float)->String:
 	if value<10000.0:return "%d"%int(value)
 	var units:=[{"e":20,"u":"垓"},{"e":16,"u":"京"},{"e":12,"u":"兆"},{"e":8,"u":"億"},{"e":4,"u":"万"}]
@@ -66,8 +66,8 @@ static func clock_text(seconds:float)->String:
 	var value:=maxi(0,int(seconds))
 	return "%02d:%02d:%02d"%[value/3600,(value/60)%60,value%60]
 
-static func battle_dps(recruit:int,gear:int,equipped:Array)->float:
-	return combat_power(recruit,gear,equipped)*0.18
+static func battle_dps(recruit:int,gear:int,legacy_multiplier:float=1.0)->float:
+	return combat_power(recruit,gear,legacy_multiplier)*0.18
 
 static func eta_text(hp:float,dps:float,running:bool)->String:
 	if not running:return "停止中"
