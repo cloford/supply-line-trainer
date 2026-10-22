@@ -69,6 +69,9 @@ static func clock_text(seconds:float)->String:
 static func battle_dps(recruit:int,gear:int,legacy_multiplier:float=1.0)->float:
 	return combat_power(recruit,gear,legacy_multiplier)*0.18
 
+static func army_dps(data:Dictionary)->float:
+	return battle_dps(int(data.recruit),int(data.gear),float(data.get("legacy_army_multiplier",1.0)))
+
 static func eta_text(hp:float,dps:float,running:bool)->String:
 	if not running:return "停止中"
 	if not is_finite(hp) or not is_finite(dps) or dps<=0:return "計算中"

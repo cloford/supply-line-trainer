@@ -152,6 +152,9 @@ var result_review:ShootingReview
 var intention_option:OptionButton
 var intention_label:Label
 var next_intention:="指定なし"
+var purchase_effect_view:PurchaseEffectView
+var last_purchase_effect:Dictionary={}
+var purchase_effect_timer:=0.0
 
 func _ready()->void:
 	is_test_mode=is_test_mode or "--ui-test" in OS.get_cmdline_user_args()
@@ -331,6 +334,7 @@ func _build_army_screen()->void:
 	var right:=VBoxContainer.new();right_panel.add_child(right)
 	var heading:=_label("進軍状況",24);heading.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;right.add_child(heading)
 	battle_view=BattleView.new();battle_view.custom_minimum_size=Vector2(480,400);battle_view.size_flags_vertical=Control.SIZE_EXPAND_FILL;battle_view.size_flags_horizontal=Control.SIZE_EXPAND_FILL;right.add_child(battle_view)
+	purchase_effect_view=PurchaseEffectView.new();battle_view.add_child(purchase_effect_view);purchase_effect_view.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE);purchase_effect_view.offset_left=10;purchase_effect_view.offset_right=-10;purchase_effect_view.offset_top=10;purchase_effect_view.clear_effect()
 
 func _panel()->PanelContainer:
 	var p:=PanelContainer.new(); var sb:=StyleBoxFlat.new(); sb.bg_color=Color("0a1722e8"); sb.border_color=Color("295266"); sb.set_border_width_all(1); sb.set_corner_radius_all(8); sb.content_margin_left=24; sb.content_margin_right=24; sb.content_margin_top=20; sb.content_margin_bottom=20; p.add_theme_stylebox_override("panel",sb); return p
@@ -464,9 +468,9 @@ func _refresh_prep()->void:
 	gear_preview_detail.text=ArmyAppearance.description(int(data.gear),int(data.gear)+purchase_batch)
 	var effects:=["%s → %s"%[Balance.format_soldiers(int(data.recruit)),Balance.format_soldiers(int(data.recruit)+purchase_batch)],"Lv.%d → Lv.%d"%[int(data.gear),int(data.gear)+purchase_batch]]
 	for i in 2:
-		var stronger:=data.duplicate(true);stronger[["recruit","gear"][i]]=int(stronger[["recruit","gear"][i]])+purchase_batch
-		var percent:=(Balance.army_power(stronger)/maxf(0.001,Balance.army_power(data))-1.0)*100.0
-		upgrade_buttons[i].text="%s ×%d　%s\n%s P / 戦闘力 +%.0f%%%s"%[names[i],purchase_batch,effects[i],Balance.format_number(costs[i]),percent,"（不足）" if not _credit_can_afford(costs[i]) else ""]
+		var effect:=PurchaseEffect.preview(data,i,purchase_batch)
+		upgrade_buttons[i].text="%s ×%d　%s\n%s P / %s%s"%[names[i],purchase_batch,effects[i],Balance.format_number(costs[i]),PurchaseEffect.reduction_text(effect),"（不足）" if not _credit_can_afford(costs[i]) else ""]
+		upgrade_buttons[i].tooltip_text=str(PurchaseEffect.presentation(effect,int(data.front)).get("detail",""))
 		upgrade_buttons[i].disabled=not _credit_can_afford(costs[i]) or bool(data.get("migration_failed",false))
 		var after:=_appearance_state();after[["soldiers","gear"][i]]=Balance.soldier_count(int(data.recruit)+purchase_batch) if i==0 else int(data.gear)+purchase_batch
 		purchase_previews[i].set_comparison(i,_appearance_state(),after)
@@ -491,7 +495,8 @@ func _refresh_army_runtime()->void:
 func _update_battle_view()->void:
 	if not battle_view: return
 	_update_battle_hud()
-	if eta_label:eta_label.text="次の突破まで "+Balance.eta_text(float(data.enemy_hp),Balance.army_power(data)*0.18,mode!=Mode.PAUSED and app_focused)
+	if eta_label:eta_label.text="次の突破まで "+Balance.eta_text(float(data.enemy_hp),Balance.army_dps(data),mode!=Mode.PAUSED and app_focused)
+	if not last_purchase_effect.is_empty() and purchase_effect_timer>0:purchase_effect_view.set_effect(PurchaseEffect.presentation(last_purchase_effect,int(data.front)))
 	var front_index:=int(data.front);battle_view.set_state({"soldiers":Balance.soldier_count(int(data.recruit)),"soldier_label":Balance.format_soldiers(int(data.recruit)),"gear":int(data.gear),"front":front_index,"enemy_hp":float(data.enemy_hp),"enemy_max":Balance.front_hp(front_index),"running":mode!=Mode.PAUSED and app_focused})
 
 func _buy_upgrade(kind:int)->void:
@@ -499,16 +504,25 @@ func _buy_upgrade(kind:int)->void:
 	purchase_lock=true
 	var before:=_appearance_state()
 	var candidate:=GrowthGoal.transaction(data,kind,purchase_batch)
+	var effect:=PurchaseEffect.compare(data,candidate,kind,purchase_batch) if not candidate.is_empty() else {}
 	if not candidate.is_empty():
 		if is_test_mode or SaveManager.save_data(candidate):
 			data=candidate
 			purchase_message.hide()
 			battle_view.play_purchase(kind,before,_appearance_state())
+			last_purchase_effect=effect;purchase_effect_timer=PurchaseEffect.DURATION;purchase_effect_view.set_effect(PurchaseEffect.presentation(effect,int(data.front)))
 			_refresh_prep()
 		else:
+			_clear_purchase_effect()
 			save_warning=true
 			purchase_message.text="保存に失敗したため購入を取り消しました。空き容量や保存先を確認してください。";purchase_message.show()
+	else:
+		_clear_purchase_effect();purchase_message.text="ポイントが不足しているか、購入できない状態です。";purchase_message.show()
 	call_deferred("_unlock_purchase")
+
+func _clear_purchase_effect()->void:
+	last_purchase_effect={};purchase_effect_timer=0.0
+	if purchase_effect_view:purchase_effect_view.clear_effect()
 
 func _unlock_purchase()->void:
 	await get_tree().create_timer(0.20).timeout
@@ -572,6 +586,8 @@ func _army_from_goal()->void:
 
 func _update_growth_feedback(delta:float)->void:
 	if mode==Mode.PAUSED or not app_focused:return
+	purchase_effect_timer=maxf(0.0,purchase_effect_timer-delta)
+	if purchase_effect_timer<=0 and not last_purchase_effect.is_empty():_clear_purchase_effect()
 	goal_notice_timer=maxf(0.0,goal_notice_timer-delta)
 	if goal_notification:goal_notification.visible=goal_notice_timer>0
 	migration_timer=maxf(0.0,migration_timer-delta)
@@ -589,10 +605,12 @@ func _set_purchase_batch(amount:int,row:HBoxContainer)->void:
 	_refresh_prep()
 
 func _show_prep()->void:
+	_clear_purchase_effect()
 	_reset_exit_hold();burst_remaining=0
 	records_view.hide();mode=Mode.PREP; Input.mouse_mode=Input.MOUSE_MODE_VISIBLE; _clear_targets(); prep_panel.show(); army_panel.hide(); hud.hide(); result_panel.hide(); pause_panel.hide(); _refresh_prep()
 
 func _show_army()->void:
+	_clear_purchase_effect()
 	_reset_exit_hold();burst_remaining=0
 	army_return_mode=Mode.PREP
 	records_view.hide();mode=Mode.ARMY; mouse_blocked=true; Input.action_release("shoot"); Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
@@ -611,6 +629,7 @@ func _show_records()->void:
 func _start_training()->void:
 	if bool(data.get("migration_failed",false)):return
 	if updater and updater.is_applying():return
+	_clear_purchase_effect()
 	_reset_exit_hold()
 	feedback_base=0;feedback_center=0;feedback_other=0
 	selected_duration=0;session_fraction=float(data.get("credit_fraction",0.0))
@@ -890,7 +909,7 @@ func _apply_settings()->void:
 	if crosshair_preview:crosshair_preview.set_appearance(str(data.settings.crosshair_color),float(data.settings.crosshair_size),int(data.settings.crosshair_shape),bool(data.settings.crosshair_outline))
 
 func _process_battle(delta:float)->void:
-	data.enemy_hp=float(data.enemy_hp)-Balance.army_power(data)*0.18*delta
+	data.enemy_hp=float(data.enemy_hp)-Balance.army_dps(data)*delta
 	if float(data.enemy_hp)<=0:_advance_front()
 	battle_save_timer+=delta
 	if battle_save_timer>=15.0:
@@ -904,7 +923,7 @@ func _update_battle_hud()->void:
 	if not battle_hud:return
 	var ratio:=1.0-float(data.enemy_hp)/Balance.front_hp(int(data.front))
 	battle_progress.value=clampf(ratio,0.0,1.0)
-	battle_hud.text="戦線 %d　制圧 %.1f%%\n次の突破まで %s"%[int(data.front)+1,ratio*100.0,Balance.eta_text(float(data.enemy_hp),Balance.army_power(data)*0.18,mode!=Mode.PAUSED)]
+	battle_hud.text="戦線 %d　制圧 %.1f%%\n次の突破まで %s"%[int(data.front)+1,ratio*100.0,Balance.eta_text(float(data.enemy_hp),Balance.army_dps(data),mode!=Mode.PAUSED)]
 
 func _advance_front()->void:
 	data.front=int(data.front)+1

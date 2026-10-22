@@ -29,6 +29,10 @@ func snap(name:String)->void:
 	if game.mode==game.Mode.RECORDS:
 		for button in game.records_view.find_children("*","Button",true,false):
 			if button.is_visible_in_tree():check(bounds.encloses(button.get_global_rect()),"record button clipped "+name)
+	if game.mode==game.Mode.ARMY:
+		for button in game.army_panel.find_children("*","Button",true,false):
+			if button.is_visible_in_tree():check(bounds.encloses(button.get_global_rect()),"army button clipped "+name)
+		if game.purchase_effect_view.visible:check(bounds.encloses(game.purchase_effect_view.get_global_rect()),"purchase comparison clipped "+name)
 	if "--no-capture" not in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png(output.path_join(name+".png"))
@@ -64,8 +68,9 @@ func _run()->void:
 	# ランダム配置と32bit 3D姿勢による中心照準の微小差を許容。端数繰越は比較しない。
 	check(absf(float(game._training_result().exact_points)-float(result_before.exact_points))<0.02,"intention affected unrounded scoring for scripted center shots")
 	var last:Dictionary=game.data.training_history[0].duplicate(true)
-	game._army_from_goal();var previous_recruit:int=game.data.recruit;game._buy_upgrade(0)
+	game._army_from_goal();await snap("05-purchase-before");var previous_recruit:int=game.data.recruit;game._buy_upgrade(0)
 	check(game.data.recruit==previous_recruit+1,"result to army purchase failed")
+	check(game.purchase_effect_view.visible,"successful purchase comparison missing");await snap("06-purchase-after")
 	game._show_prep();game._show_records()
 	var row:Button=game.records_view.rows.get_child(0);row.pressed.emit()
 	check(game.records_view.detail_view.visible and not game.records_view.listing.visible,"record selection failed")
@@ -81,6 +86,8 @@ func _run()->void:
 		game.data.settings.score_details=true;game._finish_training(false)
 		game._show_records();game.records_view.rows.get_child(0).pressed.emit();await snap("details-%dx%d"%[dimensions.x,dimensions.y])
 		game.records_view.detail_back.pressed.emit();await snap("records-%dx%d"%[dimensions.x,dimensions.y])
+		game._show_army();await snap("army-preview-%dx%d"%[dimensions.x,dimensions.y])
+		game.last_purchase_effect=PurchaseEffect.preview(game.data,1,1);game.purchase_effect_timer=2.6;game._update_battle_view();await snap("army-effect-layout-%dx%d"%[dimensions.x,dimensions.y])
 	# UI表示の境界値は隔離した複製へ注入し、実射撃の試遊結果とは区別する。
 	root.size=Vector2i(1280,720);root.content_scale_size=root.size
 	for variant in ["short","long","no-shots"]:
