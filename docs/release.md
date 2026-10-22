@@ -4,7 +4,7 @@
 
 1. `project.godot` を Godot 4.7.2 stable で開き、リリース対象のバージョンと `CHANGELOG.md` を確認する。
 2. Windows Desktop プリセットでリリースビルドを書き出す。`export_presets.cfg` の出力先は `../build/SupplyLineTrainer.exe`。Godot は `.pck` も同じ場所へ出力する。
-3. 作業用の空フォルダーへ `SupplyLineTrainer.exe` と `SupplyLineTrainer.pck` を置き、ZIPの直下にこの2ファイルが入る形で圧縮する。ZIP名は `SupplyLineTrainer_Windows_v<version>.zip`（例：`SupplyLineTrainer_Windows_v1.4.0.zip`）。
+3. 作業用の空フォルダーへ `SupplyLineTrainer.exe` と `SupplyLineTrainer.pck` を置き、ZIP直下または一つだけのルートフォルダー内へ入れて圧縮する。同階層の説明は `.md`／`.txt` のみとし、画像・テスト・セーブ・サブフォルダーを配布ZIPへ含めない。ZIP名は `SupplyLineTrainer_Windows_v<version>.zip`（例：`SupplyLineTrainer_Windows_v1.9.0.zip`）。
 4. 作成したZIPのSHA-256を記録し、ZIPを展開してEXEとPCKが揃うことを確認する。
 
 PowerShellでのハッシュ確認例：

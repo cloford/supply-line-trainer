@@ -7,7 +7,7 @@ func check(ok:bool,message:String)->void:
 func _run()->void:
 	# 固定した改修前コミットの実装をメモリ上だけで実行する。作業ツリーを変更しない。
 	var output:Array=[]
-	if OS.execute("git",["archive","--format=zip","--output="+ProjectSettings.globalize_path("user://baseline.zip"),"87b0e3e","main.gd"],output)!=0:push_error("baseline unavailable");quit(1);return
+	if OS.execute("git",["archive","--format=zip","--output="+ProjectSettings.globalize_path("user://baseline.zip"),"v1.8.0","main.gd"],output)!=0:push_error("baseline unavailable");quit(1);return
 	var archive:=ZIPReader.new();archive.open("user://baseline.zip")
 	var source:=GDScript.new();source.source_code=archive.read_file("main.gd").get_string_from_utf8();archive.close()
 	if source.reload()!=OK:push_error("baseline compile failed");quit(1);return
@@ -32,11 +32,11 @@ func _run()->void:
 				else:game._fire_shot()
 			var actual:Dictionary={"stats":game.stats.duplicate(true),"points":game._training_result(),"q_sum":game.shooting_metrics.q_sum,"q_time":game.shooting_metrics.q_time}
 			if game==old:expected.append(actual)
-			else:check(actual==expected[weapon],"weapon %d facts/points differ from v1.7.0"%weapon)
+			else:check(actual==expected[weapon],"weapon %d facts/points differ from v1.8.0"%weapon)
 			game._finish_training(false)
 		game._clear_targets();await process_frame;await physics_frame
 	old.queue_free();current.queue_free();for frame in 4:await process_frame
-	if failures.is_empty():print("SCORING_REGRESSION_OK: v1.7.0 and current actual ray replay, 3 weapons, raw metrics, misses, center/kill/streak bonuses and carry identical");quit(0)
+	if failures.is_empty():print("SCORING_REGRESSION_OK: v1.8.0 and current actual ray replay, 3 weapons, raw metrics, misses, center/kill/streak bonuses and carry identical");quit(0)
 	else:
 		for message in failures:push_error(message)
 		quit(1)

@@ -114,6 +114,7 @@ var goal_details:Array[Label]=[]
 var goal_previews:Array[ArmyPreview]=[]
 var goal_selectors:Array[HBoxContainer]=[]
 var purchase_previews:Array[ArmyPreview]=[]
+var purchase_notes:Array[Label]=[]
 var gear_preview_detail:Label
 var purchase_message:Label
 var goal_hud:Label
@@ -143,7 +144,7 @@ var feedback_base:=0
 var feedback_center:=0
 var feedback_other:=0
 var app_focused:=true
-var feedback_url:="https://github.com/cloford/supply-line-trainer/discussions/6"
+var feedback_url:="https://github.com/cloford/supply-line-trainer/discussions/7"
 var updater:SupplyLineUpdater
 var update_labels:Array[Label]=[]
 var update_buttons:Array[Button]=[]
@@ -170,6 +171,21 @@ var last_result_record:Dictionary={}
 var goal_display_check:CheckBox
 var goal_notice_check:CheckBox
 var update_hint:Button
+var training_in_army:=false
+var suspended_mode:=Mode.TRAINING
+var army_resume:Button
+var army_end:Button
+var pause_warning:Label
+var growth_candidate_kind:=0
+var growth_candidate_label:Label
+var growth_candidate_preview:ArmyPreview
+var growth_candidate_select:Button
+var condition_panel:Control
+var condition_card:PanelContainer
+var condition_weapon:OptionButton
+var condition_difficulty:OptionButton
+var condition_description:Label
+var condition_warning:Label
 
 func _ready()->void:
 	is_test_mode=is_test_mode or "--ui-test" in OS.get_cmdline_user_args()
@@ -319,6 +335,7 @@ func _build_ui()->void:
 	result_army_button=Button.new();result_army_button.text="部隊へ";result_army_button.size_flags_horizontal=Control.SIZE_EXPAND_FILL;result_army_button.pressed.connect(_army_from_goal);alternatives.add_child(result_army_button)
 	pause_panel=_build_pause_panel(); ui.add_child(pause_panel)
 	_build_navigation();_build_info_panel()
+	_build_condition_picker()
 	var shared_theme:=TrainerTheme.create()
 	for control in ui.get_children():
 		if control is Control:control.theme=shared_theme
@@ -335,6 +352,7 @@ func _build_navigation()->void:
 
 func _navigate(index:int)->void:
 	if mode not in [Mode.PREP,Mode.ARMY,Mode.RECORDS]:return
+	if training_in_army:return
 	var target:int=[Mode.PREP,Mode.ARMY,Mode.RECORDS][index]
 	if mode==target:return
 	if index==0:_show_prep()
@@ -343,7 +361,7 @@ func _navigate(index:int)->void:
 
 func _sync_navigation()->void:
 	if not navigation:return
-	navigation.visible=mode in [Mode.PREP,Mode.ARMY,Mode.RECORDS] and (not info_panel or not info_panel.visible)
+	navigation.visible=mode in [Mode.PREP,Mode.ARMY,Mode.RECORDS] and not training_in_army and (not info_panel or not info_panel.visible)
 	for index in navigation_buttons.size():
 		var selected:bool=mode==[Mode.PREP,Mode.ARMY,Mode.RECORDS][index]
 		navigation_buttons[index].text=("✓ " if selected else "")+["訓練","部隊","記録"][index]
@@ -404,29 +422,40 @@ func _build_army_screen()->void:
 	army_panel=ColorRect.new();army_panel.color=Color("071019");army_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);ui.add_child(army_panel)
 	var margin:=MarginContainer.new();margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);margin.add_theme_constant_override("margin_left",16);margin.add_theme_constant_override("margin_right",16);margin.add_theme_constant_override("margin_top",16);margin.add_theme_constant_override("margin_bottom",90);army_panel.add_child(margin)
 	var columns:=HBoxContainer.new();columns.add_theme_constant_override("separation",16);margin.add_child(columns)
-	var left_panel:=_panel();left_panel.custom_minimum_size.x=330;left_panel.size_flags_horizontal=Control.SIZE_EXPAND_FILL;left_panel.size_flags_stretch_ratio=0.34;columns.add_child(left_panel)
+	var left_panel:=_panel();left_panel.custom_minimum_size.x=400;left_panel.size_flags_horizontal=Control.SIZE_EXPAND_FILL;left_panel.size_flags_stretch_ratio=0.40;columns.add_child(left_panel)
 	var left:=VBoxContainer.new();left.add_theme_constant_override("separation",4);left_panel.add_child(left)
 	army_title=_label("部隊",22);left.add_child(army_title)
 	supply_label=_label("",18);left.add_child(supply_label)
 	power_label=_label("",18);left.add_child(power_label)
-	front_label=_label("",17);left.add_child(front_label)
-	front_bar=ProgressBar.new();front_bar.custom_minimum_size.y=12;front_bar.show_percentage=false;left.add_child(front_bar)
-	eta_label=_label("",16);left.add_child(eta_label)
 	for i in 2:
 		var b:=Button.new();b.custom_minimum_size.y=44;b.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;b.pressed.connect(_buy_upgrade.bind(i));left.add_child(b);upgrade_buttons.append(b)
-		var preview:=ArmyPreview.new();preview.custom_minimum_size=Vector2(260,36);left.add_child(preview);purchase_previews.append(preview)
+		var note:=_label("",14);left.add_child(note);purchase_notes.append(note)
+		var preview:=ArmyPreview.new();preview.custom_minimum_size=Vector2(260,32);left.add_child(preview);purchase_previews.append(preview);preview.hide()
 		if i==1:gear_preview_detail=_label("",14);gear_preview_detail.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;left.add_child(gear_preview_detail)
 	batch_row=HBoxContainer.new();left.add_child(batch_row)
 	for amount in [1,5,10]:
 		var bb:=Button.new();bb.text="×%d"%amount;bb.toggle_mode=true;bb.button_pressed=amount==1;bb.pressed.connect(_set_purchase_batch.bind(amount,batch_row));batch_row.add_child(bb)
-	_build_goal_card(left,false)
+	_build_goal_card(left,false,false)
+	goal_details.back().hide()
 	purchase_message=_label("",14);purchase_message.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;left.add_child(purchase_message);purchase_message.hide()
 	var spacer:=Control.new();spacer.size_flags_vertical=Control.SIZE_EXPAND_FILL;left.add_child(spacer)
-	var right_panel:=_panel();right_panel.size_flags_horizontal=Control.SIZE_EXPAND_FILL;right_panel.size_flags_stretch_ratio=0.66;columns.add_child(right_panel)
+	army_resume=Button.new();army_resume.text="練習に戻る";army_resume.theme_type_variation="PrimaryButton";army_resume.pressed.connect(_resume_from_army);left.add_child(army_resume)
+	army_end=Button.new();army_end.text="この練習を終了して結果へ";army_end.pressed.connect(_finish_from_army);left.add_child(army_end)
+	var right_panel:=_panel();right_panel.size_flags_horizontal=Control.SIZE_EXPAND_FILL;right_panel.size_flags_stretch_ratio=0.60;columns.add_child(right_panel)
 	var right:=VBoxContainer.new();right_panel.add_child(right)
-	var heading:=_label("進軍状況",24);heading.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;right.add_child(heading)
-	battle_view=BattleView.new();battle_view.custom_minimum_size=Vector2(480,400);battle_view.size_flags_vertical=Control.SIZE_EXPAND_FILL;battle_view.size_flags_horizontal=Control.SIZE_EXPAND_FILL;right.add_child(battle_view)
-	purchase_effect_view=PurchaseEffectView.new();battle_view.add_child(purchase_effect_view);purchase_effect_view.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE);purchase_effect_view.offset_left=10;purchase_effect_view.offset_right=-10;purchase_effect_view.offset_top=10;purchase_effect_view.clear_effect()
+	front_label=_label("",17);right.add_child(front_label)
+	front_bar=ProgressBar.new();front_bar.custom_minimum_size.y=12;front_bar.show_percentage=false;right.add_child(front_bar)
+	eta_label=_label("",16);right.add_child(eta_label)
+	battle_view=BattleView.new();battle_view.custom_minimum_size=Vector2(480,260);battle_view.size_flags_vertical=Control.SIZE_EXPAND_FILL;battle_view.size_flags_horizontal=Control.SIZE_EXPAND_FILL;right.add_child(battle_view)
+	var candidate_tabs:=HBoxContainer.new();right.add_child(candidate_tabs)
+	for kind in 2:
+		var tab:=Button.new();tab.text=["次の増員の節目","次の装備の節目"][kind];tab.size_flags_horizontal=Control.SIZE_EXPAND_FILL;tab.pressed.connect(_set_growth_candidate.bind(kind));candidate_tabs.add_child(tab)
+	growth_candidate_label=_label("",14);growth_candidate_label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;right.add_child(growth_candidate_label)
+	growth_candidate_preview=ArmyPreview.new();growth_candidate_preview.future_hidden=true;growth_candidate_preview.custom_minimum_size.y=66;right.add_child(growth_candidate_preview)
+	var select_row:=HBoxContainer.new();right.add_child(select_row)
+	growth_candidate_select=Button.new();growth_candidate_select.text="この節目を目標にする";growth_candidate_select.size_flags_horizontal=Control.SIZE_EXPAND_FILL;growth_candidate_select.pressed.connect(_choose_growth_candidate);select_row.add_child(growth_candidate_select)
+	var single:=Button.new();single.text="次の1回を目標";single.pressed.connect(func():_select_goal(growth_candidate_kind));select_row.add_child(single)
+	purchase_effect_view=PurchaseEffectView.new();purchase_effect_view.compact=true;left.add_child(purchase_effect_view);purchase_effect_view.clear_effect()
 
 func _panel()->PanelContainer:
 	var p:=PanelContainer.new(); var sb:=StyleBoxFlat.new(); sb.bg_color=Color("0a1722e8"); sb.border_color=Color("295266"); sb.set_border_width_all(1); sb.set_corner_radius_all(8); sb.content_margin_left=24; sb.content_margin_right=24; sb.content_margin_top=20; sb.content_margin_bottom=20; p.add_theme_stylebox_override("panel",sb); return p
@@ -446,7 +475,10 @@ func _build_pause_panel()->Control:
 	var outer:=VBoxContainer.new();outer.add_theme_constant_override("separation",10);pause_card.add_child(outer)
 	pause_menu=VBoxContainer.new();pause_menu.add_theme_constant_override("separation",12);outer.add_child(pause_menu)
 	var pt:=_label("一時停止",28);pt.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;pause_menu.add_child(pt)
-	var resume:=Button.new();resume.text="再開";resume.custom_minimum_size.y=52;resume.pressed.connect(_resume_pause);pause_menu.add_child(resume)
+	var resume:=Button.new();resume.text="練習を再開";resume.theme_type_variation="PrimaryButton";resume.custom_minimum_size.y=52;resume.pressed.connect(_resume_pause);pause_menu.add_child(resume)
+	for spec in [["練習条件を変更",_open_condition_picker],["部隊へ",_visit_army]]:
+		var button:=Button.new();button.text=spec[0];button.pressed.connect(spec[1]);pause_menu.add_child(button)
+	pause_warning=_label("",14);pause_warning.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;pause_menu.add_child(pause_warning);pause_warning.hide()
 	var settings_button:=Button.new();settings_button.text="設定";settings_button.custom_minimum_size.y=52;settings_button.pressed.connect(_open_settings_page);pause_menu.add_child(settings_button)
 	pause_end_button=Button.new();pause_end_button.text="訓練を終了";pause_end_button.custom_minimum_size.y=52;pause_end_button.pressed.connect(_end_early);pause_menu.add_child(pause_end_button)
 	settings_page=VBoxContainer.new();settings_page.size_flags_vertical=Control.SIZE_EXPAND_FILL;settings_page.add_theme_constant_override("separation",8);outer.add_child(settings_page)
@@ -563,15 +595,16 @@ func _refresh_prep()->void:
 	if not supply_label: return
 	supply_label.text="所持ポイント: %s P"%_credit_text()
 	power_label.text="%s　部隊装備 Lv.%d"%[Balance.format_soldiers(int(data.recruit)),int(data.gear)]
-	var costs:=[_upgrade_total_cost(0),_upgrade_total_cost(1)]
 	var names:=["増員","部隊装備"]
 	gear_preview_detail.text=ArmyAppearance.description(int(data.gear),int(data.gear)+purchase_batch)
 	var effects:=["%s → %s"%[Balance.format_soldiers(int(data.recruit)),Balance.format_soldiers(int(data.recruit)+purchase_batch)],"Lv.%d → Lv.%d"%[int(data.gear),int(data.gear)+purchase_batch]]
 	for i in 2:
 		var effect:=PurchaseEffect.preview(data,i,purchase_batch)
-		upgrade_buttons[i].text="%s ×%d　%s\n%s P / %s%s"%[names[i],purchase_batch,effects[i],Balance.format_number(costs[i]),PurchaseEffect.reduction_text(effect),"（不足）" if not _credit_can_afford(costs[i]) else ""]
-		upgrade_buttons[i].tooltip_text=str(PurchaseEffect.presentation(effect,int(data.front)).get("detail",""))
-		upgrade_buttons[i].disabled=not _credit_can_afford(costs[i]) or bool(data.get("migration_failed",false))
+		purchase_notes[i].text=PurchaseEffect.reduction_text(effect)+"（参考）"
+		var exact_cost:=GrowthGoal.total_cost(data,i,int(data[GrowthGoal.KEYS[i]])+purchase_batch)
+		upgrade_buttons[i].text="%s ×%d → %s\n%s P で購入%s"%[names[i],purchase_batch,effects[i],BigUInt.format(exact_cost),"（不足）" if BigUInt.compare(str(data.credits),exact_cost)<0 else ""]
+		upgrade_buttons[i].tooltip_text=PurchaseEffect.reduction_text(effect)+"\n"+str(PurchaseEffect.presentation(effect,int(data.front)).get("detail",""))
+		upgrade_buttons[i].disabled=BigUInt.compare(str(data.credits),exact_cost)<0 or bool(data.get("migration_failed",false))
 		var after:=_appearance_state();after[["soldiers","gear"][i]]=Balance.soldier_count(int(data.recruit)+purchase_batch) if i==0 else int(data.gear)+purchase_batch
 		purchase_previews[i].set_comparison(i,_appearance_state(),after)
 	for i in 3:
@@ -586,6 +619,8 @@ func _refresh_prep()->void:
 	var maxhp:=Balance.front_hp(int(data.front));front_label.text="戦線 %d　%s"%[int(data.front)+1,Balance.front_name(int(data.front))];front_bar.max_value=maxhp;front_bar.value=maxhp-float(data.enemy_hp)
 	if army_title:army_title.text="部隊"
 	_refresh_goals()
+	_refresh_growth_candidate()
+	army_resume.visible=training_in_army;army_end.visible=training_in_army
 	_update_battle_view()
 
 func _refresh_army_runtime()->void:
@@ -603,6 +638,7 @@ func _buy_upgrade(kind:int)->void:
 	if mode!=Mode.ARMY or purchase_lock:return
 	purchase_lock=true
 	var before:=_appearance_state()
+	var was_achieved:=GrowthGoal.achieved(data)
 	var candidate:=GrowthGoal.transaction(data,kind,purchase_batch)
 	var effect:=PurchaseEffect.compare(data,candidate,kind,purchase_batch) if not candidate.is_empty() else {}
 	if not candidate.is_empty():
@@ -612,6 +648,8 @@ func _buy_upgrade(kind:int)->void:
 			battle_view.play_purchase(kind,before,_appearance_state())
 			last_purchase_effect=effect;purchase_effect_timer=PurchaseEffect.DURATION;purchase_effect_view.set_effect(PurchaseEffect.presentation(effect,int(data.front)))
 			_refresh_prep()
+			if not was_achieved and GrowthGoal.achieved(data):
+				purchase_message.text="成長の節目に到達！ 次の候補は右側から選べます。";purchase_message.show()
 		else:
 			_clear_purchase_effect()
 			save_warning=true
@@ -653,14 +691,15 @@ func _goal_balance()->String:
 	return GrowthGoal.available(data,_session_record() if _training_session_open() else {})
 
 func _goal_status(available:String)->String:
+	if GrowthGoal.achieved(data):return "達成済み — 次の候補を部隊で選べます"
 	var missing:=GrowthGoal.missing(data,available)
-	return "購入可能（部隊画面で購入）" if missing=="0" else "あと %s P（必要 %s P）"%[BigUInt.format(missing),BigUInt.format(GrowthGoal.price(data,int(data.upgrade_goal.kind)))]
+	return "残り総費用 %s P ／ 不足 %s P%s"%[BigUInt.format(GrowthGoal.goal_cost(data)),BigUInt.format(missing),"・購入可能" if missing=="0" else ""]
 
 func _refresh_goals()->void:
 	var kind:=int(data.upgrade_goal.kind)
 	var title:="次の目標："+GrowthGoal.title(data)
 	var status:=_goal_status(_goal_balance())
-	var explanation:="援軍が合流し、隊列が厚くなります" if kind==0 else ArmyAppearance.description(int(data.gear),int(data.gear)+1)
+	var explanation:=GrowthGoal.effect(kind,int(data.upgrade_goal.level)) if GrowthGoal.is_milestone(data) else ("援軍が合流し、隊列が厚くなります" if kind==0 else ArmyAppearance.description(int(data.gear),int(data.gear)+1))
 	for index in goal_labels.size():
 		goal_labels[index].text=title+"\n"+status
 		goal_details[index].text=explanation
@@ -669,10 +708,10 @@ func _refresh_goals()->void:
 			row.get_child(index).text=("✓ " if index==kind else "")+["増員を目標","部隊装備を目標"][index]
 			row.get_child(index).set_pressed_no_signal(index==kind)
 	var after:=_appearance_state()
-	if kind==0:after.soldiers=Balance.soldier_count(int(data.recruit)+1)
-	else:after.gear=int(data.gear)+1
+	if kind==0:after.soldiers=Balance.soldier_count(int(data.upgrade_goal.level))
+	else:after.gear=int(data.upgrade_goal.level)
 	for preview in goal_previews:preview.set_comparison(kind,_appearance_state(),after)
-	if result_goal:result_goal.text=title+"\n"+status
+	if result_goal:result_goal.text=title+"\n"+status+"\n"+explanation
 	if result_army_button:result_army_button.text="部隊へ（購入可能）" if GrowthGoal.missing(data,_goal_balance())=="0" else "部隊へ"
 
 func _refresh_goal_hud()->void:
@@ -681,7 +720,28 @@ func _refresh_goal_hud()->void:
 	goal_hud.visible=bool(data.settings.get("show_training_goal",false))
 	if mode==Mode.TRAINING and GrowthGoal.poll(data,available):
 		if bool(data.settings.get("goal_notifications",true)):
-			goal_notice_timer=1.5;goal_notification.text="育成目標を購入できます（終了後、部隊へ）";goal_notification.show()
+			goal_notice_timer=1.5;goal_notification.text="目標の購入資金が揃いました（Esc → 部隊へ）";goal_notification.show()
+
+func _set_growth_candidate(kind:int)->void:
+	growth_candidate_kind=kind;_refresh_growth_candidate()
+
+func _refresh_growth_candidate()->void:
+	if not growth_candidate_label:return
+	var kind:=growth_candidate_kind;var target:=GrowthGoal.milestone(data,kind)
+	growth_candidate_select.disabled=target<0 or bool(data.get("migration_failed",false))
+	growth_candidate_preview.visible=target>=0
+	if target<0:growth_candidate_label.text="定義済みの外見の節目は達成済みです。通常の強化は続けられます。";return
+	var cost:=GrowthGoal.total_cost(data,kind,target)
+	var requirement:="%d → %d人"%[Balance.soldier_count(int(data.recruit)),Balance.soldier_count(target)] if kind==0 else "Lv.%d → %d"%[int(data.gear),target]
+	growth_candidate_label.text="現在 → 次の節目："+requirement+"\n"+GrowthGoal.effect(kind,target)+"\n残り総費用 %s P ／ 不足 %s P"%[BigUInt.format(cost),BigUInt.format(BigUInt.subtract(cost,str(data.credits)))]
+	var after:=_appearance_state();after[["soldiers","gear"][kind]]=Balance.soldier_count(target) if kind==0 else target
+	growth_candidate_preview.set_comparison(kind,_appearance_state(),after)
+
+func _choose_growth_candidate()->void:
+	if mode!=Mode.ARMY or bool(data.get("migration_failed",false)) or GrowthGoal.milestone(data,growth_candidate_kind)<0:return
+	var candidate:=data.duplicate(true);GrowthGoal.choose_milestone(candidate,growth_candidate_kind)
+	if is_test_mode or SaveManager.save_data(candidate):data=candidate;_refresh_goals()
+	else:purchase_message.text="目標を保存できませんでした。元の目標を保持します。";purchase_message.show()
 
 func _army_from_goal()->void:
 	_show_army();_set_purchase_batch(1,batch_row)
@@ -698,10 +758,6 @@ func _update_growth_feedback(delta:float)->void:
 	purchase_flash=maxf(0.0,purchase_flash-delta)
 	for index in upgrade_buttons.size():upgrade_buttons[index].modulate=Color("9dffe0") if index==highlighted_purchase and purchase_flash>0 else Color.WHITE
 
-func _upgrade_total_cost(kind:int)->float:
-	var level:=int(data[["recruit","gear"][kind]]);var total:=0.0
-	for offset in purchase_batch:total+=([Balance.recruit_cost(level+offset),Balance.gear_cost(level+offset)][kind])
-	return total
 func _set_purchase_batch(amount:int,row:HBoxContainer)->void:
 	purchase_batch=amount
 	for child in row.get_children():child.set_pressed_no_signal(child.text=="×%d"%amount)
@@ -721,6 +777,23 @@ func _show_army()->void:
 	prep_panel.hide();hud.hide();result_panel.hide();pause_panel.hide();army_panel.show();_refresh_prep()
 	_close_info();_sync_navigation()
 
+# Keep the live 3D training objects in place. Only persistent data is checkpointed.
+func _visit_army()->void:
+	if mode!=Mode.PAUSED or settings_page.visible or condition_panel.visible or mode_before_pause not in [Mode.TRAINING,Mode.COUNTDOWN]:return
+	if not _checkpoint_training():
+		pause_warning.text="成果を保存できませんでした。再試行するか練習へ戻ってください。";pause_warning.show();return
+	suspended_mode=mode_before_pause;training_in_army=true
+	_show_army()
+
+func _resume_from_army()->void:
+	if mode!=Mode.ARMY or not training_in_army:return
+	training_in_army=false;mode_before_pause=suspended_mode
+	army_panel.hide();hud.show();_resume_pause()
+
+func _finish_from_army()->void:
+	if mode!=Mode.ARMY or not training_in_army:return
+	_finish_training(false)
+
 func _leave_army()->void:
 	army_panel.hide()
 	_show_prep()
@@ -737,6 +810,7 @@ func _start_training()->void:
 	if updater and updater.is_applying():return
 	selected_weapon=TrainingCatalog.safe_index(selected_weapon);selected_difficulty=TrainingCatalog.safe_index(selected_difficulty)
 	if not TrainingCatalog.available(selected_weapon):return
+	training_in_army=false
 	_close_info()
 	_clear_purchase_effect()
 	_reset_exit_hold()
@@ -803,10 +877,13 @@ func _unhandled_input(event:InputEvent)->void:
 		var focus:=get_viewport().gui_get_focus_owner()
 		if focus is LineEdit:
 			focus.release_focus();get_viewport().set_input_as_handled();return
+		if condition_panel.visible:
+			_cancel_condition_picker();get_viewport().set_input_as_handled();return
 		if mode==Mode.PAUSED:
 			_close_pause()
 		elif mode in [Mode.COUNTDOWN,Mode.TRAINING]:
 			_open_pause()
+		get_viewport().set_input_as_handled()
 		return
 	if mode not in [Mode.COUNTDOWN,Mode.TRAINING]: return
 	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT:
@@ -935,27 +1012,30 @@ func _update_hud()->void:
 	credit_hud.text=("命中率 %.1f%%"%[float(result.accuracy)*100.0] if training_weapon!=1 else "追従率 %.1f%%"%[float(result.accuracy)*100.0])+(" / 保存再試行中" if save_warning else "")
 
 func _training_session_open()->bool:
-	return not reward_committed and (mode in [Mode.COUNTDOWN,Mode.TRAINING] or (mode==Mode.PAUSED and mode_before_pause in [Mode.COUNTDOWN,Mode.TRAINING]))
+	return not reward_committed and (training_in_army or mode in [Mode.COUNTDOWN,Mode.TRAINING] or (mode==Mode.PAUSED and mode_before_pause in [Mode.COUNTDOWN,Mode.TRAINING]))
 
 func _session_record()->Dictionary:
 	var result:=_training_result()
 	return {"id":session_id,"started":session_started,"weapon":training_weapon,"difficulty":training_difficulty,"duration":0,"elapsed":training_elapsed,"active":minf(active_seconds,training_elapsed),"score":int(result.score),"credits":int(result.supply),"point_fraction":float(result.fraction),"accuracy":float(result.accuracy),"base":result.base,"center":result.center,"speed":result.speed,"streak":result.streak,"scoring_version":Balance.SCORING_VERSION,"metrics":ShootingMetrics.snapshot(shooting_metrics,stats,training_elapsed),"scoring_raw":ScoringCapture.snapshot(stats)}
 
-func _checkpoint_training()->void:
+func _checkpoint_training()->bool:
 	checkpoint_timer=0.0
-	if not _training_session_open() or training_elapsed<=0:return
-	TrainingLedger.checkpoint(data,_session_record())
-	if not is_test_mode:save_warning=not SaveManager.save_data(data)
+	if not _training_session_open() or training_elapsed<=0:return not bool(data.get("migration_failed",false))
+	var candidate:=data.duplicate(true)
+	TrainingLedger.checkpoint(candidate,_session_record())
+	save_warning=not is_test_mode and not SaveManager.save_data(candidate)
+	if save_warning:return false
+	data=candidate
+	return true
 
 func _finish_training(_full_time:bool)->void:
 	if reward_committed:return
+	training_in_army=false
+	if condition_panel:condition_panel.hide()
 	_reset_exit_hold();mouse_blocked=true;burst_remaining=0;audio_player.stop();hit_audio_player.stop()
 	var result:=_training_result()
-	var record:=_session_record()
+	var record:=_completed_record()
 	var status:="終了"
-	record.status=status;record.metrics.complete=true
-	record.metrics.comparison_reason=ShootingMetrics.reason(record);record.metrics.comparison_eligible=str(record.metrics.comparison_reason).is_empty()
-	record.shooting_comparison=ShootingMetrics.comparison(record,data.training_history)
 	last_result_record=record.duplicate(true)
 	TrainingLedger.finish(data,record,status)
 	reward_committed=true
@@ -984,18 +1064,68 @@ func _end_early()->void:
 func _open_pause()->void:
 	if mode==Mode.PAUSED: return
 	_reset_exit_hold();burst_remaining=0
-	_checkpoint_training();settings_standalone=false;mode_before_pause=mode;mode=Mode.PAUSED;Input.action_release("shoot");Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;audio_player.stop();hit_audio_player.stop();pause_panel.show();mouse_blocked=true;crosshair.hide();pause_menu.show();settings_page.hide();pause_end_button.visible=true;_update_battle_view()
+	_checkpoint_training();pause_warning.hide();settings_standalone=false;mode_before_pause=mode;mode=Mode.PAUSED;Input.action_release("shoot");Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;audio_player.stop();hit_audio_player.stop();pause_panel.show();mouse_blocked=true;crosshair.hide();pause_menu.show();settings_page.hide();pause_end_button.visible=true;_update_battle_view()
 	_sync_navigation()
 
 func _close_pause()->void:
 	if settings_page.visible:_settings_back();return
 	_resume_pause()
 func _resume_pause()->void:
+	if mode!=Mode.PAUSED and not (mode==Mode.ARMY and not training_in_army):return
+	if condition_panel.visible:return
+	_reset_exit_hold();burst_remaining=0;mouse_blocked=true;Input.action_release("shoot")
 	pause_panel.hide();mode=mode_before_pause;settings_standalone=false
 	if mode in [Mode.COUNTDOWN,Mode.TRAINING]: Input.mouse_mode=Input.MOUSE_MODE_CAPTURED; mouse_blocked=true; crosshair.show()
 	else: Input.mouse_mode=Input.MOUSE_MODE_VISIBLE; _refresh_prep()
 	_update_battle_view()
 	_sync_navigation()
+
+func _build_condition_picker()->void:
+	var parts:=_modal_overlay(640);condition_panel=parts[0];condition_card=parts[1];ui.add_child(condition_panel)
+	var column:=VBoxContainer.new();column.add_theme_constant_override("separation",12);condition_card.add_child(column)
+	column.add_child(_label("練習条件を変更",24))
+	column.add_child(_label("変更確定時だけ現在の記録を終了します。",16))
+	condition_weapon=OptionButton.new();column.add_child(condition_weapon)
+	for title in TrainingCatalog.TITLES:condition_weapon.add_item(title)
+	condition_difficulty=OptionButton.new();column.add_child(condition_difficulty)
+	for definition in Balance.DIFFICULTY:condition_difficulty.add_item(definition.name)
+	condition_description=_label("",15);condition_description.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;column.add_child(condition_description)
+	condition_warning=_label("",14);condition_warning.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;column.add_child(condition_warning)
+	condition_weapon.item_selected.connect(func(_index):_refresh_condition_picker());condition_difficulty.item_selected.connect(func(_index):_refresh_condition_picker())
+	var confirm:=Button.new();confirm.text="確定して練習へ";confirm.theme_type_variation="PrimaryButton";confirm.pressed.connect(_confirm_condition_picker);column.add_child(confirm)
+	var cancel:=Button.new();cancel.text="キャンセルして元の練習へ";cancel.pressed.connect(_cancel_condition_picker);column.add_child(cancel)
+	condition_panel.hide()
+
+func _refresh_condition_picker()->void:
+	condition_description.text=TrainingCatalog.DESCRIPTIONS[condition_weapon.selected]+"\n"+TrainingCatalog.difficulty_text(condition_weapon.selected,condition_difficulty.selected)
+
+func _open_condition_picker()->void:
+	if mode!=Mode.PAUSED or settings_page.visible or mode_before_pause not in [Mode.TRAINING,Mode.COUNTDOWN] or condition_panel.visible:return
+	condition_weapon.select(training_weapon);condition_difficulty.select(training_difficulty);condition_warning.text="";_refresh_condition_picker();condition_panel.show()
+
+func _cancel_condition_picker()->void:
+	if not condition_panel.visible:return
+	condition_panel.hide();_resume_pause()
+
+func _confirm_condition_picker()->void:
+	if not condition_panel.visible or mode!=Mode.PAUSED:return
+	var weapon:=condition_weapon.selected;var difficulty:=condition_difficulty.selected
+	if weapon==training_weapon and difficulty==training_difficulty:_cancel_condition_picker();return
+	# Persist the final record atomically before starting a new ID. Failed save
+	# leaves the old session, wallet and checkpoint available for retry/resume.
+	var candidate:=data.duplicate(true)
+	var record:=_completed_record()
+	TrainingLedger.finish(candidate,record,"終了")
+	if not is_test_mode and not SaveManager.save_data(candidate):
+		condition_warning.text="保存に失敗したため変更していません。再試行またはキャンセルできます。";save_warning=true;return
+	data=candidate;reward_committed=true;condition_panel.hide()
+	selected_weapon=weapon;selected_difficulty=difficulty;_start_training()
+
+func _completed_record()->Dictionary:
+	var record:=_session_record();record.status="終了";record.metrics.complete=true
+	record.metrics.comparison_reason=ShootingMetrics.reason(record);record.metrics.comparison_eligible=str(record.metrics.comparison_reason).is_empty()
+	record.shooting_comparison=ShootingMetrics.comparison(record,data.training_history)
+	return record
 func _open_settings_from_screen()->void:
 	if mode in [Mode.PREP,Mode.ARMY,Mode.RESULT,Mode.RECORDS]:
 		settings_standalone=true;mode_before_pause=mode;mode=Mode.PAUSED;pause_panel.show();pause_menu.hide();Input.mouse_mode=Input.MOUSE_MODE_VISIBLE

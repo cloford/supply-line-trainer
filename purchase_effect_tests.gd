@@ -42,8 +42,8 @@ func _run()->void:
 	game.data.front+=1;game._update_battle_view()
 	check(not game.purchase_effect_view._timing_label.visible,"new front reused old seconds")
 	game._update_growth_feedback(2.7);check(not game.purchase_effect_view.visible and game.last_purchase_effect.is_empty(),"notification did not expire")
-	await create_timer(0.25).timeout;game._buy_upgrade(1)
-	check(game.last_purchase_effect.kind==1,"latest purchase did not replace earlier notification")
+	await process_frame;await create_timer(0.30).timeout;game._buy_upgrade(1)
+	check(int(game.last_purchase_effect.get("kind",-1))==1,"latest purchase did not replace earlier notification")
 	game._show_prep();game._show_army();check(not game.purchase_effect_view.visible,"reopening replayed purchase")
 	await create_timer(0.25).timeout
 	game.data.credits="0";game._buy_upgrade(0);check(game.last_purchase_effect.is_empty(),"insufficient funds success notification")

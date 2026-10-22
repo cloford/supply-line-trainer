@@ -7,6 +7,7 @@ var _timing_label: Label
 var _has_built := false
 var _has_model := false
 var _model: Dictionary = {}
+var compact := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -65,6 +66,7 @@ func _make_label(font_size: int, color: Color) -> Label:
 	return label
 
 func _apply_model() -> void:
+	_title_label.visible=not compact
 	_title_label.text = str(_model.get("title", ""))
 	_headline_label.text = str(_model.get("headline", ""))
 	_timing_label.text = str(_model.get("timing", ""))

@@ -133,7 +133,7 @@ func _draw()->void:
 	var h:=size.y
 	if w<20 or h<20:return
 	draw_rect(Rect2(Vector2.ZERO,size),Color("08131c"))
-	var horizon:=h*0.44
+	var horizon:=h*0.25
 	draw_rect(Rect2(0,horizon,w,h-horizon),Color("172633"))
 	for i in 9:
 		var stripe_x:=fposmod(float(i)*150.0-world_scroll,w+150.0)-75.0
@@ -153,15 +153,17 @@ func _draw()->void:
 		var bg_pos:=Vector2(group_x-30.0-col*13.0,horizon+22.0+row*13.0)
 		ArmyAppearance.draw_soldier(self,bg_pos,true,gear_tier,i,0.42,0.46)
 	var ally_positions:Array[Vector2]=[]
+	var formation_rows:=ArmyAppearance.formation_rows(actual_count)
+	var row_stride:=minf(27.0,maxf(16.0,(h-horizon-105.0)/5.0))
 	for i in ally_count:
-		var row:=i%6
-		var col:=i/6
-		var soldier_pos:=Vector2(group_x-col*24.0,horizon+45+row*27.0)
+		var row:=i%formation_rows
+		var col:=i/formation_rows
+		var soldier_pos:=Vector2(group_x-col*24.0,horizon+45+row*row_stride)
 		ally_positions.append(soldier_pos)
 	var combat_active:=bool(state.get("running",state.get("active",true))) and damage_age<=0.48 and float(state.get("enemy_hp",0.0))>0.0
 	var firing_count:=fire_effect_count(ally_count)
 	var fire_cycle:=int(floor(anim_time/FIRE_INTERVAL))
-	if gear_tier==2 and fire_cycle%8==0:firing_count=mini(firing_count,MAX_FIRE_EFFECTS-3)
+	if gear_tier>=2 and fire_cycle%8==0:firing_count=mini(firing_count,MAX_FIRE_EFFECTS-3)
 	var visible_duration:=FIRE_DURATION/FIRE_INTERVAL
 	var cycle_phase:=fposmod(anim_time,FIRE_INTERVAL)/FIRE_INTERVAL
 	var participants:=fire_participants_for_cycle(fire_cycle,ally_count,firing_count)
@@ -169,7 +171,7 @@ func _draw()->void:
 		var recoil:=0.0
 		var gear_motion:=0.0
 		if gear_update_age<GEAR_UPDATE_DURATION:gear_motion=sin(gear_update_age/GEAR_UPDATE_DURATION*PI*3.0+float(i%3)*0.25)*2.0
-		var volley:=gear_tier==2 and fire_cycle%8==0 and i<mini(3,firing_count) and cycle_phase<visible_duration
+		var volley:=gear_tier>=2 and fire_cycle%8==0 and i<mini(3,firing_count) and cycle_phase<visible_duration
 		if volley:recoil=2.0*(1.0-cycle_phase/visible_duration)
 		if firing_count>0:
 			for shot in firing_count:
@@ -181,7 +183,8 @@ func _draw()->void:
 				var join_phase:=clampf(float(joined.age)/REINFORCEMENT_DURATION,0.0,1.0)
 				join_alpha=join_phase
 				ally_positions[i].x=lerpf(w*0.04,ally_positions[i].x,join_phase)
-		ArmyAppearance.draw_soldier(self,ally_positions[i]+Vector2(-recoil,gear_motion),true,gear_tier,i,1.0,join_alpha)
+		var walk:=sin(anim_time*9.0+float(i)*1.7)*1.5 if march<0.98 else 0.0
+		ArmyAppearance.draw_soldier(self,ally_positions[i]+Vector2(-recoil,gear_motion+walk),true,gear_tier,i,1.0,join_alpha)
 		if volley:
 			var muzzle:=ally_positions[i]+Vector2(ArmyAppearance.muzzle_offset(gear_tier)-recoil,-3.0+gear_motion)
 			_draw_fire(muzzle,Vector2(w*0.80,horizon+59+(defeated%3)*42),1.0-cycle_phase/visible_duration)
@@ -217,12 +220,9 @@ func _draw()->void:
 		draw_rect(Rect2(pos+Vector2(-2,14),Vector2(27,7)),Color(0.9,0.3,0.35,life/0.7))
 		for particle in 4:draw_rect(Rect2(pos+Vector2(particle*9-10,-(0.7-life)*40),Vector2(3,3)),Color(1.0,0.7,0.35,life/0.7))
 	draw_string(ThemeDB.fallback_font,Vector2(18,28),"部隊 %s" % str(state.get("soldier_label","%d人"%actual_count)),HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("ccecf5"))
-	var progress:=clampf(1.0-float(state.get("enemy_hp",0.0))/maxf(0.001,float(state.get("enemy_max",1.0))),0.0,1.0)
-	draw_rect(Rect2(18,h-46,w-36,8),Color("233946"))
-	draw_rect(Rect2(18,h-46,(w-36)*progress,8),Color("55c9e8"))
 	var running:=bool(state.get("running",state.get("active",true)))
 	var combat_label:String="停止中" if not running else ("前進中" if march<0.98 else "交戦中")
-	draw_string(ThemeDB.fallback_font,Vector2(18,h-15),"戦線 %d　制圧 %.1f%%　%s"%[int(state.get("front",0))+1,progress*100.0,combat_label],HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("ccecf5"))
+	draw_string(ThemeDB.fallback_font,Vector2(18,h-15),combat_label+"・"+ArmyAppearance.formation_name(actual_count),HORIZONTAL_ALIGNMENT_LEFT,-1,16,Color("ccecf5"))
 	if gear_update_age<GEAR_UPDATE_DURATION:
 		var phase:=1.0-gear_update_age/GEAR_UPDATE_DURATION
 		var banner_width:=minf(w*0.62,maxf(0.0,w*0.96-w*0.34))
@@ -240,5 +240,6 @@ func _draw_fire(from:Vector2,to:Vector2,intensity:float=1.0)->void:
 	var flash:=3.0+ArmyAppearance.tier(int(state.gear))
 	var tracer_end:=from+(to-from).normalized()*minf(80.0,from.distance_to(to))
 	draw_line(from,tracer_end,Color(1.0,0.843,0.424,alpha),2.0)
+	if ArmyAppearance.tier(int(state.gear))>=3:draw_line(from+Vector2(0,3),tracer_end+Vector2(0,3),Color(0.7,0.94,1.0,alpha),1.0)
 	draw_rect(Rect2(from-Vector2.ONE*flash/2,Vector2.ONE*flash),Color(1.0,0.941,0.627,alpha))
 	draw_rect(Rect2(to-Vector2(2,2),Vector2(4,4)),Color(1.0,0.51,0.424,alpha))

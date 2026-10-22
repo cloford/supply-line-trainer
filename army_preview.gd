@@ -1,10 +1,11 @@
 class_name ArmyPreview
 extends Control
 
-const MAX_PREVIEW_SOLDIERS := 8
+const MAX_PREVIEW_SOLDIERS := 18
 var comparison_kind := 0
 var before_state := {"soldiers":0,"gear":0}
 var after_state := {"soldiers":0,"gear":0}
+var future_hidden := false
 
 func _ready()->void:
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -30,11 +31,13 @@ func _draw_formation(bounds:Rect2,formation:Dictionary,alpha:float)->void:
 	var draw_count:=mini(count,MAX_PREVIEW_SOLDIERS)
 	var gear_tier:=ArmyAppearance.tier(int(formation.gear))
 	if comparison_kind==1:
-		draw_count=mini(maxi(1,draw_count),3) if count>0 else 0
+		draw_count=1 if count>0 else 0
 	var scale_factor:=clampf(minf(bounds.size.y/40.0,bounds.size.x/92.0),0.30,0.68)
+	if comparison_kind==1:scale_factor=minf(1.1,bounds.size.y/48.0)
 	var stride_x:=24.0*scale_factor
 	var stride_y:=15.0*scale_factor
-	var columns:=3 if comparison_kind==1 else 4
+	var formation_rows:=ArmyAppearance.formation_rows(count)
+	var columns:=1 if comparison_kind==1 else maxi(1,ceili(float(draw_count)/formation_rows))
 	var rows:=ceili(float(draw_count)/float(columns)) if draw_count>0 else 0
 	var origin:=Vector2(bounds.position.x+bounds.size.x*0.5-float(columns-1)*stride_x*0.5,bounds.position.y+bounds.size.y*0.52+7.0*scale_factor+float(rows-1)*stride_y*0.5)
 	var background_count:=ArmyAppearance.background_representatives(count,BattleView.MAX_ALLIES)
@@ -43,7 +46,7 @@ func _draw_formation(bounds:Rect2,formation:Dictionary,alpha:float)->void:
 		var bg_row:=i/bg_columns
 		var bg_col:=i%bg_columns
 		var bg_pos:=Vector2(bounds.position.x+4.0+float(bg_col)*5.2,bounds.position.y+7.0+float(bg_row)*5.0)
-		ArmyAppearance.draw_soldier(self,bg_pos,true,gear_tier,i,0.16,0.45)
+		ArmyAppearance.draw_soldier(self,bg_pos,true,gear_tier,i,0.16,0.45,future_hidden and alpha==1.0)
 	for i in draw_count:
 		var pos:=origin+Vector2(float(i%columns)*stride_x,-float(i/columns)*stride_y)
-		ArmyAppearance.draw_soldier(self,pos,true,gear_tier,i,scale_factor,alpha)
+		ArmyAppearance.draw_soldier(self,pos,true,gear_tier,i,scale_factor,alpha,future_hidden and alpha==1.0)
