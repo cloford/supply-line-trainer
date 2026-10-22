@@ -21,7 +21,7 @@ func _init()->void:
 		check(migrated.legacy_training_history==original.training_history and migrated.training_history.is_empty(),"history archive differs")
 	else:
 		check(migrated.training_history==original.training_history and migrated.legacy_training_history==original.legacy_training_history,"current history changed")
-	var backup_path:=SaveManager.METRICS_BACKUP if int(original.get("metrics_schema",0))<1 else (SaveManager.GROWTH_BACKUP if int(original.get("growth_schema",0))<1 else SaveManager.POINTS_BACKUP)
+	var backup_path:=SaveManager.REWARD_BACKUP if int(original.get("scoring_capture_schema",0))<1 else (SaveManager.METRICS_BACKUP if int(original.get("metrics_schema",0))<1 else (SaveManager.GROWTH_BACKUP if int(original.get("growth_schema",0))<1 else SaveManager.POINTS_BACKUP))
 	check(FileAccess.get_sha256(backup_path)==source_hash,"backup hash differs")
 	check(SaveManager.save_data(migrated),"second save failed")
 	var reloaded:=SaveManager.load_data()

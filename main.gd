@@ -825,7 +825,7 @@ func _training_session_open()->bool:
 
 func _session_record()->Dictionary:
 	var result:=_training_result()
-	return {"id":session_id,"started":session_started,"weapon":training_weapon,"difficulty":training_difficulty,"duration":0,"elapsed":training_elapsed,"active":minf(active_seconds,training_elapsed),"score":int(result.score),"credits":int(result.supply),"point_fraction":float(result.fraction),"accuracy":float(result.accuracy),"base":result.base,"center":result.center,"speed":result.speed,"streak":result.streak,"scoring_version":Balance.SCORING_VERSION,"metrics":ShootingMetrics.snapshot(shooting_metrics,stats,training_elapsed)}
+	return {"id":session_id,"started":session_started,"weapon":training_weapon,"difficulty":training_difficulty,"duration":0,"elapsed":training_elapsed,"active":minf(active_seconds,training_elapsed),"score":int(result.score),"credits":int(result.supply),"point_fraction":float(result.fraction),"accuracy":float(result.accuracy),"base":result.base,"center":result.center,"speed":result.speed,"streak":result.streak,"scoring_version":Balance.SCORING_VERSION,"metrics":ShootingMetrics.snapshot(shooting_metrics,stats,training_elapsed),"scoring_raw":ScoringCapture.snapshot(stats)}
 
 func _checkpoint_training()->void:
 	checkpoint_timer=0.0

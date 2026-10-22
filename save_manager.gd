@@ -9,6 +9,7 @@ const POINTS_BACKUP := "user://save_before_v1_4.json"
 const VERSION := 4
 const GROWTH_BACKUP := "user://save_before_growth_v1_5.json"
 const METRICS_BACKUP := "user://save_before_metrics_v1_6.json"
+const REWARD_BACKUP := "user://save_before_reward_v1_7.json"
 
 static func default_settings()->Dictionary:
 	return {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true}
@@ -17,6 +18,7 @@ static func defaults()->Dictionary:
 	var data:Dictionary={"version":VERSION,"migration":"points_v1_4","scoring_version":4,"supply":0.0,"credits":"0","credit_fraction":0.0,"recruit":0,"gear":0,"depot":0,"front":0,"enemy_hp":Balance.front_hp(0),"unlocked":[true,false,false],"bests":{},"legacy_bests":{},"bests_v2":{},"selected_duration":0,"training_schema":2,"bests_v3":{},"bests_v4":{},"practice_totals":TrainingLedger.totals(),"training_history":[],"legacy_training_history":[],"active_training":{},"commander_owned":[],"commander_equipped":["","",""],"settings":default_settings(),"last_save":int(Time.get_unix_time_from_system()),"growth_schema":1,"legacy_army_multiplier":1.0,"growth_migration_notice":false,"upgrade_goal":{},"goal_notice_levels":[0,0]}
 	GrowthGoal.ensure(data)
 	data["metrics_schema"]=1
+	data["scoring_capture_schema"]=1
 	return data
 
 static func load_data()->Dictionary:
@@ -38,6 +40,12 @@ static func load_data()->Dictionary:
 		data["migration_failed"]=true
 		return data
 	var needs_growth:=int(parsed.get("growth_schema",0))<1
+	if int(parsed.get("scoring_capture_schema",0))<1 and not FileAccess.file_exists(REWARD_BACKUP):
+		if DirAccess.copy_absolute(ProjectSettings.globalize_path(PATH),ProjectSettings.globalize_path(REWARD_BACKUP))!=OK:
+			for key in data.keys():
+				if parsed.has(key):data[key]=parsed[key]
+			data.settings=_merged_settings(data.settings);data["migration_failed"]=true
+			return data
 	# 計測追加前の原本を一度だけ保護。失敗したときは後続の移行・保存を実行しない。
 	if int(parsed.get("metrics_schema",0))<1 and not FileAccess.file_exists(METRICS_BACKUP):
 		if DirAccess.copy_absolute(ProjectSettings.globalize_path(PATH),ProjectSettings.globalize_path(METRICS_BACKUP))!=OK:
@@ -96,6 +104,7 @@ static func load_data()->Dictionary:
 		if not save_data(data):data["migration_failed"]=true
 	data.version=VERSION;data.migration="points_v1_4"
 	data.metrics_schema=1
+	data.scoring_capture_schema=1
 	return data
 
 static func _migrate_commander(data:Dictionary)->void:
