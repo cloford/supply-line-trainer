@@ -25,6 +25,13 @@ var _verification_thread: Thread
 static func available() -> bool:
 	return OS.get_name() == "Windows" and OS.has_feature("template") and not OS.has_feature("editor") and OS.get_executable_path().get_file() == PAYLOAD[0]
 
+static func current_version() -> String:
+	return str(ProjectSettings.get_setting("application/config/version", ""))
+
+static func running_version_text() -> String:
+	var version := current_version()
+	return "実行中 v%s" % version if version_parts(version).size() == 3 else "実行中の版番号は不明です"
+
 static func version_parts(value: String) -> Array[int]:
 	var regex := RegEx.new()
 	regex.compile("^v?(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\z")
@@ -104,7 +111,7 @@ static func acknowledge_update() -> void:
 	if ack != expected.path_join(token).path_join("started.json"): return
 	var file := FileAccess.open(ack, FileAccess.WRITE)
 	if file:
-		file.store_string(JSON.stringify({"token": token, "version": str(ProjectSettings.get_setting("application/config/version", ""))}))
+		file.store_string(JSON.stringify({"token": token, "version": current_version()}))
 		file.close()
 
 func _ready() -> void:
@@ -190,8 +197,15 @@ func _completed(result: int, code: int, headers: PackedStringArray, body: Packed
 		if version_parts(tag).size() != 3:
 			_fail("正式版のバージョン番号を確認できませんでした")
 			return
-		if not newer(tag, str(ProjectSettings.get_setting("application/config/version", "0.0.0"))):
-			_set_status("最新版です（v%s）" % ProjectSettings.get_setting("application/config/version", ""))
+		var current := current_version()
+		if version_parts(current).size() != 3:
+			_fail("実行中のバージョン番号を確認できないため、更新を中止しました")
+			return
+		if not newer(tag, current):
+			if version_parts(tag) == version_parts(current):
+				_set_status("最新公開版 v%s と同じです" % tag.trim_prefix("v"))
+			else:
+				_set_status("最新公開版は v%s（実行中の方が新しい版です）" % tag.trim_prefix("v"))
 			return
 		_asset = {}
 		for item in data.get("assets", []):

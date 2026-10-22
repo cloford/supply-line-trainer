@@ -9,6 +9,12 @@ func _init()->void:call_deferred("_run")
 
 func _run()->void:
 	var main=load("res://main.tscn").instantiate();main.is_test_mode=true;root.add_child(main);await process_frame;await process_frame
+	main._update_status("最新公開版 v%s と同じです"%SupplyLineUpdater.current_version())
+	for label in main.update_labels:check(label.text.begins_with(SupplyLineUpdater.running_version_text()),"update label uses stale version")
+	var actual_version:=SupplyLineUpdater.current_version()
+	ProjectSettings.set_setting("application/config/version","9.8.7");main._update_status("更新を確認中…")
+	for label in main.update_labels:check(label.text.begins_with("実行中 v9.8.7"),"label did not follow changed build version")
+	ProjectSettings.set_setting("application/config/version",actual_version)
 	var esc:=InputEventKey.new();esc.physical_keycode=KEY_ESCAPE;esc.pressed=true
 	main._unhandled_input(esc);check(main.mode==main.Mode.PREP,"Esc changed prep screen")
 	for dimensions in [Vector2i(1280,720),Vector2i(1920,1080),Vector2i(1024,768)]:

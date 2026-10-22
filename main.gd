@@ -396,7 +396,7 @@ func _build_pause_panel()->Control:
 	hit_pitch_check=CheckBox.new();hit_pitch_check.text="連続成功で音程を上げる";hit_pitch_check.toggled.connect(func(_value):_settings_changed());v.add_child(hit_pitch_check)
 	var hit_preview:=Button.new();hit_preview.text="命中音を試聴";hit_preview.pressed.connect(_preview_hit_sound);v.add_child(hit_preview)
 	v=setting_sections[3]
-	v.add_child(_label("Supply Line Trainer v1.5.0",20))
+	v.add_child(_label("Supply Line Trainer — "+SupplyLineUpdater.running_version_text(),20))
 	auto_update_check=CheckBox.new();auto_update_check.text="新しい安定版を自動取得";auto_update_check.toggled.connect(func(_value):_settings_changed());v.add_child(auto_update_check)
 	_build_update_controls(v)
 	_select_settings_tab(0)
@@ -419,13 +419,13 @@ func _select_settings_tab(index:int)->void:
 	if settings_scroll:settings_scroll.scroll_vertical=0
 
 func _build_update_controls(parent:Node)->void:
-	var status:=_label("v1.5.0",14);status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;parent.add_child(status);update_labels.append(status)
+	var status:=_label(SupplyLineUpdater.running_version_text()+"　更新は未確認です",14);status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;parent.add_child(status);update_labels.append(status)
 	var row:=HBoxContainer.new();parent.add_child(row)
 	var check:=Button.new();check.text="更新を確認";check.pressed.connect(func():if updater:updater.check(true));row.add_child(check)
 	var apply:=Button.new();apply.text="再起動して更新";apply.disabled=true;apply.pressed.connect(_apply_update);row.add_child(apply);update_buttons.append(apply)
 
 func _update_status(message:String)->void:
-	for label in update_labels:label.text="v1.5.0　"+message
+	for label in update_labels:label.text=SupplyLineUpdater.running_version_text()+"　"+message
 	for button in update_buttons:button.disabled=not updater or not updater.ready_to_apply
 
 func _apply_update()->void:

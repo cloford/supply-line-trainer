@@ -61,7 +61,23 @@ func _async_checks() -> void:
 	check("確認できません" in invalid.status, "invalid release JSON")
 	var latest := {"tag_name": str(ProjectSettings.get_setting("application/config/version")), "draft": false, "prerelease": false, "assets": []}
 	var none := await _transport_case(200, JSON.stringify(latest).to_utf8_buffer(), "check", "", {})
-	check("最新版" in none.status, "same current release no update")
+	check("最新公開版 v" + Updater.current_version() + " と同じです" == none.status and not none.ready, "same current release no update")
+	var current_version := Updater.current_version()
+	check(Updater.running_version_text()=="実行中 v"+current_version,"running version label must use project setting")
+	ProjectSettings.set_setting("application/config/version","1.5.0")
+	var patch_tag := "v1.6.0"
+	var patch_asset := {"name":"SupplyLineTrainer_Windows_v1.6.0.zip","browser_download_url":Updater.DOWNLOAD_PREFIX+patch_tag+"/SupplyLineTrainer_Windows_v1.6.0.zip","size":40000000,"digest":"sha256:"+"a".repeat(64)}
+	var newer_release := {"tag_name":patch_tag,"draft":false,"prerelease":false,"assets":[patch_asset]}
+	var update := await _transport_case(200,JSON.stringify(newer_release).to_utf8_buffer(),"check","",{})
+	check(update.status=="v1.6.0 が利用できます" and not update.ready,"older running build must offer newer release, not claim latest")
+	check(Updater.running_version_text()=="実行中 v1.5.0","project version changed but label stayed fixed")
+	ProjectSettings.set_setting("application/config/version","1.7.0")
+	var ahead := await _transport_case(200,JSON.stringify(latest).to_utf8_buffer(),"check","",{})
+	check("実行中の方が新しい" in ahead.status and not ahead.ready,"ahead build must not call older public release equal")
+	ProjectSettings.set_setting("application/config/version","invalid")
+	var unknown := await _transport_case(200,JSON.stringify(latest).to_utf8_buffer(),"check","",{})
+	check("確認できない" in unknown.status and not unknown.ready,"invalid current version must not claim latest")
+	ProjectSettings.set_setting("application/config/version",current_version)
 	latest.prerelease = true
 	var prerelease := await _transport_case(200, JSON.stringify(latest).to_utf8_buffer(), "check", "", {})
 	check("正式版" in prerelease.status and not prerelease.ready, "prerelease metadata rejected")
