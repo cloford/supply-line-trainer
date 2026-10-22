@@ -50,6 +50,9 @@ func _run()->void:
 	output=OS.get_environment("SLT_CAPTURE_OUTPUT")
 	DirAccess.make_dir_recursive_absolute(output)
 	game=load("res://main.tscn").instantiate();game.is_test_mode=true;root.add_child(game)
+	# 通常操作の自動再生をOSの偶発的なフォーカス移動で中断しない。
+	# フォーカス停止自体は後段で製品のメソッドを明示的に呼び、別に検査する。
+	game.get_viewport().focus_exited.disconnect(game._on_focus_lost)
 	game.set_process(false);game.set_physics_process(false)
 	game.data.settings.shot_sound=3;game.data.settings.hit_sound=3;game.data.unlocked=[true,true,true]
 	game._start_training();await shoot_session()

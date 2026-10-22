@@ -143,7 +143,7 @@ var feedback_base:=0
 var feedback_center:=0
 var feedback_other:=0
 var app_focused:=true
-var feedback_url:="https://github.com/cloford/supply-line-trainer/discussions/4"
+var feedback_url:="https://github.com/cloford/supply-line-trainer/discussions/5"
 var updater:SupplyLineUpdater
 var update_labels:Array[Label]=[]
 var update_buttons:Array[Button]=[]
