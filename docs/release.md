@@ -1,5 +1,9 @@
 # リリース手順
 
+## v2.0.0の大型変更
+
+更新説明と配布内READMEの先頭へ「個人設定のみ引継ぎ、新育成開始」を明記する。旧`save_v1.json`は上書きせず日時付き保全、新方式は`save_v2.json`。旧進行・履歴を混ぜず、既存のセーブを削除するよう案内しない。通常EXEと配布PCKで隔離セーブを使い、実ユーザーの記録を公開しない。[v2フィードバック](https://github.com/cloford/supply-line-trainer/discussions/8)をゲーム・README・リリースで共用する。
+
 ## Windows版の作成
 
 1. `project.godot` を Godot 4.7.2 stable で開き、リリース対象のバージョンと `CHANGELOG.md` を確認する。
