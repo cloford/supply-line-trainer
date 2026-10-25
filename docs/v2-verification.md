@@ -76,4 +76,10 @@ Windows単体EXEの非表示起動と隔離保存の生成を確認した。今�
 
 `SupplyLineTrainer_Windows_v2.0.0.zip`は39,475,651バイト。SHA-256は`d5d40771f728877717340e6fc3b0fc8e90436446859530db67482d44a38d4f1d`。EXE/PCK・日本語README・CHANGELOG・Godotライセンスだけを同階層へ収録し、セーブ・テスト・画像を含めない。
 
-更新機能のZIP検証がEXE/PCKの2点を受理した。実ZIPを別フォルダーへ展開し、両ファイルのハッシュが元ビルドと一致。展開したPCKでも通常保存経路の3武器測定・採用・出撃・保存・別プロセス再読込が通過した。公開後はAPI/CDNとゲーム内の更新検出を別途確認する。
+更新機能のZIP検証がEXE/PCKの2点を受理した。実ZIPを別フォルダーへ展開し、両ファイルのハッシュが元ビルドと一致。展開したPCKでも通常保存経路の3武器測定・採用・出撃・保存・別プロセス再読込が通過した。
+
+2026-10-25に[PUBLICリポジトリの正式版v2.0.0](https://github.com/cloford/supply-line-trainer/releases/tag/v2.0.0)を公開した。実装タグは`5b57b2cb0bc370468b7d2e111244b3c9d158fc6c`。旧タグ・配布物は上書きしていない。配布アセットは上記ZIPの1点で、GitHubのサイズ・SHA-256 digestがローカルと一致。draft=false、prerelease=false、最新版であることを確認した。
+
+`public_release_tests`で公開APIから旧実行版v1.8.0→v2.0.0の更新を検出し、CDNへのリダイレクト・実ZIP取得・サイズ・SHA-256・ZIP内容が通過した。インストール・再起動は行っていない。配布PCKの`update_display_tests --live`でも実APIを使い、「実行中v2.0.0／最新公開版v2.0.0と同じ」、更新ボタン無効、720p・1080pの準備／設定の表示範囲を確認した（この最終表示テストはheadless）。旧配布版から実ファイルを差し替える自動更新の全工程は今回再実行していない。
+
+[v2.0.0フィードバック](https://github.com/cloford/supply-line-trainer/discussions/8)を作成し、ゲーム内・README・リリースを同じ入口へ接続した。
