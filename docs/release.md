@@ -1,4 +1,10 @@
-# Aim Runner 0.22の配布
+# Aim Runner 0.23の配布
+
+命中時の停止原因計測、保存要求の集約、初回の円形開口・出現音・新規武器ロックを反映したWindows版です。タグはv0.23、配布ZIPは`SupplyLineTrainer_Windows_v0.23.zip`。既存v2のセーブを保持します。
+
+[検証・未確認事項](023-verification.md) ／ [修正前後の計測](023-performance.md) ／ [版ごとの配布・Discussion](versions.md)。公開後のAPI/CDN取得とハッシュ一致も記録します。旧版を上書きせず新しいタグ・配布として公開します。
+
+## 0.22の配布記録
 
 製品名をAim Runnerへ変更。配布・更新互換用のEXE/PCK/ZIP名とGitHub URL、既存セーブ保存先は維持します。新規公開タグはv0.22です。
 

@@ -10,7 +10,7 @@ static var last_error := ""
 static var test_fail_step := ""
 
 static func defaults()->Dictionary:
-	return {"version":V2Rules.SAVE_VERSION,"scoring_version":4,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0,"progression":Progression.defaults()}
+	return {"version":V2Rules.SAVE_VERSION,"scoring_version":4,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0,"intro_seen":false,"progression":Progression.defaults()}
 
 static func validate_settings(source:Variant)->Dictionary:
 	var result := SETTING_DEFAULTS.duplicate(true)
@@ -44,6 +44,8 @@ static func _valid_data(data:Variant)->bool:
 	if not data is Dictionary or typeof(data.get("version")) not in [TYPE_INT,TYPE_FLOAT] or int(data.get("version",0)) != V2Rules.SAVE_VERSION:
 		return false
 	if data.has("progression") and not Progression.valid(data.progression):
+		return false
+	if data.has("intro_seen") and typeof(data.intro_seen) != TYPE_BOOL:
 		return false
 	for key in ["credits","lifetime_credits"]:
 		if not data.get(key) is String or BigUInt.normalize(data[key]) != data[key]:
@@ -154,6 +156,9 @@ static func load_data()->Dictionary:
 			parsed = previous
 			parsed["recovery_notice"] = "直前に確定した保存から復旧しました。"
 		var data:Dictionary = parsed
+		# 既存プレイヤーには新規導入演出を挿入しない。
+		if not data.has("intro_seen"):
+			data.intro_seen = true
 		data.settings = validate_settings(data.settings)
 		data.training_history.resize(mini(data.training_history.size(),V2Rules.HISTORY_LIMIT))
 		var migrated := Progression.migrate(data)
@@ -178,11 +183,14 @@ static func load_data()->Dictionary:
 	return data
 
 static func save_data(data:Dictionary)->bool:
+	return save_owned_snapshot(data.duplicate(true))
+
+# 呼出側から所有権を移したスナップショット専用。実行中のdataには触れない。
+static func save_owned_snapshot(candidate:Dictionary)->bool:
 	last_error = ""
-	if bool(data.get("migration_failed",false)):
-		last_error = str(data.get("migration_error","移行を再試行してください。"))
+	if bool(candidate.get("migration_failed",false)):
+		last_error = str(candidate.get("migration_error","移行を再試行してください。"))
 		return false
-	var candidate := data.duplicate(true)
 	candidate.version = V2Rules.SAVE_VERSION
 	Progression.migrate(candidate)
 	candidate.settings = validate_settings(candidate.get("settings",{}))

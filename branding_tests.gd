@@ -6,7 +6,7 @@ func _init()->void:
 func _run()->void:
 	assert(OS.get_environment("SLT_TEST_DATA")=="1")
 	assert(ProjectSettings.get_setting("application/config/name")=="Aim Runner")
-	assert(SupplyLineUpdater.current_version()=="0.22")
+	assert(SupplyLineUpdater.current_version()==ReleaseVersion.PUBLIC)
 	var expected:=OS.get_environment("APPDATA").replace("\\","/").path_join("Godot/app_userdata/Supply Line Trainer")
 	assert(OS.get_user_data_dir().replace("\\","/")==expected,"Name change must retain exact Windows save directory")
 	var game=load("res://main.tscn").instantiate()
@@ -14,14 +14,14 @@ func _run()->void:
 	root.add_child(game)
 	game.set_process(false)
 	await process_frame
-	assert(_contains_label(game,"AIM RUNNER  /  0.22"))
+	assert(_contains_label(game,"AIM RUNNER  /  "+ReleaseVersion.PUBLIC))
 	game._open_settings_from_screen()
 	await process_frame
-	assert(_contains_label(game,"Aim Runner — 実行中 v0.22"))
-	assert(game.feedback_url.ends_with("/discussions/14"))
+	assert(_contains_label(game,"Aim Runner — 実行中 v"+ReleaseVersion.PUBLIC))
+	assert(game.feedback_url==ReleaseVersion.FEEDBACK_URL)
 	game.queue_free()
 	await process_frame
-	print("BRANDING_OK: Aim Runner 0.22, preparation/settings, unchanged exact Windows user directory, Discussion 14")
+	print("BRANDING_OK: Aim Runner ",ReleaseVersion.PUBLIC,", preparation/settings, unchanged exact Windows user directory, current Discussion")
 	quit(0)
 
 func _contains_label(node:Node,text:String)->bool:

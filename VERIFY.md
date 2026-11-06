@@ -1,3 +1,7 @@
+# Aim Runner 0.23
+
+[0.23検証・未確認事項](docs/023-verification.md) ／ [停止原因と前後計測](docs/023-performance.md)。以前の版の報告は以下に残します。
+
 # Aim Runner 0.22
 
 [0.22の検証範囲と未確認事項](docs/022-verification.md)。0.21以前の報告は以下に残します。

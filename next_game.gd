@@ -21,12 +21,21 @@ var trajectory:MeshInstance3D
 var trajectory_timer := 0.0
 var extra_result:Label
 var progress_context:Array = []
+var save_worker := V2SaveWorker.new()
+var iris_intro:IrisIntro
+var spawn_audio:SpawnAudio
+var intro_hint:Label
+var intro_session := false
+var intro_first_spawn := false
+var sound_cache:Dictionary = {}
+var async_save_warning := false
 
 func _ready()->void:
 	super._ready()
-	feedback_url = "https://github.com/cloford/supply-line-trainer/discussions/14"
+	feedback_url = ReleaseVersion.FEEDBACK_URL
 	DisplayServer.window_set_title("Aim Runner " + SupplyLineUpdater.current_version())
 	_update_progress_ui()
+	_build_sound_cache()
 
 func _build_ui()->void:
 	super._build_ui()
@@ -42,22 +51,136 @@ func _build_ui()->void:
 	progression_view.theme = TrainerTheme.create()
 	progression_view.weapon_selected.connect(_choose_roster_weapon)
 	progression_view.closed.connect(_close_progress_overlay)
+	spawn_audio = SpawnAudio.new()
+	add_child(spawn_audio)
+	spawn_audio.configure(data.settings)
+	iris_intro = IrisIntro.new()
+	ui.add_child(iris_intro)
+	ui.move_child(iris_intro,0)
+	iris_intro.finished.connect(_complete_intro)
+	intro_hint = V2Interface.label(ui, "中央の標的を撃って開始 ／ Enterでスキップ", 17)
+	intro_hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	intro_hint.offset_left = -245
+	intro_hint.offset_right = 245
+	intro_hint.offset_top = -64
+	intro_hint.offset_bottom = -36
+	intro_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	intro_hint.hide()
 	extra_result = V2Interface.label(replay_diorama.get_parent(), "", 18)
 	extra_result.custom_minimum_size = Vector2(400, 180)
 	replay_diorama.get_parent().move_child(extra_result, replay_diorama.get_index() + 1)
 	extra_result.hide()
 
 func _commit(candidate:Dictionary)->bool:
+	save_worker.finish()
+	async_save_warning = false
 	var okay := super._commit(candidate)
 	if okay:
 		progress_dirty = true
+		save_worker.mark_flushed()
 	return okay
 
 func _save_current()->bool:
+	if mode in [Mode.COUNTDOWN, Mode.TRAINING]:
+		_sync_combat_save()
+		_request_progress_save()
+		return true
+	save_worker.finish()
+	async_save_warning = false
 	var okay := super._save_current()
+	save_warning = not okay
 	if okay:
-		progress_dirty = true
+		save_worker.mark_flushed()
 	return okay
+
+func _request_progress_save()->void:
+	if not is_test_mode:
+		save_worker.request()
+
+func _exit_tree()->void:
+	save_worker.finish()
+	for player_node in [audio_player,hit_audio_player]:
+		if is_instance_valid(player_node):
+			player_node.stop()
+			player_node.stream = null
+	sound_cache.clear()
+
+func _complete_intro()->void:
+	if not intro_session:
+		return
+	intro_session = false
+	intro_hint.hide()
+	data.intro_seen = true
+	_request_progress_save()
+
+func _build_sound_cache()->void:
+	var silent := AudioStreamPlayer.new()
+	silent.volume_db = -80.0
+	add_child(silent)
+	for hit in [false,true]:
+		for choice in 3:
+			super._play_synth(silent,choice,hit,1.0,1.0)
+			sound_cache[str(hit)+str(choice)] = silent.stream
+			silent.stop()
+	silent.queue_free()
+
+func _play_synth(player_node:AudioStreamPlayer,choice:int,is_hit:bool,volume:float,pitch:float)->void:
+	if choice == 3:
+		player_node.stop()
+		return
+	var key := str(is_hit)+str(choice)
+	if not sound_cache.has(key):
+		super._play_synth(player_node,choice,is_hit,volume,pitch)
+		return
+	player_node.stream = sound_cache[key]
+	player_node.volume_db = linear_to_db(maxf(0.00001,volume))
+	player_node.pitch_scale = pitch
+	player_node.play()
+
+func _apply_settings()->void:
+	super._apply_settings()
+	if spawn_audio:
+		spawn_audio.configure(data.settings)
+
+func _refresh_army_runtime()->void:
+	super._refresh_army_runtime()
+	if not profile_name:
+		return
+	for weapon in slot_buttons.size():
+		if not Progression.unlocked(data,weapon):
+			slot_buttons[weapon].text = "??? 未解放"
+	var known := Progression.unlocked(data,selected_soldier)
+	profile_name.editable = known
+	if not known:
+		profile_name.text = "???"
+		soldier_summary.text = "???\n練習の達成条件を満たすと名前が分かります。"
+		soldier_flavor.text = "未解放の武器"
+
+func _save_name()->void:
+	if Progression.unlocked(data,selected_soldier):
+		super._save_name()
+
+func _open_soldier_details()->void:
+	if not Progression.unlocked(data,selected_soldier):
+		info_title.text = "???"
+		info_text.text = "練習の達成条件を満たすと、この武器の名前と情報が分かります。"
+		info_review.hide()
+		info_panel.show()
+		return
+	super._open_soldier_details()
+
+func _checkpoint_training()->bool:
+	checkpoint_timer = 0.0
+	if not _training_session_open() or training_elapsed <= 0.0:
+		return not bool(data.get("migration_failed", false))
+	# memory台帳は即時。発砲経路では履歴全体の複製/JSON保存を行わない。
+	V2Ledger.checkpoint(data, _session_record())
+	progress_dirty = true
+	if mode == Mode.TRAINING:
+		_request_progress_save()
+		return true
+	return _save_current()
 
 func _refresh_prep()->void:
 	if not free_button:
@@ -79,7 +202,7 @@ func _refresh_prep()->void:
 		weapon_buttons[weapon].visible = not row.is_empty() and (weapon == 0 or Progression.list_visible(data))
 		var unlocked := Progression.unlocked(data, weapon)
 		weapon_buttons[weapon].disabled = not unlocked
-		weapon_buttons[weapon].text = (("✓ " if weapon == selected_weapon else "") + TrainingCatalog.NAMES[weapon] + "\n" + TrainingCatalog.TITLES[weapon]) if unlocked else "???\n累計 %d 達成で解放" % int(row.get("threshold", 0))
+		V2Interface.set_weapon_button(weapon_buttons[weapon], weapon, unlocked, weapon == selected_weapon, TrainingCatalog.NAMES[weapon]+"\n"+TrainingCatalog.TITLES[weapon] if unlocked else "???\n累計%d達成で解放" % Progression.THRESHOLDS[weapon])
 		weapon_buttons[weapon].set_pressed_no_signal(weapon == selected_weapon)
 	for difficulty in 3:
 		difficulty_buttons[difficulty].set_pressed_no_signal(difficulty == selected_difficulty)
@@ -114,7 +237,7 @@ func _select_difficulty(value:int)->void:
 	_remember_selection()
 
 func _select_measurement(value:bool)->void:
-	if value and selected_weapon >= 3:
+	if value and (selected_weapon >= 3 or not Progression.unlocked(data, selected_weapon)):
 		return
 	super._select_measurement(value)
 
@@ -128,25 +251,22 @@ func _progress_model()->Dictionary:
 func _update_progress_ui()->void:
 	if not progression_view or bool(data.get("migration_failed", false)):
 		return
-	if progress_dirty or progress_retry_clock >= 1.0:
+	if progress_dirty:
 		progress_dirty = false
 		progress_retry_clock = 0.0
 		progression_view.refresh(_progress_model())
 		var pending := Progression.pending_notifications(data)
 		if not pending.is_empty():
-			var candidate := data.duplicate(true)
 			for achievement in pending:
-				Progression.mark_seen(candidate, str(achievement.id))
-			if _commit(candidate):
-				for achievement in pending:
-					progression_view.enqueue_notification(achievement)
+				Progression.mark_seen(data, str(achievement.id))
+				progression_view.enqueue_notification(achievement)
+			_request_progress_save()
 			progress_retry_clock = 0.0
 		if Progression.list_visible(data) and not bool(data.progression.get("list_seen", false)):
-			var candidate := data.duplicate(true)
-			Progression.mark_list_seen(candidate)
-			if _commit(candidate):
-				progression_view.set_context(true, false, true)
-				progression_view.play_roster_intro()
+			Progression.mark_list_seen(data)
+			_request_progress_save()
+			progression_view.set_context(true, false, true)
+			progression_view.play_roster_intro()
 			progress_retry_clock = 0.0
 	var training := mode in [Mode.TRAINING, Mode.COUNTDOWN]
 	var context := [training, roster_open, roster_open or (training and Progression.list_visible(data))]
@@ -195,6 +315,10 @@ func _choose_roster_weapon(weapon:int)->void:
 		_select_weapon(weapon)
 
 func _unhandled_input(event:InputEvent)->void:
+	if intro_session and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ENTER:
+		iris_intro.skip()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("pause") and progression_view and (roster_open or progression_view.is_overlay_open()):
 		progression_view.close_overlay()
 		_close_progress_overlay()
@@ -208,6 +332,8 @@ func _unhandled_input(event:InputEvent)->void:
 	super._unhandled_input(event)
 
 func _resume_pause()->void:
+	if not is_test_mode:
+		save_worker.configure(data)
 	if pending_weapon >= 0 and pending_weapon != training_weapon:
 		if not Progression.unlocked(data, pending_weapon):
 			pending_weapon = -1
@@ -223,16 +349,36 @@ func _resume_pause()->void:
 	pending_weapon = -1
 	super._resume_pause()
 
+func _finish_training(full_time:bool)->void:
+	if iris_intro and iris_intro.is_active():
+		iris_intro.skip()
+	super._finish_training(full_time)
+
+func _open_pause()->void:
+	super._open_pause()
+	# 基底のcheckpointはmode変更前なので、PAUSEDになってから確定保存する。
+	if not _save_current():
+		save_warning = true
+		pause_warning.text = "保存を再試行中です。成果はこの画面に保持しています。"
+		pause_warning.show()
+	if iris_intro:
+		iris_intro.hide()
+	if intro_hint:
+		intro_hint.hide()
+
 func _refresh_condition_picker()->void:
 	if not condition_measure:
 		return
 	for weapon in condition_weapon.item_count:
 		condition_weapon.set_item_disabled(weapon, not Progression.unlocked(data, weapon))
+		condition_weapon.set_item_text(weapon,TrainingCatalog.NAMES[weapon] if Progression.unlocked(data,weapon) else "??? — 累計%d達成" % Progression.THRESHOLDS[weapon])
 	var extra := condition_weapon.selected >= 3
 	if extra:
 		condition_measure.set_pressed_no_signal(false)
 	condition_measure.disabled = extra
 	super._refresh_condition_picker()
+	if not Progression.unlocked(data,condition_weapon.selected):
+		condition_description.text = "??? — 累計%d達成で解放" % Progression.THRESHOLDS[condition_weapon.selected]
 	if extra:
 		condition_description.text = TrainingCatalog.difficulty_text(condition_weapon.selected, 0)
 		condition_difficulty.disabled = true
@@ -243,6 +389,8 @@ func _confirm_condition_picker()->void:
 		return
 	if condition_weapon.selected >= 3:
 		condition_measure.set_pressed_no_signal(false)
+	if iris_intro and iris_intro.is_active():
+		iris_intro.skip()
 	super._confirm_condition_picker()
 
 func _start_training()->void:
@@ -250,6 +398,11 @@ func _start_training()->void:
 		return
 	if selected_weapon >= 3:
 		selected_measurement = false
+	intro_session = selected_weapon == 0 and not selected_measurement and not bool(data.get("intro_seen",true)) and Progression.total(data) == 0 and data.completed_measurement_ids.is_empty()
+	intro_first_spawn = intro_session
+	iris_intro.clear()
+	intro_hint.visible = intro_session
+	intro_hint.text = "中央の標的を撃って開始 ／ Enterでスキップ"
 	selected_difficulty = TrainingCatalog.safe_difficulty(selected_difficulty)
 	pending_weapon = -1
 	roster_open = false
@@ -263,6 +416,10 @@ func _start_training()->void:
 	group_respawn = -1.0
 	extra_rng.seed = int(Time.get_ticks_usec())
 	super._start_training()
+	if not is_test_mode:
+		save_worker.configure(data)
+	if intro_session:
+		iris_intro.start_wait(get_viewport().get_visible_rect().size * 0.5, 74.0)
 	if not training_measurement:
 		shooting_metrics.setting_key = ShootingMetrics.setting_key(training_weapon, training_difficulty, data.settings)
 		shooting_metrics.setting_key += "|practice-021"
@@ -277,6 +434,8 @@ func _spawn_targets()->void:
 	if training_weapon >= 3:
 		training_difficulty = 0
 	super._spawn_targets()
+	if training_weapon == 1 and spawn_audio and not targets.is_empty():
+		spawn_audio.spawn_at(camera.unproject_position(targets[0].global_position))
 	if training_weapon == 3:
 		for cell in 9:
 			var marker := MeshInstance3D.new()
@@ -301,6 +460,22 @@ func _spawn_targets()->void:
 			_relocate_target(index)
 
 func _relocate_target(index:int)->void:
+	if intro_first_spawn and training_weapon == 0:
+		intro_first_spawn = false
+		targets[index].position = Vector3(0.0,1.7,-7.0)
+		target_progress[index] = 0
+		target_precisions[index] = 0.0
+		target_spawn_times[index] = training_elapsed
+		_play_spawn(index)
+		return
+	_relocate_target_actual(index)
+	_play_spawn(index)
+
+func _play_spawn(index:int)->void:
+	if spawn_audio and index < targets.size() and training_weapon != 1:
+		spawn_audio.spawn_at(camera.unproject_position(targets[index].global_position))
+
+func _relocate_target_actual(index:int)->void:
 	if training_weapon == 3:
 		if not targets.is_empty():
 			grid_previous = TrainingExtras.next_cell(grid_bag, grid_previous, extra_rng)
@@ -376,7 +551,15 @@ func _ray_hit()->Dictionary:
 
 func _fire_shot()->void:
 	if training_weapon < 3:
+		var previous_kills := int(stats.get("kills",0))
+		var opening_anchor := Vector2.ZERO
+		if intro_session and iris_intro.waiting:
+			var hit := _ray_hit()
+			if not hit.is_empty():
+				opening_anchor = camera.unproject_position(targets[int(hit.index)].global_position)
 		super._fire_shot()
+		if intro_session and iris_intro.waiting and int(stats.get("kills",0)) > previous_kills:
+			iris_intro.open_from(opening_anchor,bool(data.settings.get("effects_enabled",true)))
 		_maybe_progress_checkpoint()
 		return
 	if mode != Mode.TRAINING or mouse_blocked or exit_holding or fire_cooldown > 0.0:
@@ -538,9 +721,29 @@ func _clear_extra_visuals()->void:
 
 func _process(delta:float)->void:
 	progress_retry_clock += minf(delta, 0.25)
+	save_worker.poll()
+	if not save_worker.error.is_empty():
+		save_warning = true
+		async_save_warning = true
+	elif async_save_warning and not save_worker.pending():
+		save_warning = false
+		async_save_warning = false
 	super._process(delta)
 	_maybe_progress_checkpoint()
 	_update_progress_ui()
+	if iris_intro:
+		if iris_intro.waiting and not targets.is_empty() and not camera.is_position_behind(targets[0].global_position):
+			iris_intro.anchor = camera.unproject_position(targets[0].global_position)
+			iris_intro._sync_shader()
+		iris_intro.advance(delta, mode == Mode.TRAINING and app_focused and not info_panel.visible)
+		if iris_intro.opening:
+			intro_hint.text = "周囲が見えてきます ／ Enterでスキップ"
+		iris_intro.visible = iris_intro.is_active() and mode in [Mode.COUNTDOWN,Mode.TRAINING]
+		intro_hint.visible = intro_session and mode in [Mode.COUNTDOWN,Mode.TRAINING]
+		if not _training_session_open() and iris_intro.is_active():
+			iris_intro.skip()
+	if not is_test_mode:
+		save_worker.dispatch(data)
 	if mode not in [Mode.COUNTDOWN, Mode.TRAINING, Mode.PAUSED] and not training_in_army:
 		_clear_extra_visuals()
 	if is_instance_valid(trajectory):
@@ -553,7 +756,7 @@ func _process(delta:float)->void:
 				blast_effects.remove_at(index)
 
 func _maybe_progress_checkpoint()->void:
-	if training_measurement or mode != Mode.TRAINING or training_elapsed <= 0.0 or (save_warning and progress_retry_clock < 1.0):
+	if training_measurement or mode != Mode.TRAINING or training_elapsed <= 0.0:
 		return
 	var previous:Dictionary = data.get("active_training", {})
 	if str(previous.get("id", "")) != session_id:
@@ -651,6 +854,6 @@ func _open_help()->void:
 		return
 	info_title.text = "撃破・追従達成で次の練習へ"
 	info_review.hide()
-	info_text.text = "ハンドガンから開始。5達成で一覧、累計10／100／500／1,500達成で次の武器を解放します。射撃中は一覧を閲覧し、Escで停止して操作できます。武器を選んだ後の再開で、現在の記録を一度閉じて切り替えます。\n\n達成は標的撃破一体につき一回。アサルトは標的上での有効追従累計1秒につき一回。空撃ち・再現・試射・部隊からは増えません。測定分は60秒の有効完了時だけ反映します。\n\nグリッドとグレネードは自由練習専用。兵士は従来どおりHG・AR・BR各1枠の計3人。部隊加入は累計クレジット、FPSの練習解放は達成回数で別の条件です。\n\n0.21への番号変更で既存の育成・クレジット・個人設定はリセットしません。"
+	info_text.text = "ハンドガンから開始。5達成で一覧、累計10／100／500／1,500達成で次の武器を解放します。射撃中は一覧を閲覧し、Escで停止して操作できます。武器を選んだ後の再開で、現在の記録を一度閉じて切り替えます。\n\n達成は標的撃破一体につき一回。追従種目は標的上での有効追従累計1秒につき一回。空撃ち・再現・試射・部隊からは増えません。測定分は60秒の有効完了時だけ反映します。\n\n後半の二種目は自由練習専用。兵士は従来どおり三つの固定枠、計3人。部隊加入は累計クレジット、FPSの練習解放は達成回数で別の条件です。\n\n0.21への番号変更で既存の育成・クレジット・個人設定はリセットしません。"
 	info_panel.show()
 	_sync_navigation()

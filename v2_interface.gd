@@ -12,6 +12,34 @@ static func button(parent:Node, text:String, action:Callable, primary:bool = fal
 	parent.add_child(control)
 	return control
 
+static func set_weapon_button(control: Button, weapon: int, unlocked: bool, selected: bool, display_text: String = "") -> void:
+	# Locked choices deliberately reveal neither their names nor silhouettes with detail.
+	control.text = ("✓ " if selected else "") + (display_text if unlocked else "???\n累計%d達成で解放" % Progression.THRESHOLDS[weapon])
+	var icon: WeaponIcon
+	for child in control.get_children():
+		if child is WeaponIcon:
+			icon = child
+			break
+	if icon == null:
+		icon = WeaponIcon.new()
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		control.add_child(icon)
+		# Reserve a real text area so long unlocked names cannot overlap the icon.
+		for state in ["normal", "hover", "pressed", "disabled", "hover_pressed", "focus"]:
+			var style := control.get_theme_stylebox(state).duplicate() as StyleBox
+			style.content_margin_left = 84.0
+			style.content_margin_right = 12.0
+			control.add_theme_stylebox_override(state, style)
+	icon.weapon_id = weapon
+	icon.locked = not unlocked
+	icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT)
+	icon.offset_left = 12
+	icon.offset_right = 74
+	icon.offset_top = -20
+	icon.offset_bottom = 20
+	icon.custom_minimum_size = Vector2(62, 40)
+	icon.queue_redraw()
+
 static func label(parent:Node, text:String, size:int = 16)->Label:
 	var control := Label.new()
 	control.text = text
@@ -61,7 +89,7 @@ static func build(g)->void:
 	g.goal_display_check.hide()
 	g.goal_notice_check.hide()
 	g.effects_check = CheckBox.new()
-	g.effects_check.text = "部隊の音と強い発射演出を表示"
+	g.effects_check.text = "部隊・標的出現の音と強い演出"
 	g.effects_check.toggled.connect(func(_value): g._settings_changed())
 	g.setting_sections[2].add_child(g.effects_check)
 	label(g.setting_sections[0], "60秒測定中の設定適用は現在の測定を途中終了し、新条件で測定を開始します。", 14)

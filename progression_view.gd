@@ -45,6 +45,8 @@ var _intro_duration := 0.28
 var _intro_elapsed := 0.0
 var _notification_origin_y := 0.0
 var _layout_size := Vector2.ZERO
+var _weapon_widgets:Dictionary = {}
+var _achievement_widgets:Dictionary = {}
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -144,6 +146,7 @@ func show_achievements() -> void:
 		_overlay = "achievements"
 		return
 	_overlay = "achievements"
+	_rebuild_achievements(_model.get("achievements",[]))
 	_achievements_panel.visible = true
 	_roster_panel.visible = false
 	visible = true
@@ -218,6 +221,8 @@ func _build() -> void:
 	_roster_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roster_column.add_child(_roster_scroll)
 	_roster_scroll.add_child(_roster_list)
+	for weapon in 5:
+		_roster_list.add_child(_make_weapon_row({"id":weapon}, weapon, 0))
 	_achievement_button = Button.new()
 	_achievement_button.text = "実績一覧"
 	_achievement_button.custom_minimum_size.y = 30
@@ -252,14 +257,26 @@ func _build() -> void:
 	_achievements_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_achievements_list.add_theme_constant_override("separation", 7)
 	scroll.add_child(_achievements_list)
+	for achievement in Progression.definitions():
+		var item := VBoxContainer.new()
+		var title := _make_label(14, LOCKED)
+		var description := _make_label(12, SUBTEXT)
+		var date := _make_label(10, LOCKED)
+		item.add_child(title)
+		item.add_child(description)
+		item.add_child(date)
+		_achievements_list.add_child(item)
+		_achievement_widgets[str(achievement.id)] = {"title":title,"description":description,"date":date}
 
 func _apply_model() -> void:
 	if not _built:
 		return
 	var rows: Array = _model.get("rows", [])
 	var achievements: Array = _model.get("achievements", [])
-	_rebuild_rows(rows)
-	_rebuild_achievements(achievements)
+	if _roster_requested and _overlay != "achievements":
+		_rebuild_rows(rows)
+	if _overlay == "achievements":
+		_rebuild_achievements(achievements)
 	_roster_panel.visible = _roster_requested and (_overlay.is_empty() or _overlay == "roster" or _overlay == "achievements") and not rows.is_empty()
 	if _overlay == "achievements":
 		_roster_panel.visible = false
@@ -272,6 +289,8 @@ func _apply_model() -> void:
 		_roster_scroll.get_v_scroll_bar().mouse_filter = Control.MOUSE_FILTER_STOP
 		_roster_close_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		_achievement_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		for widget in _weapon_widgets.values():
+			widget.button.mouse_filter = Control.MOUSE_FILTER_STOP
 	_roster_close_button.visible = _interactive and not _training
 	_achievement_button.visible = _interactive and not _training
 	_achievements_panel.visible = _overlay == "achievements"
@@ -279,16 +298,25 @@ func _apply_model() -> void:
 	_layout()
 
 func _rebuild_rows(rows: Array) -> void:
-	for child in _roster_list.get_children():
-		_roster_list.remove_child(child)
-		child.queue_free()
-	var unlocked_count := 0
+	# 固定5行の値だけを変更する。非表示パネルには呼ばない。
+	for widget in _weapon_widgets.values():
+		widget.box.hide()
 	for row in rows:
-		if row is Dictionary and bool(row.get("unlocked", false)):
-			unlocked_count += 1
-	for index in rows.size():
-		var row: Dictionary = rows[index]
-		_roster_list.add_child(_make_weapon_row(row, index, unlocked_count))
+		var widget:Dictionary = _weapon_widgets[int(row.id)]
+		var unlocked := bool(row.get("unlocked", false))
+		widget.box.show()
+		widget.icon.locked = not unlocked
+		widget.icon.queue_redraw()
+		widget.name_label.text = str(row.get("name", "???")) if unlocked else "???"
+		widget.name_label.add_theme_color_override("font_color", TEXT if unlocked else LOCKED)
+		widget.subtitle.text = (str(row.get("title", "")) if _interactive else "") if unlocked else "達成 %d/%d・あと%d" % [int(_model.get("total",0)),int(row.threshold),int(row.remaining)]
+		widget.subtitle.visible = not (_training and unlocked)
+		widget.description.text = str(row.get("description", "")) if _interactive else ""
+		widget.description.visible = not widget.description.text.is_empty()
+		widget.button.visible = unlocked and _interactive and not _training
+		widget.box.modulate = Color.WHITE if unlocked else Color(0.77,0.83,0.85,0.88)
+		widget.box.custom_minimum_size.y = 52.0 if _training else 72.0
+		widget.content.custom_minimum_size.y = 40.0 if _training else 60.0
 
 func _make_weapon_row(row: Dictionary, index: int, unlocked_count: int) -> Control:
 	var unlocked := bool(row.get("unlocked", false))
@@ -342,43 +370,35 @@ func _make_weapon_row(row: Dictionary, index: int, unlocked_count: int) -> Contr
 	description.text = str(row.get("description", "")) if _interactive else ""
 	description.visible = not description.text.is_empty()
 	details.add_child(description)
-	if unlocked and _interactive and not _training:
-		var button := Button.new()
-		button.text = "選ぶ"
-		button.custom_minimum_size = Vector2(48, 30)
-		button.pressed.connect(_select_weapon.bind(int(row.get("id", 0))))
-		row_content.add_child(button)
+	var button := Button.new()
+	button.text = "選ぶ"
+	button.custom_minimum_size = Vector2(48, 30)
+	button.pressed.connect(_select_weapon.bind(int(row.get("id", 0))))
+	row_content.add_child(button)
+	button.hide()
 	if not unlocked:
 		box.modulate = Color(0.77, 0.83, 0.85, 0.88)
 	box.custom_minimum_size.y = 52.0 if _training else 72.0
 	box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row_content.custom_minimum_size.y = 40.0 if _training else 60.0
+	_weapon_widgets[int(row.get("id",0))] = {"box":box,"content":row_content,"icon":icon,"name_label":name_label,"subtitle":subtitle,"description":description,"button":button}
+	box.hide()
 	return box
 
 func _select_weapon(weapon: int) -> void:
 	weapon_selected.emit(weapon)
 
 func _rebuild_achievements(achievements: Array) -> void:
-	for child in _achievements_list.get_children():
-		_achievements_list.remove_child(child)
-		child.queue_free()
 	for achievement in achievements:
 		if not achievement is Dictionary:
 			continue
-		var item := VBoxContainer.new()
-		item.add_theme_constant_override("separation", 1)
-		var title := _make_label(14, GOLD if bool(achievement.get("unlocked", false)) else LOCKED)
-		title.text = str(achievement.get("title", "実績"))
-		item.add_child(title)
-		var description := _make_label(12, SUBTEXT)
-		description.text = str(achievement.get("description", ""))
-		item.add_child(description)
+		var widget:Dictionary = _achievement_widgets[str(achievement.id)]
+		widget.title.text = str(achievement.get("title", "実績"))
+		widget.title.add_theme_color_override("font_color", GOLD if bool(achievement.get("unlocked",false)) else LOCKED)
+		widget.description.text = str(achievement.get("description", ""))
 		var unlocked_at := str(achievement.get("unlocked_at", ""))
-		if bool(achievement.get("unlocked", false)) and not unlocked_at.is_empty():
-			var date := _make_label(10, LOCKED)
-			date.text = unlocked_at
-			item.add_child(date)
-		_achievements_list.add_child(item)
+		widget.date.text = unlocked_at
+		widget.date.visible = bool(achievement.get("unlocked",false)) and not unlocked_at.is_empty()
 
 func _start_next_notification() -> void:
 	if not _built or _notification_phase != "" or _notification_queue.is_empty():
@@ -416,8 +436,6 @@ func _layout() -> void:
 	var compact_now := narrow or viewport.y < 640.0
 	var compact_changed := _compact != compact_now
 	_compact = compact_now
-	if compact_changed and _has_model:
-		_rebuild_rows(_model.get("rows", []))
 	var width := clampf(viewport.x * (0.24 if narrow else 0.205), 190.0, 278.0)
 	if _interactive:
 		width = minf(340.0, viewport.x - 32.0)

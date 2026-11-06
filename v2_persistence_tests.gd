@@ -31,7 +31,8 @@ func _run()->void:
 	if OS.get_environment("SLT_NATIVE_PHASE") == "reload":
 		for weapon in 3:
 			check(int(game.data.measurement_counts[weapon]) == 1, "native restart lost completions")
-		check(game.data.training_history.size() == 5, "native restart lost five-mode history")
+		check(game.data.training_history.size() == 6, "native restart lost intro plus five-mode history")
+		check(bool(game.data.get("intro_seen",false)), "native restart lost first-play completion")
 		check(Progression.total(game.data) >= 1503 and Progression.unlocked(game.data,4), "restart lost progression or five-mode unlock")
 		check(int(game.data.training_history[0].weapon) == 4 and not game.data.training_history[0].extra.grenade_events.is_empty(), "restart lost grenade impact facts")
 		for weapon in 3:
@@ -42,6 +43,22 @@ func _run()->void:
 		print("V2_PERSISTENCE_RELOAD: counts=", game.data.measurement_counts, " credits=", game.data.credits)
 	else:
 		check(game.data.measurement_counts == [0, 0, 0], "native test needs fresh isolated save")
+		game.selected_weapon = 0
+		game.selected_measurement = false
+		game._request_start()
+		for tick in 31:
+			game._process(0.1)
+			if game.mode == game.Mode.TRAINING:break
+		game.training_elapsed = 0.2
+		game.mouse_blocked = false
+		check(game.iris_intro.waiting,"native first-play intro did not wait")
+		game.camera.look_at(game.targets[0].global_position)
+		await physics_frame
+		game._fire_shot()
+		game._process(0.85)
+		check(game.data.intro_seen and int(game.stats.kills) == 1,"native first-play kill/completion wrong")
+		game._finish_training(false)
+		check(game.reward_committed and Progression.total(game.data) == 1,"native intro finish lost or duplicated progression")
 		# 既存三武器が利用済みの隔離fixture。新規解放は0.21専用テストで確認。
 		game.data.progression.preserved_weapons = [0, 1, 2]
 		for weapon in 3:

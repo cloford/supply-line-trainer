@@ -6,6 +6,7 @@
 
 | 公開版 | 配布・詳細 | 感想・不具合報告 |
 | --- | --- | --- |
+| 0.23 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.23) | [Discussion #15](https://github.com/cloford/supply-line-trainer/discussions/15) |
 | 0.22 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.22) | [Discussion #14](https://github.com/cloford/supply-line-trainer/discussions/14) |
 | 0.21 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.21) | [Discussion #9](https://github.com/cloford/supply-line-trainer/discussions/9) |
 | 2.0.0 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v2.0.0) | [Discussion #8](https://github.com/cloford/supply-line-trainer/discussions/8) |
@@ -28,6 +29,10 @@
 - 1.xから初めてv2系へ移る場合：v2.0.0で導入した設定のみの移行が適用されます。旧育成をv2育成に換算するものではありません。
 
 ## 各版で変わったこと
+
+### 0.23
+
+命中・撃破直後の同期保存による停止を計測して修正。保存要求集約、UIと音源の再利用、新規の初回アイリス・オープン、標的出現音、未解放武器の黒いシルエットと選択防御を追加。解放条件と既存進行・設定・記録は維持します。
 
 ### 0.22
 

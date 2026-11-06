@@ -1,0 +1,1932 @@
+{
+  "before": [
+    {
+      "kind": "PROFILE023",
+      "event": "miss",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 0,
+      "us": {
+        "audio_shot_us": 1196,
+        "event_frame_us": 1419,
+        "frame_work_us": 165,
+        "hud_us": 38,
+        "notification_ui_us": 10,
+        "shot_us": 1249
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "miss",
+      "frame_wait_us": 434,
+      "history": 0,
+      "us": {
+        "frame_work_us": 96,
+        "hud_us": 30,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill1",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 326,
+        "audio_shot_us": 914,
+        "checkpoint_us": 9611,
+        "commit_save_us": 20033,
+        "event_frame_us": 35741,
+        "frame_work_us": 24699,
+        "hud_us": 52,
+        "notification_ui_us": 24547,
+        "shot_us": 11038,
+        "target_move_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill1",
+      "frame_wait_us": 2623,
+      "history": 0,
+      "us": {
+        "frame_work_us": 11782,
+        "hud_us": 43,
+        "notification_ui_us": 11647
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill2",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 2,
+      "us": {
+        "audio_hit_us": 172,
+        "audio_shot_us": 1101,
+        "checkpoint_us": 8779,
+        "commit_save_us": 8635,
+        "event_frame_us": 20890,
+        "frame_work_us": 10741,
+        "hud_us": 49,
+        "notification_ui_us": 10601,
+        "shot_us": 10144,
+        "target_move_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill2",
+      "frame_wait_us": 1298,
+      "history": 0,
+      "us": {
+        "frame_work_us": 166,
+        "hud_us": 49,
+        "notification_ui_us": 11
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill3",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 3,
+      "us": {
+        "audio_hit_us": 329,
+        "audio_shot_us": 1009,
+        "checkpoint_us": 9680,
+        "commit_save_us": 9441,
+        "event_frame_us": 22290,
+        "frame_work_us": 11171,
+        "hud_us": 49,
+        "notification_ui_us": 11029,
+        "shot_us": 11113,
+        "target_move_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill3",
+      "frame_wait_us": 1019,
+      "history": 0,
+      "us": {
+        "frame_work_us": 131,
+        "hud_us": 39,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill4",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 4,
+      "us": {
+        "audio_hit_us": 326,
+        "audio_shot_us": 1110,
+        "checkpoint_us": 9808,
+        "commit_save_us": 9639,
+        "event_frame_us": 22904,
+        "frame_work_us": 11567,
+        "hud_us": 47,
+        "notification_ui_us": 11432,
+        "shot_us": 11333,
+        "target_move_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill4",
+      "frame_wait_us": 1087,
+      "history": 0,
+      "us": {
+        "frame_work_us": 145,
+        "hud_us": 42,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill5",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 5,
+      "us": {
+        "audio_hit_us": 253,
+        "audio_shot_us": 1352,
+        "checkpoint_us": 9935,
+        "commit_save_us": 28558,
+        "event_frame_us": 64183,
+        "frame_work_us": 52536,
+        "hud_us": 52,
+        "notification_ui_us": 52385,
+        "shot_us": 11639,
+        "target_move_us": 11
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill5",
+      "frame_wait_us": 3885,
+      "history": 0,
+      "us": {
+        "frame_work_us": 11214,
+        "hud_us": 48,
+        "notification_ui_us": 11057
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill6",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 6,
+      "us": {
+        "audio_hit_us": 322,
+        "audio_shot_us": 1110,
+        "checkpoint_us": 11033,
+        "commit_save_us": 10868,
+        "event_frame_us": 24404,
+        "frame_work_us": 11850,
+        "hud_us": 66,
+        "notification_ui_us": 11659,
+        "shot_us": 12548,
+        "target_move_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill6",
+      "frame_wait_us": 1961,
+      "history": 0,
+      "us": {
+        "frame_work_us": 139,
+        "hud_us": 42,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill7",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 7,
+      "us": {
+        "audio_hit_us": 321,
+        "audio_shot_us": 1108,
+        "checkpoint_us": 11088,
+        "commit_save_us": 10918,
+        "event_frame_us": 29304,
+        "frame_work_us": 16711,
+        "hud_us": 57,
+        "notification_ui_us": 16545,
+        "shot_us": 12589,
+        "target_move_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill7",
+      "frame_wait_us": 2561,
+      "history": 0,
+      "us": {
+        "frame_work_us": 194,
+        "hud_us": 60,
+        "notification_ui_us": 12
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill8",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 8,
+      "us": {
+        "audio_hit_us": 173,
+        "audio_shot_us": 1196,
+        "checkpoint_us": 9270,
+        "commit_save_us": 9120,
+        "event_frame_us": 27514,
+        "frame_work_us": 16784,
+        "hud_us": 55,
+        "notification_ui_us": 16626,
+        "shot_us": 10725,
+        "target_move_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill8",
+      "frame_wait_us": 1888,
+      "history": 0,
+      "us": {
+        "frame_work_us": 146,
+        "hud_us": 43,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill9",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 9,
+      "us": {
+        "audio_hit_us": 321,
+        "audio_shot_us": 1113,
+        "checkpoint_us": 11296,
+        "commit_save_us": 11127,
+        "event_frame_us": 62212,
+        "frame_work_us": 49400,
+        "hud_us": 56,
+        "notification_ui_us": 49239,
+        "shot_us": 12807,
+        "target_move_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill9",
+      "frame_wait_us": 2917,
+      "history": 0,
+      "us": {
+        "frame_work_us": 465,
+        "hud_us": 72,
+        "notification_ui_us": 13
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill10",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 503,
+        "audio_shot_us": 1908,
+        "checkpoint_us": 23820,
+        "commit_save_us": 38935,
+        "event_frame_us": 62087,
+        "frame_work_us": 35660,
+        "hud_us": 85,
+        "notification_ui_us": 35415,
+        "shot_us": 26419,
+        "target_move_us": 63
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill10",
+      "frame_wait_us": 3714,
+      "history": 0,
+      "us": {
+        "frame_work_us": 18457,
+        "hud_us": 63,
+        "notification_ui_us": 18256
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "ordinary_hit",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 339,
+        "audio_shot_us": 1785,
+        "event_frame_us": 2391,
+        "frame_work_us": 148,
+        "hud_us": 45,
+        "notification_ui_us": 9,
+        "shot_us": 2236
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "ordinary_hit",
+      "frame_wait_us": 1036,
+      "history": 0,
+      "us": {
+        "frame_work_us": 209,
+        "hud_us": 64,
+        "notification_ui_us": 12
+      }
+    },
+    {
+      "kind": "PROFILE023_JSON",
+      "characters": 2429,
+      "history": 0,
+      "json_us": 274
+    },
+    {
+      "kind": "PROFILE023_SAVE",
+      "full_save_us": 3794,
+      "history": 0
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "miss",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 0,
+      "us": {
+        "audio_shot_us": 1119,
+        "event_frame_us": 1309,
+        "frame_work_us": 136,
+        "hud_us": 43,
+        "notification_ui_us": 10,
+        "shot_us": 1169
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "miss",
+      "frame_wait_us": 642,
+      "history": 100,
+      "us": {
+        "frame_work_us": 98,
+        "hud_us": 30,
+        "notification_ui_us": 6
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill1",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 498,
+        "audio_shot_us": 1119,
+        "checkpoint_us": 2004606,
+        "commit_save_us": 4056675,
+        "event_frame_us": 4272782,
+        "frame_work_us": 2266376,
+        "hud_us": 63,
+        "notification_ui_us": 2266203,
+        "shot_us": 2006401,
+        "target_move_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill1",
+      "frame_wait_us": 1256,
+      "history": 100,
+      "us": {
+        "frame_work_us": 14605,
+        "hud_us": 44,
+        "notification_ui_us": 14463
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill2",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 2,
+      "us": {
+        "audio_hit_us": 358,
+        "audio_shot_us": 1202,
+        "checkpoint_us": 2051568,
+        "commit_save_us": 1949098,
+        "event_frame_us": 2064587,
+        "frame_work_us": 11329,
+        "hud_us": 58,
+        "notification_ui_us": 11161,
+        "shot_us": 2053251,
+        "target_move_us": 12
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill2",
+      "frame_wait_us": 990,
+      "history": 100,
+      "us": {
+        "frame_work_us": 138,
+        "hud_us": 41,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill3",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 3,
+      "us": {
+        "audio_hit_us": 326,
+        "audio_shot_us": 776,
+        "checkpoint_us": 2183102,
+        "commit_save_us": 2029582,
+        "event_frame_us": 2195000,
+        "frame_work_us": 10707,
+        "hud_us": 56,
+        "notification_ui_us": 10540,
+        "shot_us": 2184285,
+        "target_move_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill3",
+      "frame_wait_us": 1664,
+      "history": 100,
+      "us": {
+        "frame_work_us": 180,
+        "hud_us": 60,
+        "notification_ui_us": 10
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill4",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 4,
+      "us": {
+        "audio_hit_us": 326,
+        "audio_shot_us": 1121,
+        "checkpoint_us": 1956195,
+        "commit_save_us": 1883322,
+        "event_frame_us": 1968959,
+        "frame_work_us": 11218,
+        "hud_us": 57,
+        "notification_ui_us": 11047,
+        "shot_us": 1957735,
+        "target_move_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill4",
+      "frame_wait_us": 1132,
+      "history": 100,
+      "us": {
+        "frame_work_us": 249,
+        "hud_us": 71,
+        "notification_ui_us": 12
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill5",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 5,
+      "us": {
+        "audio_hit_us": 324,
+        "audio_shot_us": 1121,
+        "checkpoint_us": 2037093,
+        "commit_save_us": 5858275,
+        "event_frame_us": 6120240,
+        "frame_work_us": 4081618,
+        "hud_us": 52,
+        "notification_ui_us": 4081468,
+        "shot_us": 2038617,
+        "target_move_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill5",
+      "frame_wait_us": 2965,
+      "history": 100,
+      "us": {
+        "frame_work_us": 16242,
+        "hud_us": 48,
+        "notification_ui_us": 16091
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill6",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 6,
+      "us": {
+        "audio_hit_us": 289,
+        "audio_shot_us": 1138,
+        "checkpoint_us": 2101067,
+        "commit_save_us": 2011712,
+        "event_frame_us": 2113752,
+        "frame_work_us": 11116,
+        "hud_us": 59,
+        "notification_ui_us": 10940,
+        "shot_us": 2102630,
+        "target_move_us": 15
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill6",
+      "frame_wait_us": 1877,
+      "history": 100,
+      "us": {
+        "frame_work_us": 136,
+        "hud_us": 40,
+        "notification_ui_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill7",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 7,
+      "us": {
+        "audio_hit_us": 335,
+        "audio_shot_us": 1118,
+        "checkpoint_us": 2018928,
+        "commit_save_us": 1943433,
+        "event_frame_us": 2032356,
+        "frame_work_us": 11874,
+        "hud_us": 57,
+        "notification_ui_us": 11675,
+        "shot_us": 2020479,
+        "target_move_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill7",
+      "frame_wait_us": 1806,
+      "history": 100,
+      "us": {
+        "frame_work_us": 132,
+        "hud_us": 39,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill8",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 8,
+      "us": {
+        "audio_hit_us": 377,
+        "audio_shot_us": 1393,
+        "checkpoint_us": 1980305,
+        "commit_save_us": 1899166,
+        "event_frame_us": 1993540,
+        "frame_work_us": 11326,
+        "hud_us": 60,
+        "notification_ui_us": 11149,
+        "shot_us": 1982208,
+        "target_move_us": 13
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill8",
+      "frame_wait_us": 2068,
+      "history": 100,
+      "us": {
+        "frame_work_us": 158,
+        "hud_us": 49,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill9",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 9,
+      "us": {
+        "audio_hit_us": 433,
+        "audio_shot_us": 1101,
+        "checkpoint_us": 2003661,
+        "commit_save_us": 1929101,
+        "event_frame_us": 2017052,
+        "frame_work_us": 11758,
+        "hud_us": 55,
+        "notification_ui_us": 11569,
+        "shot_us": 2005287,
+        "target_move_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill9",
+      "frame_wait_us": 2702,
+      "history": 100,
+      "us": {
+        "frame_work_us": 237,
+        "hud_us": 74,
+        "notification_ui_us": 14
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill10",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 591,
+        "audio_shot_us": 1009,
+        "checkpoint_us": 2060646,
+        "commit_save_us": 3945795,
+        "event_frame_us": 4105020,
+        "frame_work_us": 2042627,
+        "hud_us": 54,
+        "notification_ui_us": 2042463,
+        "shot_us": 2062387,
+        "target_move_us": 19
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill10",
+      "frame_wait_us": 2208,
+      "history": 100,
+      "us": {
+        "frame_work_us": 15625,
+        "hud_us": 72,
+        "notification_ui_us": 15454
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "ordinary_hit",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 346,
+        "audio_shot_us": 1140,
+        "event_frame_us": 1725,
+        "frame_work_us": 152,
+        "hud_us": 45,
+        "notification_ui_us": 12,
+        "shot_us": 1568
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "ordinary_hit",
+      "frame_wait_us": 645,
+      "history": 100,
+      "us": {
+        "frame_work_us": 105,
+        "hud_us": 31,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_JSON",
+      "characters": 3918920,
+      "history": 100,
+      "json_us": 1066716
+    },
+    {
+      "kind": "PROFILE023_SAVE",
+      "full_save_us": 1769123,
+      "history": 100
+    }
+  ],
+  "after": [
+    {
+      "kind": "synthetic_payload",
+      "history": 0,
+      "profiles": 0
+    },
+    {
+      "kind": "PROFILE023_CACHE",
+      "cache_setup_us": 12,
+      "history": 0
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "miss",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 0,
+      "us": {
+        "audio_shot_us": 32,
+        "event_frame_us": 344,
+        "frame_work_us": 245,
+        "hud_us": 50,
+        "notification_ui_us": 12,
+        "shot_us": 95,
+        "snapshot_us": 0
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "miss",
+      "frame_wait_us": 459,
+      "history": 0,
+      "us": {
+        "frame_work_us": 134,
+        "hud_us": 38,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill1",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 18,
+        "audio_shot_us": 24,
+        "checkpoint_us": 181,
+        "event_frame_us": 3097,
+        "frame_work_us": 2645,
+        "hud_us": 41,
+        "notification_ui_us": 2347,
+        "shot_us": 448,
+        "snapshot_us": 72,
+        "target_move_us": 21
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill1",
+      "frame_wait_us": 3197,
+      "history": 0,
+      "us": {
+        "frame_work_us": 190,
+        "hud_us": 47,
+        "notification_ui_us": 11
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill2",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 2,
+      "us": {
+        "audio_hit_us": 15,
+        "audio_shot_us": 27,
+        "checkpoint_us": 143,
+        "event_frame_us": 759,
+        "frame_work_us": 480,
+        "hud_us": 35,
+        "notification_ui_us": 354,
+        "shot_us": 275,
+        "snapshot_us": 72,
+        "target_move_us": 19
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill2",
+      "frame_wait_us": 858,
+      "history": 0,
+      "us": {
+        "frame_work_us": 151,
+        "hud_us": 40,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill3",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 3,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 34,
+        "checkpoint_us": 143,
+        "event_frame_us": 814,
+        "frame_work_us": 510,
+        "hud_us": 41,
+        "notification_ui_us": 236,
+        "shot_us": 299,
+        "snapshot_us": 45,
+        "target_move_us": 22
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill3",
+      "frame_wait_us": 896,
+      "history": 0,
+      "us": {
+        "frame_work_us": 135,
+        "hud_us": 35,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill4",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 4,
+      "us": {
+        "audio_hit_us": 26,
+        "audio_shot_us": 47,
+        "checkpoint_us": 215,
+        "event_frame_us": 1126,
+        "frame_work_us": 669,
+        "hud_us": 60,
+        "notification_ui_us": 335,
+        "shot_us": 452,
+        "snapshot_us": 50,
+        "target_move_us": 31
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill4",
+      "frame_wait_us": 747,
+      "history": 0,
+      "us": {
+        "frame_work_us": 144,
+        "hud_us": 38,
+        "notification_ui_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill5",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 5,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 33,
+        "checkpoint_us": 149,
+        "event_frame_us": 2692,
+        "frame_work_us": 2387,
+        "hud_us": 40,
+        "notification_ui_us": 2109,
+        "shot_us": 300,
+        "snapshot_us": 59,
+        "target_move_us": 21
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill5",
+      "frame_wait_us": 2696,
+      "history": 0,
+      "us": {
+        "frame_work_us": 241,
+        "hud_us": 63,
+        "notification_ui_us": 14
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill6",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 6,
+      "us": {
+        "audio_hit_us": 19,
+        "audio_shot_us": 42,
+        "checkpoint_us": 136,
+        "event_frame_us": 1572,
+        "frame_work_us": 1253,
+        "hud_us": 45,
+        "notification_ui_us": 945,
+        "shot_us": 314,
+        "snapshot_us": 62,
+        "target_move_us": 28
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill6",
+      "frame_wait_us": 1330,
+      "history": 0,
+      "us": {
+        "frame_work_us": 216,
+        "hud_us": 62,
+        "notification_ui_us": 12
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill7",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 7,
+      "us": {
+        "audio_hit_us": 18,
+        "audio_shot_us": 39,
+        "checkpoint_us": 144,
+        "event_frame_us": 1752,
+        "frame_work_us": 1424,
+        "hud_us": 48,
+        "notification_ui_us": 1078,
+        "shot_us": 322,
+        "snapshot_us": 70,
+        "target_move_us": 24
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill7",
+      "frame_wait_us": 1280,
+      "history": 0,
+      "us": {
+        "frame_work_us": 198,
+        "hud_us": 55,
+        "notification_ui_us": 11
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill8",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 8,
+      "us": {
+        "audio_hit_us": 21,
+        "audio_shot_us": 42,
+        "checkpoint_us": 181,
+        "event_frame_us": 1502,
+        "frame_work_us": 1115,
+        "hud_us": 65,
+        "notification_ui_us": 808,
+        "shot_us": 381,
+        "snapshot_us": 42,
+        "target_move_us": 28
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill8",
+      "frame_wait_us": 944,
+      "history": 0,
+      "us": {
+        "frame_work_us": 153,
+        "hud_us": 37,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill9",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 9,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 36,
+        "checkpoint_us": 144,
+        "event_frame_us": 1417,
+        "frame_work_us": 1105,
+        "hud_us": 41,
+        "notification_ui_us": 845,
+        "shot_us": 308,
+        "snapshot_us": 42,
+        "target_move_us": 23
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill9",
+      "frame_wait_us": 1062,
+      "history": 0,
+      "us": {
+        "frame_work_us": 186,
+        "hud_us": 57,
+        "notification_ui_us": 11
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill10",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 18,
+        "audio_shot_us": 50,
+        "checkpoint_us": 159,
+        "event_frame_us": 1639,
+        "frame_work_us": 1268,
+        "hud_us": 36,
+        "notification_ui_us": 1015,
+        "shot_us": 367,
+        "snapshot_us": 49,
+        "target_move_us": 31
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill10",
+      "frame_wait_us": 1958,
+      "history": 0,
+      "us": {
+        "frame_work_us": 292,
+        "hud_us": 105,
+        "notification_ui_us": 14
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "ordinary_hit",
+      "focus": true,
+      "history": 0,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 24,
+        "audio_shot_us": 71,
+        "event_frame_us": 394,
+        "frame_work_us": 203,
+        "hud_us": 45,
+        "notification_ui_us": 10,
+        "shot_us": 186,
+        "snapshot_us": 49
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "ordinary_hit",
+      "frame_wait_us": 654,
+      "history": 0,
+      "us": {
+        "frame_work_us": 135,
+        "hud_us": 32,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_WORKER",
+      "history": 0,
+      "last_worker_us": 10381,
+      "requests": 14,
+      "writes": 9
+    },
+    {
+      "kind": "PROFILE023_JSON",
+      "characters": 2449,
+      "history": 0,
+      "json_us": 290
+    },
+    {
+      "kind": "PROFILE023_SAVE",
+      "full_save_us": 4034,
+      "history": 0
+    },
+    {
+      "kind": "synthetic_payload",
+      "history": 100,
+      "profiles": 0
+    },
+    {
+      "kind": "PROFILE023_CACHE",
+      "cache_setup_us": 105727,
+      "history": 100
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "miss",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 0,
+      "us": {
+        "audio_shot_us": 32,
+        "event_frame_us": 279,
+        "frame_work_us": 182,
+        "hud_us": 50,
+        "notification_ui_us": 11,
+        "shot_us": 93,
+        "snapshot_us": 49
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "miss",
+      "frame_wait_us": 485,
+      "history": 100,
+      "us": {
+        "frame_work_us": 117,
+        "hud_us": 31,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill1",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 19,
+        "checkpoint_us": 247,
+        "event_frame_us": 873,
+        "frame_work_us": 426,
+        "hud_us": 30,
+        "notification_ui_us": 228,
+        "shot_us": 444,
+        "snapshot_us": 46,
+        "target_move_us": 16
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill1",
+      "frame_wait_us": 1122,
+      "history": 100,
+      "us": {
+        "frame_work_us": 98,
+        "hud_us": 28,
+        "notification_ui_us": 6
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill2",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 2,
+      "us": {
+        "audio_hit_us": 23,
+        "audio_shot_us": 48,
+        "checkpoint_us": 389,
+        "event_frame_us": 1173,
+        "frame_work_us": 563,
+        "hud_us": 58,
+        "notification_ui_us": 370,
+        "shot_us": 605,
+        "snapshot_us": 46,
+        "target_move_us": 32
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill2",
+      "frame_wait_us": 933,
+      "history": 100,
+      "us": {
+        "frame_work_us": 191,
+        "hud_us": 50,
+        "notification_ui_us": 12
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill3",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 3,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 36,
+        "checkpoint_us": 252,
+        "event_frame_us": 795,
+        "frame_work_us": 369,
+        "hud_us": 42,
+        "notification_ui_us": 233,
+        "shot_us": 421,
+        "snapshot_us": 46,
+        "target_move_us": 24
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill3",
+      "frame_wait_us": 669,
+      "history": 100,
+      "us": {
+        "frame_work_us": 116,
+        "hud_us": 31,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill4",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 4,
+      "us": {
+        "audio_hit_us": 21,
+        "audio_shot_us": 42,
+        "checkpoint_us": 335,
+        "event_frame_us": 1028,
+        "frame_work_us": 487,
+        "hud_us": 51,
+        "notification_ui_us": 310,
+        "shot_us": 535,
+        "snapshot_us": 46,
+        "target_move_us": 28
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill4",
+      "frame_wait_us": 892,
+      "history": 100,
+      "us": {
+        "frame_work_us": 146,
+        "hud_us": 41,
+        "notification_ui_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill5",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 5,
+      "us": {
+        "audio_hit_us": 17,
+        "audio_shot_us": 35,
+        "checkpoint_us": 254,
+        "event_frame_us": 2270,
+        "frame_work_us": 1849,
+        "hud_us": 41,
+        "notification_ui_us": 1700,
+        "shot_us": 416,
+        "snapshot_us": 46,
+        "target_move_us": 23
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill5",
+      "frame_wait_us": 1202,
+      "history": 100,
+      "us": {
+        "frame_work_us": 172,
+        "hud_us": 49,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill6",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 6,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 34,
+        "checkpoint_us": 255,
+        "event_frame_us": 1398,
+        "frame_work_us": 983,
+        "hud_us": 43,
+        "notification_ui_us": 810,
+        "shot_us": 412,
+        "snapshot_us": 46,
+        "target_move_us": 23
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill6",
+      "frame_wait_us": 899,
+      "history": 100,
+      "us": {
+        "frame_work_us": 121,
+        "hud_us": 33,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill7",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 7,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 37,
+        "checkpoint_us": 278,
+        "event_frame_us": 1491,
+        "frame_work_us": 1039,
+        "hud_us": 48,
+        "notification_ui_us": 881,
+        "shot_us": 446,
+        "snapshot_us": 46,
+        "target_move_us": 23
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill7",
+      "frame_wait_us": 1224,
+      "history": 100,
+      "us": {
+        "frame_work_us": 189,
+        "hud_us": 45,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill8",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 8,
+      "us": {
+        "audio_hit_us": 20,
+        "audio_shot_us": 40,
+        "checkpoint_us": 340,
+        "event_frame_us": 1710,
+        "frame_work_us": 1170,
+        "hud_us": 54,
+        "notification_ui_us": 999,
+        "shot_us": 535,
+        "snapshot_us": 46,
+        "target_move_us": 28
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill8",
+      "frame_wait_us": 1000,
+      "history": 100,
+      "us": {
+        "frame_work_us": 173,
+        "hud_us": 40,
+        "notification_ui_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill9",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 9,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 35,
+        "checkpoint_us": 324,
+        "event_frame_us": 1692,
+        "frame_work_us": 1203,
+        "hud_us": 56,
+        "notification_ui_us": 1028,
+        "shot_us": 483,
+        "snapshot_us": 46,
+        "target_move_us": 21
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill9",
+      "frame_wait_us": 1150,
+      "history": 100,
+      "us": {
+        "frame_work_us": 166,
+        "hud_us": 45,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill10",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 16,
+        "audio_shot_us": 34,
+        "checkpoint_us": 266,
+        "event_frame_us": 1346,
+        "frame_work_us": 917,
+        "hud_us": 50,
+        "notification_ui_us": 749,
+        "shot_us": 425,
+        "snapshot_us": 46,
+        "target_move_us": 23
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill10",
+      "frame_wait_us": 1729,
+      "history": 100,
+      "us": {
+        "frame_work_us": 210,
+        "hud_us": 56,
+        "notification_ui_us": 10
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "ordinary_hit",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 10,
+      "us": {
+        "audio_hit_us": 20,
+        "audio_shot_us": 40,
+        "event_frame_us": 343,
+        "frame_work_us": 184,
+        "hud_us": 52,
+        "notification_ui_us": 10,
+        "shot_us": 154,
+        "snapshot_us": 46
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "ordinary_hit",
+      "frame_wait_us": 927,
+      "history": 100,
+      "us": {
+        "frame_work_us": 183,
+        "hud_us": 45,
+        "notification_ui_us": 8
+      }
+    },
+    {
+      "kind": "PROFILE023_WORKER",
+      "history": 100,
+      "last_worker_us": 1893766,
+      "requests": 28,
+      "writes": 10
+    },
+    {
+      "kind": "PROFILE023_JSON",
+      "characters": 3918939,
+      "history": 100,
+      "json_us": 1203944
+    },
+    {
+      "kind": "PROFILE023_SAVE",
+      "full_save_us": 2187182,
+      "history": 100
+    }
+  ],
+  "before-valid": [
+    {
+      "kind": "valid_measurement",
+      "history": 100,
+      "profiles": 6
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "miss",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 0,
+      "us": {
+        "audio_shot_us": 1035,
+        "event_frame_us": 1319,
+        "frame_work_us": 207,
+        "hud_us": 47,
+        "notification_ui_us": 11,
+        "shot_us": 1106
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "miss",
+      "frame_wait_us": 440,
+      "history": 100,
+      "us": {
+        "frame_work_us": 98,
+        "hud_us": 29,
+        "notification_ui_us": 6
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill1",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 331,
+        "audio_shot_us": 1121,
+        "checkpoint_us": 17846054,
+        "commit_save_us": 36000300,
+        "event_frame_us": 37783457,
+        "frame_work_us": 19935723,
+        "hud_us": 55,
+        "notification_ui_us": 19935561,
+        "shot_us": 17847728,
+        "target_move_us": 10
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill1",
+      "frame_wait_us": 3474,
+      "history": 100,
+      "us": {
+        "frame_work_us": 11361,
+        "hud_us": 49,
+        "notification_ui_us": 11209
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "ordinary_hit",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 338,
+        "audio_shot_us": 1591,
+        "event_frame_us": 2225,
+        "frame_work_us": 146,
+        "hud_us": 46,
+        "notification_ui_us": 10,
+        "shot_us": 2073
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "ordinary_hit",
+      "frame_wait_us": 777,
+      "history": 100,
+      "us": {
+        "frame_work_us": 111,
+        "hud_us": 32,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_JSON",
+      "characters": 40811073,
+      "history": 100,
+      "json_us": 8839980
+    },
+    {
+      "kind": "PROFILE023_SAVE",
+      "full_save_us": 19804642,
+      "history": 100
+    }
+  ],
+  "after-valid": [
+    {
+      "kind": "valid_measurement",
+      "history": 100,
+      "profiles": 6
+    },
+    {
+      "kind": "PROFILE023_CACHE",
+      "cache_setup_us": 923446,
+      "history": 100
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "miss",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 0,
+      "us": {
+        "audio_shot_us": 31,
+        "event_frame_us": 317,
+        "frame_work_us": 216,
+        "hud_us": 40,
+        "notification_ui_us": 10,
+        "shot_us": 97,
+        "snapshot_us": 0
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "miss",
+      "frame_wait_us": 462,
+      "history": 100,
+      "us": {
+        "frame_work_us": 117,
+        "hud_us": 30,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "kill1",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 14,
+        "audio_shot_us": 17,
+        "checkpoint_us": 307,
+        "event_frame_us": 2586,
+        "frame_work_us": 2059,
+        "hud_us": 31,
+        "notification_ui_us": 1826,
+        "shot_us": 524,
+        "snapshot_us": 53,
+        "target_move_us": 16
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "kill1",
+      "frame_wait_us": 3347,
+      "history": 100,
+      "us": {
+        "frame_work_us": 160,
+        "hud_us": 44,
+        "notification_ui_us": 9
+      }
+    },
+    {
+      "kind": "PROFILE023",
+      "event": "ordinary_hit",
+      "focus": true,
+      "history": 100,
+      "mode": 3,
+      "mouse": 0,
+      "paused": false,
+      "time_scale": 1.0,
+      "total": 1,
+      "us": {
+        "audio_hit_us": 14,
+        "audio_shot_us": 24,
+        "event_frame_us": 210,
+        "frame_work_us": 113,
+        "hud_us": 31,
+        "notification_ui_us": 7,
+        "shot_us": 95,
+        "snapshot_us": 53
+      }
+    },
+    {
+      "kind": "PROFILE023_NEXT",
+      "event": "ordinary_hit",
+      "frame_wait_us": 546,
+      "history": 100,
+      "us": {
+        "frame_work_us": 103,
+        "hud_us": 29,
+        "notification_ui_us": 7
+      }
+    },
+    {
+      "kind": "PROFILE023_WORKER",
+      "history": 100,
+      "last_worker_us": 15274490,
+      "requests": 2,
+      "writes": 1
+    },
+    {
+      "kind": "PROFILE023_JSON",
+      "characters": 40811043,
+      "history": 100,
+      "json_us": 7873427
+    },
+    {
+      "kind": "PROFILE023_SAVE",
+      "full_save_us": 16821688,
+      "history": 100
+    }
+  ]
+}

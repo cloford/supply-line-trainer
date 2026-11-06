@@ -24,6 +24,9 @@ func capture(name:String)->void:
 	for control in game.ui.find_children("*", "Button", true, false):
 		if control.is_visible_in_tree():
 			check(bounds.encloses(control.get_global_rect()), "button outside: " + name + " / " + control.text)
+	for icon in game.ui.find_children("*", "Control", true, false):
+		if icon is WeaponIcon and icon.is_visible_in_tree() and icon.get_parent() is Button:
+			check(icon.get_parent().get_global_rect().encloses(icon.get_global_rect()), "button icon outside: " + name)
 	for panel in [game.progression_view._roster_panel, game.progression_view._notification_panel, game.progression_view._achievements_panel]:
 		if panel.is_visible_in_tree():
 			check(bounds.encloses(panel.get_global_rect()), "progression panel outside: " + name + " " + str(panel.get_global_rect()))
@@ -87,6 +90,16 @@ func _run()->void:
 	check(game.selected_weapon == 0, "locked selection allowed")
 	begin(0)
 	var fov:float = game.camera.fov
+	check(game.iris_intro.waiting and game.intro_session and game.targets.size() == 1, "new HG intro did not wait")
+	check(game.targets[0].position == Vector3(0,1.7,-7), "intro target was not static/centered")
+	check(Rect2(Vector2.ZERO,Vector2(root.size)).encloses(game.intro_hint.get_global_rect()), "intro hint outside viewport")
+	await capture("iris-wait-1280x720")
+	game._open_pause()
+	game._process(0.1)
+	check(not game.iris_intro.visible and game.pause_panel.visible, "iris hid pause menu")
+	await capture("iris-pause-1280x720")
+	game._resume_pause()
+	game.mouse_blocked = false
 	for kill in 10:
 		await aim()
 		game._fire_shot()
@@ -94,6 +107,20 @@ func _run()->void:
 		check(Progression.total(game.data) == kill + 1, "actual HG kill not once")
 		if kill == 0:
 			check(game.data.progression.achievements.has("first_kill"), "first kill missing achievement")
+			check(game.iris_intro.opening and game.stats.kills == 1, "actual first kill did not open iris once")
+			var anchor:Vector2 = game.iris_intro.anchor
+			game.camera.rotation.y += 0.1
+			game._process(0.1)
+			check(game.iris_intro.anchor == anchor, "opening center followed camera")
+			var elapsed:float = game.iris_intro.elapsed
+			game.app_focused = false
+			game._process(0.1)
+			check(game.iris_intro.elapsed == elapsed, "unfocused iris advanced")
+			game.app_focused = true
+			await capture("iris-open-mid-1280x720")
+			game._process(0.7)
+			check(not game.iris_intro.is_active() and game.data.intro_seen, "iris completion missing")
+			await capture("iris-done-1280x720")
 			game.progression_view._process(0.4)
 			await capture("02-first-achievement")
 		if kill == 4:
@@ -117,7 +144,19 @@ func _run()->void:
 	var saved_stats:Dictionary = game.stats.duplicate(true)
 	game._open_roster()
 	check(game.mode == game.Mode.PAUSED and game.roster_open, "paused roster failed")
-	game._choose_roster_weapon(1)
+	await frames()
+	var select_button:Button = game.progression_view._weapon_widgets[1].button
+	check(select_button.mouse_filter == Control.MOUSE_FILTER_STOP, "roster selection stayed mouse transparent")
+	var click := InputEventMouseButton.new()
+	click.position = select_button.get_global_rect().get_center()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	root.push_input(click,true)
+	click = click.duplicate()
+	click.pressed = false
+	root.push_input(click,true)
+	await frames()
+	check(game.pending_weapon == 1, "GUI roster select did not receive mouse input")
 	check(game.training_weapon == 0 and game.mode == game.Mode.PAUSED, "selection changed active weapon before resume")
 	game._resume_pause()
 	check(game.mode == game.Mode.COUNTDOWN and game.training_weapon == 1 and game.mouse_blocked, "resume switch failed")
@@ -204,12 +243,42 @@ func _run()->void:
 	await aim()
 	var protected:Dictionary = game.data.duplicate(true)
 	game.is_test_mode = false
+	game.save_worker.configure(game.data)
 	V2Save.test_fail_step = "temp"
 	game._fire_shot()
-	check(game.data == protected and game.save_warning, "failed progression save changed state")
+	check(Progression.total(game.data) == Progression.total(protected)+1 and game.mode == game.Mode.TRAINING, "memory progression waited for disk")
+	game._process(0.016)
+	var writes_in_frame:int = game.save_worker.writes
+	for duplicate_request in 3:game._request_progress_save()
+	game._process(0.016)
+	check(game.save_worker.writes == writes_in_frame, "same-frame save requests dispatched twice")
+	game.save_worker.finish()
+	game._process(0.016)
+	check(game.save_warning and Progression.total(game.data) == Progression.total(protected)+1, "failed async save lost live progression")
 	V2Save.test_fail_step = ""
-	for frame in 5:game._process(0.25)
+	game.save_worker.retry_after = 0.0
+	await frames(1)
+	game._process(0.016)
+	game.save_worker.finish()
+	game._process(0.016)
 	check(Progression.total(game.data) == Progression.total(protected) + 1, "retry lost or duplicated kill")
+	for retry in 5:
+		if not game.save_worker.pending():break
+		await frames(1)
+		game._process(0.016)
+		game.save_worker.finish()
+	check(not game.save_worker.pending(), "failed async save did not retry: %d/%d %s" % [game.save_worker.durable,game.save_worker.requested,game.save_worker.error])
+	await aim()
+	game._fire_shot()
+	game._process(0.016)
+	var before_poll := Progression.total(game.data)
+	await aim()
+	game._fire_shot()
+	game.save_worker.finish()
+	game._process(0.016)
+	check(Progression.total(game.data) == before_poll+1, "stale async snapshot rolled back live kill")
+	game._open_pause()
+	check(not game.save_worker.pending(), "pause did not flush pending saves")
 	game.is_test_mode = true
 	game._finish_training(false)
 	for dimensions in [Vector2i(1280,720),Vector2i(1920,1080),Vector2i(1024,768)]:
@@ -229,6 +298,52 @@ func _run()->void:
 		await capture("settings-%dx%d" % [dimensions.x,dimensions.y])
 		game._settings_back()
 		game._finish_training(false)
+	# 初回の別比率も同じ実sceneで描画。ここからは独立の新規fixture。
+	for dimensions in [Vector2i(1920,1080),Vector2i(1024,768)]:
+		root.size = dimensions
+		root.content_scale_size = dimensions
+		game.data = V2Save.defaults()
+		game.combat.configure(game.data)
+		begin(0)
+		game._process(0.016)
+		check(game.iris_intro.waiting and Rect2(Vector2.ZERO,Vector2(root.size)).encloses(game.intro_hint.get_global_rect()), "alternate intro bounds failed")
+		await capture("iris-wait-%dx%d" % [dimensions.x,dimensions.y])
+		await aim()
+		game._fire_shot()
+		game._process(0.32)
+		check(game.iris_intro.opening and game.stats.kills == 1 and Progression.total(game.data) == 1, "alternate intro kill was not exactly once")
+		await capture("iris-open-mid-%dx%d" % [dimensions.x,dimensions.y])
+		game._process(0.6)
+		check(not game.iris_intro.is_active(), "alternate intro left black overlay")
+		await capture("iris-done-%dx%d" % [dimensions.x,dimensions.y])
+		game._finish_training(false)
+	# 無射撃の途中測定は「最初の自由練習」の案内を消費しない。
+	game.data = V2Save.defaults()
+	game.combat.configure(game.data)
+	begin(0,true)
+	game._process(0.2)
+	game._finish_training(false)
+	check(game.data.training_history.size() == 1 and not game.data.intro_seen and Progression.total(game.data) == 0, "aborted measurement consumed first-free intro")
+	begin(0)
+	check(game.iris_intro.waiting, "first free intro missing after zero-progress measurement")
+	game._finish_training(false)
+	begin(0)
+	check(not game.iris_intro.is_active(), "finished/skipped intro replayed without a kill")
+	game._finish_training(false)
+	# 有効測定を既に持つ場合は、全外しで達成0でも新規案内を挿入しない。
+	game.data = V2Save.defaults()
+	game.combat.configure(game.data)
+	begin(0,true)
+	game.camera.rotation.y += 1.5
+	game._accept_measurement_shoot(true,0.21)
+	game._accept_measurement_shoot(false,0.3)
+	for tick in 601:
+		if game.mode != game.Mode.TRAINING:break
+		game._process(0.1)
+	check(game.data.measurement_counts[0] == 1 and Progression.total(game.data) == 0, "valid miss-only measurement boundary failed")
+	begin(0)
+	check(not game.iris_intro.is_active(), "completed measurement replayed new-user intro")
+	game._finish_training(false)
 	game.queue_free()
 	await frames()
 	if failures.is_empty():

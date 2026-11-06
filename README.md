@@ -1,10 +1,10 @@
-# Aim Runner — 0.22
+# Aim Runner — 0.23
 
 標的を撃ち、達成を積み、次の武器で別の練習を試すWindows向けゲームです。三武器の60秒測定から、自分の発射リズムを持つ三人の部隊も作れます。
 
 ## ダウンロード・旧版からの更新
 
-[0.22正式リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.22)の`SupplyLineTrainer_Windows_v0.22.zip`を別フォルダーへ展開し、`SupplyLineTrainer.exe`を起動してください。同じ場所のPCKが必要です。Windows 10/11 64bit、Godot 4.7.2 Compatibility renderer。
+[0.23正式リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.23)の`SupplyLineTrainer_Windows_v0.23.zip`を別フォルダーへ展開し、`SupplyLineTrainer.exe`を起動してください。同じ場所のPCKが必要です。Windows 10/11 64bit、Godot 4.7.2 Compatibility renderer。
 
 **旧1.x／2.xから0.21以降へは手動更新が必要です。** 公開済みの旧アップデーターは新番号を認識できません。ゲームを終了して新ZIPを展開・起動してください。0.21以降は0.22、0.23…、0.29の次は0.30という整数の連番体系を使い、旧体系より優先します。
 
@@ -15,6 +15,16 @@
 0.22から製品名を **Aim Runner** に変更しました（旧称Supply Line Trainer）。Windowsの起動画面・設定・ウィンドウ・製品情報に反映しています。保存済みデータと更新の互換性を保つため、保存先・EXE/PCK/ZIP名・GitHub URLは従来の識別名を使用します。ゲームの射撃・採点・育成ルールは0.21と同じです。
 
 [過去バージョンからの更新内容・版別Discussion一覧](docs/versions.md) ／ [全変更履歴](CHANGELOG.md) ／ [0.22検証報告](docs/022-verification.md)
+
+## 0.23で変わったこと
+
+命中・撃破直後の全体同期保存を保存要求の集約へ変更し、射撃中に保存済み履歴全体を繰り返し複製しないようにしました。武器・実績の表示構造と音源も再利用します。[原因と修正前後の計測](docs/023-performance.md)、[配布版の検証・未確認事項](docs/023-verification.md)を公開します。
+
+新規データの最初の自由練習では、暗闇の中央に見える標的を撃つと、その位置から短い円形の開口が広がります。実際の最初の撃破として一度だけ数えます。Enterで案内をスキップでき、Escで一時停止できます。測定には演出を入れません。既存プレイヤーの解放・記録・プロフィール・設定は保持します。
+
+標的出現時に短い自作のポン音を追加しました。連続して移動する追従標的の位置更新では鳴りません。音量は全体音量と射撃音量、出現音の有効状態は演出設定に従います。強い演出を抑える設定では初回の開口を短縮します。
+
+[0.23のフィードバック](https://github.com/cloford/supply-line-trainer/discussions/15)。新規の選択・使用はハンドガンだけです。未解放は黒いシルエットと???で表示し、解放されるまで他の経路からも練習開始できません。
 
 ## 遊び方
 
@@ -54,7 +64,7 @@
 
 [0.21仕様](docs/021-spec.md) ／ [中核契約](docs/021-core.md) ／ [検証・調整値・未確認事項](docs/021-verification.md) ／ [変更履歴](CHANGELOG.md) ／ [配布手順](docs/release.md)。
 
-[0.21フィードバック](https://github.com/cloford/supply-line-trainer/discussions/14)へ、武器・達成数・画面サイズ・再現手順を添えてお寄せください。
+[0.23フィードバック](https://github.com/cloford/supply-line-trainer/discussions/15)へ、武器・達成数・画面サイズ・再現手順を添えてお寄せください。
 
 兵士・武器アイコン・地形はコードで作成したオリジナル、音は自作合成です。無断抽出・有料素材・実行時AIサービスは使いません。Godotと同梱第三者ライセンスはWindows配布の`GODOT_LICENSE.txt`へ収録します。[素材表記](docs/v2-assets.md)。自動検証や画像確認を、人による面白さや技能向上の実証とは扱いません。
 

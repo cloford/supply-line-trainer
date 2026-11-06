@@ -88,6 +88,10 @@ static func achievements(data:Dictionary)->Array:
 		item["title"] = item.name
 		item["unlocked"] = unlocked_items.has(item.id)
 		item["unlocked_at"] = str(unlocked_items.get(item.id,""))
+		if item.kind == "weapon" and not bool(item.unlocked):
+			item["title"] = "??? 解放"
+			item["name"] = "??? 解放"
+			item["description"] = "累計%d達成で解放" % int(item.threshold)
 	return result
 
 static func mark_seen(data:Dictionary, id:String)->void:
