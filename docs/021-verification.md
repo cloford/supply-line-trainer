@@ -55,7 +55,11 @@ GodotのWindowsリリース書き出しでEXE/PCKを作成。最終PCKを直接�
 
 通常EXEも隔離APPDATAで表示起動し、保存ファイル生成とログにSCRIPT ERROR／ERRORなしを確認した。画面操作ツールは従来API・別の提供APIとも初期化時に`failed to write kernel assets: 指定されたパスが見つかりません。 (os error 3)`で失敗。通常EXEをクリックしての測定・採用・切替は確認済みとしない。自分の隔離検証インスタンスだけを終了した。
 
-ZIPは38,349,334バイト、SHA-256は`8083246247f5d1510759fb0ad03a9aea93413eefcc4b1a94e02ecff7d9b8d2f3`。EXE/PCK、日本語README・CHANGELOG・検証範囲、Godotライセンスだけを同階層に収録した。セーブ・画像・テスト・認証情報を含めない。全メンバーを読み戻し、EXE/PCKが元ビルドのハッシュと一致。更新機能のZIP検証も受理した。公開API/CDNは公開後に追記する。
+ZIPは38,349,334バイト、SHA-256は`8083246247f5d1510759fb0ad03a9aea93413eefcc4b1a94e02ecff7d9b8d2f3`。EXE/PCK、日本語README・CHANGELOG・検証範囲、Godotライセンスだけを同階層に収録した。セーブ・画像・テスト・認証情報を含めない。全メンバーを読み戻し、EXE/PCKが元ビルドのハッシュと一致。更新機能のZIP検証も受理した。
+
+2026-11-06に[PUBLICの0.21リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.21)を公開。製品タグは`v0.21`、コミットは`cde2354`。GitHubの最新リリースAPIが0.21を返し、公開アセットのサイズ・digestも上記と一致した。最終PCKの`public_release_tests.gd`でAPI/CDNのリダイレクトを含め実ダウンロードし、サイズ・SHA-256・アーカイブ内容が通過した。旧版番号を与えた新版検査器の更新検出も通過したが、公開済み旧バイナリが新番号を認識するという意味ではない。適用・再起動は実行していない。
+
+最終PCKの`update_display_tests.gd -- --live`も通過。実行中v0.21と最新公開版v0.21が同じと表示され、準備／設定の二解像度で適用ボタンが無効だった。[フィードバック窓口](https://github.com/cloford/supply-line-trainer/discussions/9)も0.21専用で作成した。
 
 ## 画面例
 
