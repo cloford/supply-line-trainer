@@ -5,6 +5,8 @@
 # ローカルビルド
 build/
 dist/
+/outputs/
+*.zip
 *.exe
 *.pck
 captures/
