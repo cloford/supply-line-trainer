@@ -30,7 +30,9 @@ Windows EXE/PCKのリリース書き出しは成功。通常EXEも隔離APPDATA�
 
 ## Windows ZIP
 
-EXE/PCK、日本語README・変更履歴・検証範囲とGodotライセンスの6ファイルを同階層に収録。実セーブ・認証情報・画像・テストは含めない。ZIP全メンバーを読み戻し、EXE/PCKが元ビルドのハッシュと一致した。サイズ38,367,092バイト、SHA-256 `60a610d98d5cb8055acfa696071a1fb83e84f29cb979b40a69130794a68ded3f`。更新機能のアーカイブ検証も通過した。公開後の確認は追記する。
+EXE/PCK、日本語README・変更履歴・検証範囲とGodotライセンスの6ファイルを同階層に収録。実セーブ・認証情報・画像・テストは含めない。ZIP全メンバーを読み戻し、EXE/PCKが元ビルドのハッシュと一致した。サイズ38,367,092バイト、SHA-256 `60a610d98d5cb8055acfa696071a1fb83e84f29cb979b40a69130794a68ded3f`。更新機能のアーカイブ検証も通過した。
+
+2026-11-07、[PUBLICの0.23](https://github.com/cloford/supply-line-trainer/releases/tag/v0.23)を公開。製品タグv0.23は`294a78c`。公開後に最終PCKの`public_release_tests.gd`でAPI/CDNの実リダイレクトからZIPを取得し、サイズ・SHA-256・内容を照合した。`update_display_tests.gd -- --live`も通過し、実行中0.23と最新公開版0.23が同じ表示で適用ボタンが無効だった。旧番号を与えた新版検査器の更新検出は確認したが、旧公開バイナリの自動適用が成功した意味ではない。適用・再起動は実行していない。[専用Discussion #15](https://github.com/cloford/supply-line-trainer/discussions/15)も公開案内へ更新した。
 
 ## 担当モデル
 
