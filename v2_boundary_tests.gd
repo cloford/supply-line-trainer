@@ -14,6 +14,7 @@ func _init()->void:
 
 func start(weapon:int)->void:
 	game.data = V2Save.defaults()
+	game.data.progression.preserved_weapons = [0, 1, 2]
 	game.data.settings.shot_sound = 3
 	game.data.settings.hit_sound = 3
 	game._show_prep()

@@ -82,24 +82,25 @@ static func _build_prep(g)->void:
 	g.prep_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	g.ui.add_child(g.prep_panel)
 	var body := column(margin(g.prep_panel), 10)
-	label(body, "SUPPLY LINE TRAINER  /  v2", 20)
+	label(body, "SUPPLY LINE TRAINER  /  " + SupplyLineUpdater.current_version(), 20)
 	var center := CenterContainer.new()
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(center)
 	var content := column(center)
 	content.custom_minimum_size.x = 880
-	label(content, "好きな練習から、自分の記録を持つ兵士へ", 26)
+	label(content, "一つ撃つところから、次の練習へ", 26)
 	var modes := HBoxContainer.new()
 	content.add_child(modes)
 	g.free_button = button(modes, "自由練習 — 無制限", g._select_measurement.bind(false))
 	g.measure_button = button(modes, "兵士を作る — 60秒測定", g._select_measurement.bind(true))
 	g.training_kind_info = label(content, "", 15)
-	var weapons := HBoxContainer.new()
+	var weapons := GridContainer.new()
+	weapons.columns = 3
 	content.add_child(weapons)
-	for weapon in 3:
+	for weapon in 5:
 		var control := button(weapons, "", g._select_weapon.bind(weapon))
 		control.toggle_mode = true
-		control.custom_minimum_size = Vector2(272, 80)
+		control.custom_minimum_size = Vector2(272, 62)
 		g.weapon_buttons.append(control)
 	g.difficulty_row = HBoxContainer.new()
 	content.add_child(g.difficulty_row)
@@ -198,7 +199,9 @@ static func _build_hud(g)->void:
 	g.hit_label = label(g.hud, "", 15)
 	g.hit_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	g.hit_label.offset_left = 24
+	g.hit_label.offset_right = 780
 	g.hit_label.offset_top = -58
+	g.hit_label.offset_bottom = -18
 	g.crosshair = AimCrosshair.new()
 	g.crosshair.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	g.hud.add_child(g.crosshair)

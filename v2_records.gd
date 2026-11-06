@@ -21,7 +21,7 @@ func _refresh()->void:
 	previous.disabled = page == 0
 	next.disabled = page == pages - 1
 	if history.is_empty():
-		rows.add_child(_text("まだ記録はありません。全武器の自由練習・測定を最初から利用できます。", 18))
+		rows.add_child(_text("まだ記録はありません。ハンドガンから始め、撃破・追従達成で次の練習を解放できます。", 18))
 	for index in range(page * PAGE_SIZE, mini(history.size(), (page + 1) * PAGE_SIZE)):
 		var entry:Dictionary = history[index]
 		var measurement:Dictionary = entry.get("measurement", {})
@@ -33,6 +33,6 @@ func _refresh()->void:
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.custom_minimum_size.y = 68
-		button.text = "%s　%s / %s　%s\n練習 %s　獲得 %d クレジット" % [str(entry.get("started", "")), kind, ["ハンドガン", "アサルトライフル", "バーストライフル"][clampi(int(entry.get("weapon", 0)), 0, 2)], status, Balance.clock_text(float(entry.get("elapsed", 0))), int(entry.get("credits", 0))]
+		button.text = "%s　%s / %s　%s\n練習 %s　獲得 %d クレジット" % [str(entry.get("started", "")), kind, TrainingCatalog.NAMES[TrainingCatalog.safe_index(entry.get("weapon", 0))], status, Balance.clock_text(float(entry.get("elapsed", 0))), int(entry.get("credits", 0))]
 		button.pressed.connect(_select_record.bind(entry))
 		rows.add_child(button)

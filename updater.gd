@@ -26,31 +26,17 @@ static func available() -> bool:
 	return OS.get_name() == "Windows" and OS.has_feature("template") and not OS.has_feature("editor") and OS.get_executable_path().get_file() == PAYLOAD[0]
 
 static func current_version() -> String:
-	return str(ProjectSettings.get_setting("application/config/version", ""))
+	return ReleaseVersion.display(str(ProjectSettings.get_setting("application/config/version", "")))
 
 static func running_version_text() -> String:
 	var version := current_version()
 	return "実行中 v%s" % version if version_parts(version).size() == 3 else "実行中の版番号は不明です"
 
 static func version_parts(value: String) -> Array[int]:
-	var regex := RegEx.new()
-	regex.compile("^v?(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\z")
-	var matched := regex.search(value)
-	var parts: Array[int] = []
-	if matched:
-		for index in range(1, 4):
-			var part := matched.get_string(index)
-			if part.length() > 9: return []
-			parts.append(int(part))
-	return parts
+	return ReleaseVersion.parts(value)
 
 static func newer(candidate: String, current: String) -> bool:
-	var left := version_parts(candidate)
-	var right := version_parts(current)
-	if left.size() != 3 or right.size() != 3: return false
-	for index in 3:
-		if left[index] != right[index]: return left[index] > right[index]
-	return false
+	return ReleaseVersion.newer(candidate,current)
 
 static func valid_asset(asset: Dictionary, tag: String) -> bool:
 	if version_parts(tag).size() != 3: return false
@@ -202,7 +188,7 @@ func _completed(result: int, code: int, headers: PackedStringArray, body: Packed
 			_fail("実行中のバージョン番号を確認できないため、更新を中止しました")
 			return
 		if not newer(tag, current):
-			if version_parts(tag) == version_parts(current):
+			if ReleaseVersion.same(tag,current):
 				_set_status("最新公開版 v%s と同じです" % tag.trim_prefix("v"))
 			else:
 				_set_status("最新公開版は v%s（実行中の方が新しい版です）" % tag.trim_prefix("v"))

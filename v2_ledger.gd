@@ -1,19 +1,32 @@
 class_name V2Ledger
 extends RefCounted
 
+static func _settled(data:Dictionary, id:String)->bool:
+	if id in data.settled_training_ids:
+		return true
+	for entry in data.training_history:
+		if str(entry.get("id","")) == id:
+			return true
+	return false
+
 static func checkpoint(data:Dictionary, record:Dictionary)->void:
-	if float(record.get("elapsed",0.0)) <= 0.0 or str(record.get("id","")) in data.settled_training_ids:
+	if float(record.get("elapsed",0.0)) <= 0.0 or _settled(data,str(record.get("id",""))):
 		return
 	var previous:Dictionary = data.get("active_training",{})
 	if not previous.is_empty() and str(previous.id) != str(record.id):
 		finish(data,previous,"中断復元")
+		previous = {}
+	if not data.has("progression"):
+		Progression.migrate(data)
+	if not bool(record.get("progress_measurement",false)) and not record.has("measurement"):
+		Progression.apply_record(data,record,previous)
 	var before := str(data.credits)
 	TrainingLedger.checkpoint(data,record)
 	var delta := BigUInt.subtract(str(data.credits),before)
 	data.lifetime_credits = BigUInt.add(str(data.lifetime_credits),delta)
 
 static func finish(data:Dictionary, record:Dictionary, status:String, measurement:Dictionary = {})->void:
-	if float(record.get("elapsed",0.0)) <= 0.0 or str(record.get("id","")) in data.settled_training_ids:
+	if float(record.get("elapsed",0.0)) <= 0.0 or _settled(data,str(record.get("id",""))):
 		return
 	var final := record.duplicate(true)
 	var measured:Dictionary = measurement.duplicate(true) if not measurement.is_empty() else record.get("measurement",{}).duplicate(true)
@@ -33,6 +46,7 @@ static func finish(data:Dictionary, record:Dictionary, status:String, measuremen
 	var id := str(measured.record_id)
 	if id in data.completed_measurement_ids:
 		return
+	Progression.apply_record(data,final)
 	data.completed_measurement_ids.append(id)
 	var weapon := int(measured.weapon)
 	data.measurement_counts[weapon] = int(data.measurement_counts[weapon]) + 1

@@ -1,5 +1,11 @@
 # リリース手順
 
+## 0.21以降の公開番号と更新
+
+公開表記0.21、タグ`v0.21`、ZIP`SupplyLineTrainer_Windows_v0.21.zip`。次は0.22、0.29の次は0.30。`ReleaseVersion`の新旧世代と整数連番を使い、古い番号体系の配布を最新へ戻さない。既存タグ・配布物を上書きしない。
+
+旧1.x／2.xの公開済みアップデーターは新番号を認識できず、0.21はゲーム終了後にZIPを別フォルダーへ手動展開する。**既存v2の育成・設定・プロフィールはリセットしない。セーブを削除させない。** アセット名・サイズ・digest・latestを確認する。ゲーム内の0.21フィードバックは`next_game.gd`から[Discussion #9](https://github.com/cloford/supply-line-trainer/discussions/9)へ接続する。
+
 ## v2.0.0の大型変更
 
 更新説明と配布内READMEの先頭へ「個人設定のみ引継ぎ、新育成開始」を明記する。旧`save_v1.json`は上書きせず日時付き保全、新方式は`save_v2.json`。旧進行・履歴を混ぜず、既存のセーブを削除するよう案内しない。通常EXEと配布PCKで隔離セーブを使い、実ユーザーの記録を公開しない。[v2フィードバック](https://github.com/cloford/supply-line-trainer/discussions/8)をゲーム・README・リリースで共用する。

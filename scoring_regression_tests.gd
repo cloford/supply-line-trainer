@@ -15,6 +15,7 @@ func _run()->void:
 	var current=load("res://main.tscn").instantiate();current.is_test_mode=true;root.add_child(current)
 	for game in [old,current]:
 		game.set_process(false);game.set_physics_process(false);game.data.settings.shot_sound=3;game.data.settings.hit_sound=3;game.data.unlocked=[true,true,true]
+		if game.data.has("progression"):game.data.progression.preserved_weapons=[0,1,2]
 	var expected:Array=[]
 	# 同時に3D世界へ重ねないため、片方の標的を消してから次の実装を走らせる。
 	for game in [old,current]:
@@ -22,6 +23,9 @@ func _run()->void:
 			game.selected_weapon=weapon;seed(1600+weapon);game._start_training();game._process(3.1)
 			for index in 15:
 				game.training_elapsed+=0.3
+				# 0.21は出現領域を整理したため、採点回帰は同一の空間条件を注入して比較する。
+				for target_index in game.targets.size():
+					game.targets[target_index].position=Vector3(-2.0+target_index*2.0,2.5,-8.0)
 				game.camera.look_at(game.targets[0].global_position)
 				if index%5==4:game.camera.rotation.y+=1.2
 				await physics_frame;await physics_frame
@@ -32,7 +36,11 @@ func _run()->void:
 				else:game._fire_shot()
 			var actual:Dictionary={"stats":game.stats.duplicate(true),"points":game._training_result(),"q_sum":game.shooting_metrics.q_sum,"q_time":game.shooting_metrics.q_time}
 			if game==old:expected.append(actual)
-			else:check(actual==expected[weapon],"weapon %d facts/points differ from v1.9.0"%weapon)
+			else:
+				if actual!=expected[weapon]:
+					print("SCORING_EXPECTED ",weapon," ",JSON.stringify(expected[weapon]))
+					print("SCORING_ACTUAL ",weapon," ",JSON.stringify(actual))
+				check(actual==expected[weapon],"weapon %d facts/points differ from v1.9.0"%weapon)
 			game._finish_training(false)
 		game._clear_targets();await process_frame;await physics_frame
 	old.queue_free();current.queue_free();for frame in 4:await process_frame

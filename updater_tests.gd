@@ -11,10 +11,15 @@ func _init() -> void:
 	check(Updater.newer("1.10.0", "1.9.99"), "numeric semantic comparison")
 	check(not Updater.newer("1.4.0", "1.4.0"), "equal release")
 	check(not Updater.newer("1.3.9", "1.4.0"), "no downgrade")
+	check(Updater.newer("v0.21", "2.0.0"), "new numbering epoch wins over legacy major")
+	check(not Updater.newer("v2.99.0", "0.21"), "never select legacy release again")
+	check(Updater.newer("0.30", "0.29"), "integer sequence comparison")
 	for version in ["1.4.0-beta", "1.4.0+dev", "01.4.0", "1.4", "1.4.0\n", "https://bad", "9999999999999999999.0.0"]:
 		check(Updater.version_parts(version).is_empty(), "invalid stable version " + version)
 	var asset := {"name": "SupplyLineTrainer_Windows_v1.4.0.zip", "browser_download_url": Updater.DOWNLOAD_PREFIX + "v1.4.0/SupplyLineTrainer_Windows_v1.4.0.zip", "size": 40000000, "digest": "sha256:" + "a".repeat(64)}
 	check(Updater.valid_asset(asset, "v1.4.0"), "trusted GitHub release asset")
+	var sequence_asset := {"name":"SupplyLineTrainer_Windows_v0.21.zip","browser_download_url":Updater.DOWNLOAD_PREFIX+"v0.21/SupplyLineTrainer_Windows_v0.21.zip","size":40000000,"digest":"sha256:"+"a".repeat(64)}
+	check(Updater.valid_asset(sequence_asset,"v0.21"),"new sequence archive/tag naming")
 	for field in ["name", "browser_download_url", "digest"]:
 		var invalid: Dictionary = asset.duplicate()
 		invalid[field] = "https://evil.invalid/asset.zip"
@@ -72,7 +77,7 @@ func _async_checks() -> void:
 	check(update.status=="v1.6.0 が利用できます" and not update.ready,"older running build must offer newer release, not claim latest")
 	check(Updater.running_version_text()=="実行中 v1.5.0","project version changed but label stayed fixed")
 	var current_parts:=Updater.version_parts(current_version)
-	ProjectSettings.set_setting("application/config/version","%d.%d.%d"%[current_parts[0]+1,current_parts[1],current_parts[2]])
+	ProjectSettings.set_setting("application/config/version","0.%d" % maxi(22,current_parts[1]+1))
 	var ahead := await _transport_case(200,JSON.stringify(latest).to_utf8_buffer(),"check","",{})
 	check("実行中の方が新しい" in ahead.status and not ahead.ready,"ahead build must not call older public release equal")
 	ProjectSettings.set_setting("application/config/version","invalid")

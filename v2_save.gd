@@ -10,7 +10,7 @@ static var last_error := ""
 static var test_fail_step := ""
 
 static func defaults()->Dictionary:
-	return {"version":V2Rules.SAVE_VERSION,"scoring_version":4,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0}
+	return {"version":V2Rules.SAVE_VERSION,"scoring_version":4,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0,"progression":Progression.defaults()}
 
 static func validate_settings(source:Variant)->Dictionary:
 	var result := SETTING_DEFAULTS.duplicate(true)
@@ -42,6 +42,8 @@ static func _failure(reason:String)->Dictionary:
 
 static func _valid_data(data:Variant)->bool:
 	if not data is Dictionary or typeof(data.get("version")) not in [TYPE_INT,TYPE_FLOAT] or int(data.get("version",0)) != V2Rules.SAVE_VERSION:
+		return false
+	if data.has("progression") and not Progression.valid(data.progression):
 		return false
 	for key in ["credits","lifetime_credits"]:
 		if not data.get(key) is String or BigUInt.normalize(data[key]) != data[key]:
@@ -76,6 +78,13 @@ static func _valid_data(data:Variant)->bool:
 		for key in ["weapon","duration","elapsed","active","credits"]:
 			if typeof(entry.get(key)) not in [TYPE_INT,TYPE_FLOAT] or not is_finite(float(entry[key])) or float(entry[key]) < 0.0:
 				return false
+		for key in ["progress_kills","progress_tracking_seconds"]:
+			if entry.has(key) and (typeof(entry[key]) not in [TYPE_INT,TYPE_FLOAT] or not is_finite(float(entry[key])) or float(entry[key]) < 0.0):
+				return false
+		if entry.has("progress_kills") and float(entry.progress_kills) != floor(float(entry.progress_kills)):
+			return false
+		if entry.has("progress_measurement") and typeof(entry.progress_measurement) != TYPE_BOOL:
+			return false
 	for weapon in range(3):
 		for key in ["protection","measurement_counts"]:
 			if typeof(data[key][weapon]) not in [TYPE_INT,TYPE_FLOAT] or not is_finite(float(data[key][weapon])) or float(data[key][weapon]) != floor(float(data[key][weapon])):
@@ -147,7 +156,9 @@ static func load_data()->Dictionary:
 		var data:Dictionary = parsed
 		data.settings = validate_settings(data.settings)
 		data.training_history.resize(mini(data.training_history.size(),V2Rules.HISTORY_LIMIT))
-		if V2Ledger.recover(data) and not save_data(data):
+		var migrated := Progression.migrate(data)
+		var recovered := V2Ledger.recover(data)
+		if (migrated or recovered) and not save_data(data):
 			return _failure("中断記録の確定保存に失敗しました。" + last_error)
 		return data
 	var data := defaults()
@@ -173,6 +184,7 @@ static func save_data(data:Dictionary)->bool:
 		return false
 	var candidate := data.duplicate(true)
 	candidate.version = V2Rules.SAVE_VERSION
+	Progression.migrate(candidate)
 	candidate.settings = validate_settings(candidate.get("settings",{}))
 	candidate.last_save = int(Time.get_unix_time_from_system())
 	if not _valid_data(candidate):
