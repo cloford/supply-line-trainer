@@ -36,7 +36,9 @@ EXE SHA-256：`acbbc00a8ec03a216a5821aa4185bb017cbed86d1199583b1eda7cda2dc04a19`
 
 ## Windows ZIP
 
-EXE/PCK、日本語README・CHANGELOG・検証範囲、Godotライセンスの6ファイルを同階層に収録。QAラッパー・テスト・画像・実セーブ・認証情報は含めない。全メンバーを読み戻し、EXE/PCKが検証済みファイルと同じハッシュであることを確認した。38,378,736バイト、SHA-256 `9dd145363b535bd97ce237bed602e686d05dc504d9edb5f46688ba315da4e5a7`。公開後の確認は追記する。
+EXE/PCK、日本語README・CHANGELOG・検証範囲、Godotライセンスの6ファイルを同階層に収録。QAラッパー・テスト・画像・実セーブ・認証情報は含めない。全メンバーを読み戻し、EXE/PCKが検証済みファイルと同じハッシュであることを確認した。38,378,736バイト、SHA-256 `9dd145363b535bd97ce237bed602e686d05dc504d9edb5f46688ba315da4e5a7`。更新機能のZIP検証も通過した。
+
+2026-11-07に[PUBLICの0.24](https://github.com/cloford/supply-line-trainer/releases/tag/v0.24)を公開。製品タグv0.24は`a207383`。公開後に最終PCKの`public_release_tests.gd`でAPI/CDNのリダイレクトからZIPを実取得し、サイズ・SHA-256・内容を照合した。`update_display_tests.gd -- --live`も通過し、実行中0.24と最新公開版0.24が同じ表示で適用ボタンは無効だった。旧番号を与えた新版検査器の検出も確認したが、旧公開バイナリの自動差し替えが成功した意味ではない。適用・再起動は実行していない。[専用Discussion #16](https://github.com/cloford/supply-line-trainer/discussions/16)も公開案内へ更新した。
 
 ## 未確認事項・担当
 
