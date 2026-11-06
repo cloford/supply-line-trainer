@@ -27,13 +27,15 @@
 
 ## 未確認事項
 
-このホストのWindows PowerShellは検証起動でタイムアウトした。別のPowerShellでも検証を試行した。番号検証コードの修正と、実インストールの差し替え・再起動までの成功を同一視しない。実際の自動差し替え全工程は未確認。
+このホストのWindows PowerShellと、別のPowerShell（pwsh）はいずれも検証起動でタイムアウトした。番号検証コードの修正と、実インストールの差し替え・再起動までの成功を同一視しない。実際の自動差し替え全工程は未確認。
 
 通常EXEのクリックによる試遊、高DPI、別PC、人の長時間試遊も今回未確認。0.21の検証結果は[以前の報告](021-verification.md)を参照。
 
 ## 配布物
 
-Windows製品リソースをWin32のVersion APIで読み、`ProductName`が`Aim Runner 0.22`であることを確認。ZIPの全エントリーを読み戻し、EXE/PCKのハッシュが元ビルドと一致した。38,350,048バイト、SHA-256 `aa7b87bf1608f0aa8f5089210de982d9eff7e52ee1709a1a1ba71c26bc12a39d`。更新処理のZIP検証も通過した。公開後の確認は追記する。
+Windows製品リソースをWin32のVersion APIで読み、`ProductName`が`Aim Runner 0.22`であることを確認。ZIPの全エントリーを読み戻し、EXE/PCKのハッシュが元ビルドと一致した。38,350,048バイト、SHA-256 `aa7b87bf1608f0aa8f5089210de982d9eff7e52ee1709a1a1ba71c26bc12a39d`。更新処理のZIP検証も通過した。
+
+PUBLICの[0.22リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.22)を公開後、最終PCKの`public_release_tests.gd`で実API/CDNのリダイレクトを経てダウンロードし、サイズ・SHA-256・ZIP内容が一致した。`update_display_tests.gd -- --live`も通過し、実行中0.22と最新公開版0.22が同じ表示、同版の適用ボタンが無効であることを確認。検査器に旧版番号を渡した検出試験も行ったが、旧公開バイナリで自動適用まで成功した意味ではない。適用・再起動は実行していない。
 
 ## 画面例
 
