@@ -82,7 +82,7 @@ static func _build_prep(g)->void:
 	g.prep_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	g.ui.add_child(g.prep_panel)
 	var body := column(margin(g.prep_panel), 10)
-	label(body, "SUPPLY LINE TRAINER  /  " + SupplyLineUpdater.current_version(), 20)
+	label(body, "AIM RUNNER  /  " + SupplyLineUpdater.current_version(), 20)
 	var center := CenterContainer.new()
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(center)

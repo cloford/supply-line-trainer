@@ -1,14 +1,20 @@
-# Supply Line Trainer — 0.21
+# Aim Runner — 0.22
 
 標的を撃ち、達成を積み、次の武器で別の練習を試すWindows向けゲームです。三武器の60秒測定から、自分の発射リズムを持つ三人の部隊も作れます。
 
 ## ダウンロード・旧版からの更新
 
-[0.21正式リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.21)の`SupplyLineTrainer_Windows_v0.21.zip`を別フォルダーへ展開し、`SupplyLineTrainer.exe`を起動してください。同じ場所のPCKが必要です。Windows 10/11 64bit、Godot 4.7.2 Compatibility renderer。
+[0.22正式リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.22)の`SupplyLineTrainer_Windows_v0.22.zip`を別フォルダーへ展開し、`SupplyLineTrainer.exe`を起動してください。同じ場所のPCKが必要です。Windows 10/11 64bit、Godot 4.7.2 Compatibility renderer。
 
-**旧1.x／2.xから0.21へは手動更新が必要です。** 公開済みの旧アップデーターは新番号を認識できません。ゲームを終了して新ZIPを展開・起動してください。0.21以降は0.22、0.23…、0.29の次は0.30という整数の連番体系を使い、旧体系より優先します。
+**旧1.x／2.xから0.21以降へは手動更新が必要です。** 公開済みの旧アップデーターは新番号を認識できません。ゲームを終了して新ZIPを展開・起動してください。0.21以降は0.22、0.23…、0.29の次は0.30という整数の連番体系を使い、旧体系より優先します。
 
 **今回、既存v2の育成・クレジット・プロフィール・個人設定をリセットしません。** 保存先は従来の`%APPDATA%/Godot/app_userdata/Supply Line Trainer/save_v2.json`。セーブの削除は不要です。旧v1から初めてv2系へ移る場合だけ、従来の設定のみ移行が適用されます。異常終了では未保存の成果を失う場合があります。
+
+## 名称と更新履歴
+
+0.22から製品名を **Aim Runner** に変更しました（旧称Supply Line Trainer）。Windowsの起動画面・設定・ウィンドウ・製品情報に反映しています。保存済みデータと更新の互換性を保つため、保存先・EXE/PCK/ZIP名・GitHub URLは従来の識別名を使用します。ゲームの射撃・採点・育成ルールは0.21と同じです。
+
+[過去バージョンからの更新内容・版別Discussion一覧](docs/versions.md) ／ [全変更履歴](CHANGELOG.md) ／ [0.22検証報告](docs/022-verification.md)
 
 ## 遊び方
 
@@ -48,6 +54,10 @@
 
 [0.21仕様](docs/021-spec.md) ／ [中核契約](docs/021-core.md) ／ [検証・調整値・未確認事項](docs/021-verification.md) ／ [変更履歴](CHANGELOG.md) ／ [配布手順](docs/release.md)。
 
-[0.21フィードバック](https://github.com/cloford/supply-line-trainer/discussions/9)へ、武器・達成数・画面サイズ・再現手順を添えてお寄せください。
+[0.21フィードバック](https://github.com/cloford/supply-line-trainer/discussions/14)へ、武器・達成数・画面サイズ・再現手順を添えてお寄せください。
 
 兵士・武器アイコン・地形はコードで作成したオリジナル、音は自作合成です。無断抽出・有料素材・実行時AIサービスは使いません。Godotと同梱第三者ライセンスはWindows配布の`GODOT_LICENSE.txt`へ収録します。[素材表記](docs/v2-assets.md)。自動検証や画像確認を、人による面白さや技能向上の実証とは扱いません。
+
+## 0.21から0.22への更新について
+
+0.21内の更新補助スクリプトが三要素番号しか受け付けず、0.22の自動適用を拒否することが独立レビューで判明しました。**0.21からも今回は手動更新してください。** ゲームを終了し、0.22のZIP全体を別フォルダーへ展開してEXEを起動します。セーブの削除・初期化は不要です。0.22では二要素の新番号を正しく受け付けるよう補助スクリプトを修正しました。

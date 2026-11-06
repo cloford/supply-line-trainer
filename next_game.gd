@@ -24,8 +24,8 @@ var progress_context:Array = []
 
 func _ready()->void:
 	super._ready()
-	feedback_url = "https://github.com/cloford/supply-line-trainer/discussions/9"
-	DisplayServer.window_set_title("Supply Line Trainer " + SupplyLineUpdater.current_version())
+	feedback_url = "https://github.com/cloford/supply-line-trainer/discussions/14"
+	DisplayServer.window_set_title("Aim Runner " + SupplyLineUpdater.current_version())
 	_update_progress_ui()
 
 func _build_ui()->void:

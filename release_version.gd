@@ -2,8 +2,8 @@ class_name ReleaseVersion
 extends RefCounted
 
 # 0.21以降は連番体系。旧0.xの三要素タグを新体系と推測しない。
-const PUBLIC := "0.21"
-const INTERNAL := "0.21.0"
+const PUBLIC := "0.22"
+const INTERNAL := "0.22.0"
 
 static func parse(value:String)->Dictionary:
 	var regex := RegEx.new()
@@ -21,7 +21,7 @@ static func parse(value:String)->Dictionary:
 		return {"epoch":1,"parts":[0,minor,0],"public":"0.%d" % minor}
 	# 内部版は現在ビルドだけを明示的に許可。任意の旧0.x.yは旧体系。
 	if value.trim_prefix("v") == INTERNAL:
-		return {"epoch":1,"parts":[0,21,0],"public":PUBLIC}
+		return {"epoch":1,"parts":[0,int(PUBLIC.get_slice(".",1)),0],"public":PUBLIC}
 	if third.is_empty():
 		return {}
 	return {"epoch":0,"parts":[major,minor,int(third)],"public":"%d.%d.%d" % [major,minor,int(third)]}

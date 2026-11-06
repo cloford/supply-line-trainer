@@ -526,7 +526,7 @@ func _build_pause_panel()->Control:
 	hit_pitch_check=CheckBox.new();hit_pitch_check.text="連続成功で音程を上げる";hit_pitch_check.toggled.connect(func(_value):_settings_changed());v.add_child(hit_pitch_check)
 	var hit_preview:=Button.new();hit_preview.text="命中音を試聴";hit_preview.pressed.connect(_preview_hit_sound);v.add_child(hit_preview)
 	v=setting_sections[3]
-	v.add_child(_label("Supply Line Trainer — "+SupplyLineUpdater.running_version_text(),20))
+	v.add_child(_label("Aim Runner — "+SupplyLineUpdater.running_version_text(),20))
 	auto_update_check=CheckBox.new();auto_update_check.text="新しい安定版を自動取得";auto_update_check.toggled.connect(func(_value):_settings_changed());v.add_child(auto_update_check)
 	_build_update_controls(v)
 	_select_settings_tab(0)

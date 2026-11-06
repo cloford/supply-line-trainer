@@ -39,12 +39,18 @@ function Sha256([string]$path) {
     try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
     finally { $hash.Dispose(); $stream.Dispose() }
 }
+function ValidVersion([string]$version) {
+    # Match ReleaseVersion: legacy three-part versions, or 0.21 onward.
+    if ($version -cmatch '^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\z') { return $true }
+    if ($version -cmatch '^0\.([1-9][0-9]{0,8})\z') { return [long]$Matches[1] -ge 21 }
+    return $false
+}
 try {
     AssertPlain $stage
     AssertPlain $ManifestPath
     $manifest = Get-Content -LiteralPath $ManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($manifest.token -cnotmatch '^[0-9a-f]{32}\z' -or [IO.Path]::GetFileName($stage) -cne $manifest.token) { throw 'Invalid update token' }
-    if ($manifest.sha256 -cnotmatch '^[0-9a-f]{64}\z' -or $manifest.version -cnotmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\z') { throw 'Invalid update metadata' }
+    if ($manifest.sha256 -cnotmatch '^[0-9a-f]{64}\z' -or -not (ValidVersion ([string]$manifest.version))) { throw 'Invalid update metadata' }
     $executable = [IO.Path]::GetFullPath([string]$manifest.executable)
     if ([IO.Path]::GetFileName($executable) -cne $payload[0] -or -not (Test-Path -LiteralPath $executable -PathType Leaf)) { throw 'Invalid installed executable' }
     $install = [IO.Path]::GetDirectoryName($executable)
