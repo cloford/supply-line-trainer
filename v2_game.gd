@@ -97,7 +97,7 @@ func _notification(what:int)->void:
 			get_tree().quit()
 			return
 		if _training_session_open():
-			_finish_training(false)
+			await _finish_training(false)
 			if not reward_committed:
 				return
 		if not _save_current():
@@ -124,9 +124,9 @@ func _commit(candidate:Dictionary)->bool:
 	return true
 
 func _ack_migration()->void:
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	candidate.v2_notice_seen = true
-	if _commit(candidate):
+	if await _commit(candidate):
 		_refresh_prep()
 
 func _retry_migration()->void:
@@ -241,29 +241,29 @@ func _refresh_army_runtime()->void:
 	_update_battle_view()
 
 func _save_name()->void:
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	candidate.names[selected_soldier] = profile_name.text.strip_edges().left(24)
 	if str(candidate.names[selected_soldier]).is_empty():
 		candidate.names[selected_soldier] = ["ハンドガン兵", "アサルト兵", "バースト兵"][selected_soldier]
-	army_message.text = "名前を保存しました（能力は変わりません）" if _commit(candidate) else "名前を保存できませんでした。"
+	army_message.text = "名前を保存しました（能力は変わりません）" if await _commit(candidate) else "名前を保存できませんでした。"
 
 func _purchase_protection()->void:
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	if not V2Profiles.purchase(candidate, selected_soldier):
 		return
-	army_message.text = "防護強化を保存。次の区間・再挑戦から反映します。" if _commit(candidate) else "保存に失敗したため購入していません。"
+	army_message.text = "防護強化を保存。次の区間・再挑戦から反映します。" if await _commit(candidate) else "保存に失敗したため購入していません。"
 	_refresh_army_runtime()
 
 func _toggle_deployed(enabled:bool)->void:
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	if V2Profiles.set_deployed(candidate, selected_soldier, enabled):
-		army_message.text = "次の区間・再挑戦から出撃変更を反映します。" if _commit(candidate) else "保存できず、出撃状態を維持しました。"
+		army_message.text = "次の区間・再挑戦から出撃変更を反映します。" if await _commit(candidate) else "保存できず、出撃状態を維持しました。"
 	_refresh_army_runtime()
 
 func _revert_profile()->void:
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	if V2Profiles.revert(candidate, selected_soldier):
-		army_message.text = "直前の採用へ戻しました。次の戦闘から反映します。" if _commit(candidate) else "保存に失敗しました。採用は変更していません。"
+		army_message.text = "直前の採用へ戻しました。次の戦闘から反映します。" if await _commit(candidate) else "保存に失敗しました。採用は変更していません。"
 	_refresh_army_runtime()
 
 func _open_soldier_details()->void:
@@ -311,10 +311,10 @@ func _retry_battle()->void:
 		return
 	var pending := combat.copy_runtime()
 	var events := pending.retry(data)
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	for key in pending.persistent_state():
 		candidate[key] = pending.persistent_state()[key]
-	if not _commit(candidate):
+	if not await _commit(candidate):
 		army_message.text = "再挑戦の保存に失敗しました。再読み込みできます。"
 		return
 	combat = pending
@@ -326,10 +326,10 @@ func _retry_battle()->void:
 func _continue_battle()->void:
 	var pending := combat.copy_runtime()
 	var events := pending.continue_expedition(data)
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	for key in pending.persistent_state():
 		candidate[key] = pending.persistent_state()[key]
-	if not _commit(candidate):
+	if not await _commit(candidate):
 		army_message.text = "継続戦線の保存に失敗しました。"
 		return
 	combat = pending
@@ -623,7 +623,7 @@ func _process_measurement(delta:float)->void:
 		exit_ring.show()
 		exit_hint.show()
 		if exit_hold >= 0.8:
-			_finish_training(false)
+			await _finish_training(false)
 			return
 	_consume_measurement_until(endpoint)
 	measurement_frame_elapsed = training_elapsed
@@ -702,9 +702,9 @@ func _checkpoint_training()->bool:
 	checkpoint_timer = 0.0
 	if not _training_session_open() or training_elapsed <= 0.0:
 		return not bool(data.get("migration_failed", false))
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	V2Ledger.checkpoint(candidate, _session_record())
-	return _commit(candidate)
+	return await _commit(candidate)
 
 func _finish_training(full_time:bool)->void:
 	if reward_committed:
@@ -712,7 +712,7 @@ func _finish_training(full_time:bool)->void:
 	if training_measurement and measured_final.is_empty():
 		measured_final = measurement.completed(training_elapsed, not full_time, measurement_settings_changed)
 	var record := _completed_record()
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	V2Ledger.finish(candidate, record, "終了", measured_final)
 	_reset_exit_hold()
 	burst_remaining = 0
@@ -720,7 +720,7 @@ func _finish_training(full_time:bool)->void:
 	mouse_blocked = true
 	audio_player.stop()
 	hit_audio_player.stop()
-	if not _commit(candidate):
+	if not await _commit(candidate):
 		mode_before_pause = Mode.TRAINING
 		mode = Mode.PAUSED
 		pause_panel.show()
@@ -823,11 +823,11 @@ func _open_history_record(record:Dictionary)->void:
 func _adopt_result()->void:
 	if mode != Mode.RESULT:
 		return
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	if not V2Profiles.adopt(candidate, candidate_record):
 		result_message.text = "この記録はすでに採用中です。" if not V2Profiles.from_record(candidate_record).is_empty() else "有効な60秒測定ではありません。"
 		return
-	if _commit(candidate):
+	if await _commit(candidate):
 		result_message.text = "採用を保存しました。次の区間・再挑戦から反映します。報酬や完了回数は増えません。"
 		adopt_button.disabled = true
 	else:
@@ -943,9 +943,9 @@ func _sync_settings_controls(source:Dictionary)->void:
 func _apply_settings_draft()->void:
 	var draft := V2Save.validate_settings(_draft_settings())
 	var restart_measurement:bool = _training_session_open() and training_measurement and draft != data.settings
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	candidate.settings = draft
-	if not _commit(candidate):
+	if not await _commit(candidate):
 		settings_dirty = true
 		return
 	settings_snapshot = data.settings.duplicate(true)
@@ -953,7 +953,7 @@ func _apply_settings_draft()->void:
 	_apply_settings()
 	if restart_measurement:
 		measurement_settings_changed = true
-		_finish_training(false)
+		await _finish_training(false)
 		if reward_committed:
 			selected_measurement = true
 			_start_training()
@@ -995,9 +995,9 @@ func _confirm_condition_picker()->void:
 		pending.record = measurement.record.duplicate(true)
 		measured_final = pending.completed(training_elapsed, true, true)
 	var record := _completed_record()
-	var candidate := data.duplicate(true)
+	var candidate := V2Save.transaction_copy(data)
 	V2Ledger.finish(candidate, record, "終了", measured_final)
-	if not _commit(candidate):
+	if not await _commit(candidate):
 		measured_final = {}
 		condition_warning.text = "保存に失敗し、条件は変更していません。再試行できます。"
 		return

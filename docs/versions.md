@@ -6,6 +6,7 @@
 
 | 公開版 | 配布・詳細 | 感想・不具合報告 |
 | --- | --- | --- |
+| 0.24 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.24) | [Discussion #16](https://github.com/cloford/supply-line-trainer/discussions/16) |
 | 0.23 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.23) | [Discussion #15](https://github.com/cloford/supply-line-trainer/discussions/15) |
 | 0.22 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.22) | [Discussion #14](https://github.com/cloford/supply-line-trainer/discussions/14) |
 | 0.21 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.21) | [Discussion #9](https://github.com/cloford/supply-line-trainer/discussions/9) |
@@ -29,6 +30,10 @@
 - 1.xから初めてv2系へ移る場合：v2.0.0で導入した設定のみの移行が適用されます。旧育成をv2育成に換算するものではありません。
 
 ## 各版で変わったこと
+
+### 0.24
+
+通常起動をHG無限練習へ直結し、自動アイリスと大きな3・2・1を表示。Escメニューを保存待ちから分離し、確定操作の描画付き待機と単一writerを維持。既存進行と武器解放条件は保持します。
 
 ### 0.23
 

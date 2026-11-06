@@ -182,6 +182,18 @@ static func load_data()->Dictionary:
 		return _failure("新セーブの初回作成に失敗しました。" + last_error)
 	return data
 
+# 履歴の各確定recordは不変。外側の配列だけ複製し、候補への追加/差替えを隔離する。
+# mutableな現行セッション・設定・進行・所持量は深く複製する。
+static func transaction_copy(data:Dictionary)->Dictionary:
+	var candidate:Dictionary = {}
+	for key in data:
+		var value:Variant = data[key]
+		if key in ["training_history","profiles","previous_profiles"]:
+			candidate[key] = value.duplicate()
+		else:
+			candidate[key] = value.duplicate(true) if value is Dictionary or value is Array else value
+	return candidate
+
 static func save_data(data:Dictionary)->bool:
 	return save_owned_snapshot(data.duplicate(true))
 

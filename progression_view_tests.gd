@@ -2,6 +2,7 @@ extends SceneTree
 
 const VIEW := preload("res://progression_view.gd")
 const IRIS := preload("res://iris_intro.gd")
+const COUNTDOWN := preload("res://countdown_display.gd")
 const SPAWN_AUDIO := preload("res://spawn_audio.gd")
 
 func _initialize() -> void:
@@ -67,6 +68,26 @@ func _run() -> void:
 	assert(iris.anchor == Vector2(300, 200))
 	iris.skip()
 	assert(not iris.is_active() and not iris.visible)
+	iris.start_boot(Vector2(480, 270), true)
+	assert(iris.visible and iris.opening and not iris.waiting)
+	assert(iris.anchor == Vector2(480, 270))
+	assert(is_equal_approx(iris.duration, IRIS.DEFAULT_OPEN_SECONDS))
+	iris.advance(0.4, false)
+	assert(is_equal_approx(iris.elapsed, 0.0))
+	iris.advance(0.8, true)
+	assert(not iris.is_active() and not iris.visible)
+	var countdown = COUNTDOWN.new()
+	root.add_child(countdown)
+	await process_frame
+	assert(countdown.mouse_filter == Control.MOUSE_FILTER_IGNORE)
+	countdown.show_number(3)
+	assert(countdown.visible and countdown.number_label.text == "3")
+	countdown.show_number(2)
+	assert(countdown.number_label.text == "2")
+	countdown.show_number(1)
+	assert(countdown.number_label.text == "1")
+	countdown.clear()
+	assert(not countdown.visible and countdown.number_label.text == "")
 	var button := Button.new()
 	root.add_child(button)
 	V2Interface.set_weapon_button(button, 3, false, false, "Precision rifle")
@@ -91,7 +112,7 @@ func _run() -> void:
 	assert(not pop._player.playing)
 	assert(pop.play_count == 1)
 	print("ProgressionView component checks passed")
-	for node in [view,iris,button,pop]:
+	for node in [view,iris,countdown,button,pop]:
 		node.queue_free()
 	await process_frame
 	quit(0)

@@ -2,9 +2,9 @@ class_name ReleaseVersion
 extends RefCounted
 
 # 0.21以降は連番体系。旧0.xの三要素タグを新体系と推測しない。
-const PUBLIC := "0.23"
-const INTERNAL := "0.23.0"
-const FEEDBACK_URL := "https://github.com/cloford/supply-line-trainer/discussions/15"
+const PUBLIC := "0.24"
+const INTERNAL := "0.24.0"
+const FEEDBACK_URL := "https://github.com/cloford/supply-line-trainer/discussions/16"
 
 static func parse(value:String)->Dictionary:
 	var regex := RegEx.new()

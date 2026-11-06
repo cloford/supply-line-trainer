@@ -9,7 +9,7 @@ func _init()->void:
 	assert(ReleaseVersion.display(ReleaseVersion.INTERNAL) == ReleaseVersion.PUBLIC)
 	assert(not ReleaseVersion.newer("2.99.0","0.21"))
 	assert(not ReleaseVersion.newer("0.21","0.21"))
-	assert(ReleaseVersion.parse("0.24.0").epoch == 0)
+	assert(ReleaseVersion.parse("0.25.0").epoch == 0)
 	assert(ReleaseVersion.newer(ReleaseVersion.PUBLIC,"0.21"))
 	for invalid in ["0.020","0.21\n","0.21-beta","0.21+dev","0.21.0.0","01.0.0","0.999999999999","0.2"]:
 		assert(ReleaseVersion.parse(invalid).is_empty(),invalid)

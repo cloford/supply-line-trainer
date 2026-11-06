@@ -18,6 +18,7 @@ func begin(weapon:int, measured:bool = false)->void:
 	game.selected_weapon = weapon
 	game.selected_measurement = measured
 	game._start_training()
+	game._presentation_drawn_for_test()
 	game.mode = game.Mode.TRAINING
 	game.training_elapsed = 0.2
 	game.mouse_blocked = false

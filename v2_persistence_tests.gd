@@ -32,7 +32,7 @@ func _run()->void:
 		for weapon in 3:
 			check(int(game.data.measurement_counts[weapon]) == 1, "native restart lost completions")
 		check(game.data.training_history.size() == 6, "native restart lost intro plus five-mode history")
-		check(bool(game.data.get("intro_seen",false)), "native restart lost first-play completion")
+		check(game.intro_session and game.iris_intro.waiting and game.training_weapon == 0 and not game.prep_panel.visible,"native reload did not replay HG boot")
 		check(Progression.total(game.data) >= 1503 and Progression.unlocked(game.data,4), "restart lost progression or five-mode unlock")
 		check(int(game.data.training_history[0].weapon) == 4 and not game.data.training_history[0].extra.grenade_events.is_empty(), "restart lost grenade impact facts")
 		for weapon in 3:
@@ -43,21 +43,23 @@ func _run()->void:
 		print("V2_PERSISTENCE_RELOAD: counts=", game.data.measurement_counts, " credits=", game.data.credits)
 	else:
 		check(game.data.measurement_counts == [0, 0, 0], "native test needs fresh isolated save")
-		game.selected_weapon = 0
-		game.selected_measurement = false
-		game._request_start()
-		for tick in 31:
-			game._process(0.1)
-			if game.mode == game.Mode.TRAINING:break
+		check(game.mode == game.Mode.COUNTDOWN and game.intro_session and not game.prep_panel.visible,"production boot exposed prep")
+		game._process(0.1)
+		check(game.iris_intro.waiting and game.training_elapsed == 0.0,"production boot clock advanced before drawing")
+		game._presentation_drawn_for_test()
+		game._process(0.1)
+		for tick in 8:game._process(0.1)
+		game._presentation_drawn_for_test()
+		for tick in 31:game._process(0.1)
 		game.training_elapsed = 0.2
 		game.mouse_blocked = false
-		check(game.iris_intro.waiting,"native first-play intro did not wait")
+		check(game.mode == game.Mode.TRAINING and game.stats.shots == 0,"native automatic intro/countdown failed")
 		game.camera.look_at(game.targets[0].global_position)
 		await physics_frame
 		game._fire_shot()
-		game._process(0.85)
+		game._process(0.1)
 		check(game.data.intro_seen and int(game.stats.kills) == 1,"native first-play kill/completion wrong")
-		game._finish_training(false)
+		await game._finish_training(false)
 		check(game.reward_committed and Progression.total(game.data) == 1,"native intro finish lost or duplicated progression")
 		# 既存三武器が利用済みの隔離fixture。新規解放は0.21専用テストで確認。
 		game.data.progression.preserved_weapons = [0, 1, 2]
@@ -66,6 +68,7 @@ func _run()->void:
 			game.selected_measurement = true
 			game.selected_weapon = weapon
 			game._request_start()
+			game._presentation_drawn_for_test()
 			for tick in 31:
 				game._process(0.1)
 				if game.mode == game.Mode.TRAINING:
@@ -80,8 +83,9 @@ func _run()->void:
 				if game.mode != game.Mode.TRAINING:
 					break
 				game._process(0.1)
+			while game.durable_busy:await process_frame
 			check(game.mode == game.Mode.RESULT and game.data.measurement_counts[weapon] == 1, "native 60s completion failed")
-			game._adopt_result()
+			await game._adopt_result()
 			check(not game.data.profiles[weapon].is_empty(), "native adoption failed")
 		# 新二種目は隔離fixtureで解放し、本番保存経路へ実射撃事実を保存する。
 		Progression.apply_record(game.data, {"weapon":0,"progress_kills":1500})
@@ -90,6 +94,7 @@ func _run()->void:
 			game.selected_measurement = false
 			game.selected_weapon = weapon
 			game._request_start()
+			game._presentation_drawn_for_test()
 			for tick in 31:
 				game._process(0.1)
 				if game.mode == game.Mode.TRAINING:break
@@ -99,11 +104,11 @@ func _run()->void:
 			await physics_frame
 			game._fire_shot()
 			for tick in 35:game._process(0.05)
-			game._finish_training(false)
+			await game._finish_training(false)
 			check(game.adopt_button.disabled, "extra mode offered profile")
 		game._show_army()
 		check(game.combat.snapshot().allies.size() >= 1, "native deployment absent")
-		check(game._save_current(), "native final save failed")
+		check(await game._flush_current(), "native final save failed")
 		print("V2_PERSISTENCE_CREATE: counts=", game.data.measurement_counts, " credits=", game.data.credits)
 	game.queue_free()
 	await process_frame

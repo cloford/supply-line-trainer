@@ -37,6 +37,7 @@ func begin(weapon:int, measured:bool)->void:
 	game.selected_weapon = weapon
 	game.selected_measurement = measured
 	game._request_start()
+	game._presentation_drawn_for_test()
 	for tick in 31:
 		game._process(0.1)
 		if game.mode == game.Mode.TRAINING:

@@ -64,6 +64,18 @@ func open_from(screen_pos: Vector2, effects_enabled: bool = true) -> void:
 	duration = DEFAULT_OPEN_SECONDS if effects_enabled else FAST_OPEN_SECONDS
 	_sync_shader()
 
+## Starts the one-shot boot iris without entering the legacy click-wait state.
+## The anchor is captured once so camera movement cannot shift the aperture.
+func start_boot(screen_pos: Vector2, effects_enabled: bool = true) -> void:
+	anchor = screen_pos
+	radius_pixels = 72.0
+	opening = true
+	waiting = false
+	elapsed = 0.0
+	duration = DEFAULT_OPEN_SECONDS if effects_enabled else FAST_OPEN_SECONDS
+	visible = true
+	_sync_shader()
+
 func advance(delta: float, active: bool = true) -> void:
 	if not active or not opening:
 		return

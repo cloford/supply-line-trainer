@@ -25,7 +25,7 @@ func _checkpoint_training()->bool:
 
 func _commit(candidate:Dictionary)->bool:
 	var started := Time.get_ticks_usec()
-	var okay := super._commit(candidate)
+	var okay := await super._commit(candidate)
 	track("commit_save_us",started)
 	return okay
 
@@ -53,3 +53,14 @@ func _process(delta:float)->void:
 	var started := Time.get_ticks_usec()
 	super._process(delta)
 	track("frame_work_us",started)
+
+func _open_pause()->void:
+	var started := Time.get_ticks_usec()
+	super._open_pause()
+	track("pause_menu_checkpoint_us",started)
+
+func _save_current()->bool:
+	var started := Time.get_ticks_usec()
+	var okay := super._save_current()
+	track("save_current_us",started)
+	return okay

@@ -1,0 +1,204 @@
+{
+  "method": "配布EXEと同一バイナリ、QA起動ラッパーから未変更の製品PCKをmount。入力はGodotイベント。OS物理入力とは区別。",
+  "conditions": "各条件一回、隔離APPDATA、フォーカスを制御。",
+  "cases": {
+    "fresh": {
+      "exe_sha256": "acbbc00a8ec03a216a5821aa4185bb017cbed86d1199583b1eda7cda2dc04a19",
+      "product_pck_sha256": "3e8b7446b58325e05c5fc40aaf3a6096f68bf8cbea9603515ff11b2c90327a0b",
+      "wrapper_pck_sha256": "0f633cb1b8299feb3dae6fd370102c7f1c0374b46b882aec3b40fdb278d31700",
+      "results": [
+        {
+          "binary": "SupplyLineTrainer.exe",
+          "bytecode_hashes": 42,
+          "checks": 795,
+          "close_draw_frames": 5,
+          "close_ms": 109,
+          "dispatch_training_delta": 0.016949,
+          "esc_enqueue_us": 41,
+          "esc_to_post_draw_us": 33146,
+          "esc_worker_alive": false,
+          "esc_worker_running": true,
+          "failures": [],
+          "fixture": "fresh",
+          "game_is_test_mode": false,
+          "history_at_boot": 0,
+          "pause_draw_frames_200ms": 8,
+          "phase": "create",
+          "profile_ids_at_boot": [],
+          "renderer": "Windows",
+          "resource_hashes": 90,
+          "saved_credits": "10",
+          "saved_history": 1,
+          "saved_progress": 1.0,
+          "saved_shots": 1.0,
+          "transitions": [
+            {
+              "ms": 0,
+              "phase": "iris"
+            },
+            {
+              "ms": 952,
+              "phase": "3"
+            },
+            {
+              "ms": 1986,
+              "phase": "2"
+            },
+            {
+              "ms": 2969,
+              "phase": "1"
+            },
+            {
+              "ms": 3986,
+              "phase": "training"
+            }
+          ]
+        },
+        {
+          "binary": "SupplyLineTrainer.exe",
+          "bytecode_hashes": 42,
+          "checks": 791,
+          "failures": [],
+          "fixture": "fresh",
+          "game_is_test_mode": false,
+          "history_at_boot": 1,
+          "phase": "reload",
+          "profile_ids_at_boot": [],
+          "reloaded_credits": "10",
+          "reloaded_progress": 1.0,
+          "reloaded_shots": 1.0,
+          "renderer": "Windows",
+          "resource_hashes": 90,
+          "transitions": [
+            {
+              "ms": 0,
+              "phase": "iris"
+            },
+            {
+              "ms": 913,
+              "phase": "3"
+            },
+            {
+              "ms": 1947,
+              "phase": "2"
+            },
+            {
+              "ms": 2947,
+              "phase": "1"
+            },
+            {
+              "ms": 3947,
+              "phase": "training"
+            }
+          ]
+        }
+      ]
+    },
+    "valid_measurement": {
+      "exe_sha256": "acbbc00a8ec03a216a5821aa4185bb017cbed86d1199583b1eda7cda2dc04a19",
+      "product_pck_sha256": "3e8b7446b58325e05c5fc40aaf3a6096f68bf8cbea9603515ff11b2c90327a0b",
+      "wrapper_pck_sha256": "0f633cb1b8299feb3dae6fd370102c7f1c0374b46b882aec3b40fdb278d31700",
+      "results": [
+        {
+          "binary": "SupplyLineTrainer.exe",
+          "bytecode_hashes": 42,
+          "checks": 893,
+          "close_draw_frames": 1245,
+          "close_ms": 21973,
+          "dispatch_training_delta": 0.0166666666666667,
+          "esc_enqueue_us": 61,
+          "esc_to_post_draw_us": 33113,
+          "esc_worker_alive": true,
+          "esc_worker_running": true,
+          "failures": [],
+          "fixture": "valid_measurement",
+          "game_is_test_mode": false,
+          "history_at_boot": 100,
+          "pause_draw_frames_200ms": 9,
+          "phase": "create",
+          "profile_ids_at_boot": [
+            "release-qa-history-0",
+            "release-qa-history-1",
+            "release-qa-history-2",
+            "release-qa-history-3",
+            "release-qa-history-4",
+            "release-qa-history-5"
+          ],
+          "renderer": "Windows",
+          "resource_hashes": 90,
+          "saved_credits": "10",
+          "saved_history": 101,
+          "saved_progress": 1.0,
+          "saved_shots": 1.0,
+          "transitions": [
+            {
+              "ms": 0,
+              "phase": "iris"
+            },
+            {
+              "ms": 981,
+              "phase": "3"
+            },
+            {
+              "ms": 1998,
+              "phase": "2"
+            },
+            {
+              "ms": 2998,
+              "phase": "1"
+            },
+            {
+              "ms": 3998,
+              "phase": "training"
+            }
+          ]
+        },
+        {
+          "binary": "SupplyLineTrainer.exe",
+          "bytecode_hashes": 42,
+          "checks": 785,
+          "failures": [],
+          "fixture": "valid_measurement",
+          "game_is_test_mode": false,
+          "history_at_boot": 101,
+          "phase": "reload",
+          "profile_ids_at_boot": [
+            "release-qa-history-0",
+            "release-qa-history-1",
+            "release-qa-history-2",
+            "release-qa-history-3",
+            "release-qa-history-4",
+            "release-qa-history-5"
+          ],
+          "reloaded_credits": "10",
+          "reloaded_progress": 1.0,
+          "reloaded_shots": 1.0,
+          "renderer": "Windows",
+          "resource_hashes": 90,
+          "transitions": [
+            {
+              "ms": 0,
+              "phase": "iris"
+            },
+            {
+              "ms": 928,
+              "phase": "3"
+            },
+            {
+              "ms": 1962,
+              "phase": "2"
+            },
+            {
+              "ms": 2962,
+              "phase": "1"
+            },
+            {
+              "ms": 3962,
+              "phase": "training"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

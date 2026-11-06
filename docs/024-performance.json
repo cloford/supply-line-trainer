@@ -1,0 +1,2249 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "baseline": {
+    "tag": "v0.23",
+    "pck_sha256": "fe5abc8abf02b0e45f3aaf798fe08de9ac7a6e6eeab97a5cba63f7fb525a87ed"
+  },
+  "engine": "Godot 4.7.2 stable / Windows / headless timing",
+  "fixture_safety": "SLT_TEST_DATA=1; isolated APPDATA; generated fixtures only; no user save reads or writes",
+  "units": "microseconds unless ms is named",
+  "phase_states": {
+    "mode": 5,
+    "scene_tree_paused": false,
+    "time_scale": 1,
+    "focus": true,
+    "headless_mouse": 0
+  },
+  "measurement_notes": [
+    "Esc total is handler time before return; menu_visible is observed after return, not evidence that it rendered during a blocking baseline handler.",
+    "pause_menu_ui_us is inclusive remainder after checkpoint, so baseline includes sync save/join; save_current_us is separately instrumented and may overlap checkpoint.",
+    "frame_wait_us is headless process_frame scheduling; GPU drawing is verified separately.",
+    "Worker I/O remains expensive; initial worker-owned deep archive cache is retained; pause/resume never rebuild it.",
+    "One sample per fixture/worker state; timings vary by machine and load."
+  ],
+  "runs": {
+    "baseline": [
+      {
+        "event": "PROFILE023_FIXTURE",
+        "history": 0,
+        "kind": "synthetic_payload",
+        "profiles": 0
+      },
+      {
+        "event": "PROFILE023_CACHE",
+        "cache_setup_us": 13,
+        "history": 0
+      },
+      {
+        "event": "miss",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 0,
+        "us": {
+          "audio_shot_us": 25,
+          "event_frame_us": 280,
+          "frame_work_us": 195,
+          "hud_us": 38,
+          "notification_ui_us": 9,
+          "shot_us": 81,
+          "snapshot_us": 0
+        }
+      },
+      {
+        "event": "miss",
+        "frame_wait_us": 359,
+        "history": 0,
+        "us": {
+          "frame_work_us": 110,
+          "hud_us": 29,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill1",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 13,
+          "audio_shot_us": 18,
+          "checkpoint_us": 146,
+          "event_frame_us": 2234,
+          "frame_work_us": 1869,
+          "hud_us": 29,
+          "notification_ui_us": 1655,
+          "shot_us": 362,
+          "snapshot_us": 53,
+          "target_move_us": 18
+        }
+      },
+      {
+        "event": "kill1",
+        "frame_wait_us": 4069,
+        "history": 0,
+        "us": {
+          "frame_work_us": 236,
+          "hud_us": 65,
+          "notification_ui_us": 13
+        }
+      },
+      {
+        "event": "kill2",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 2,
+        "us": {
+          "audio_hit_us": 22,
+          "audio_shot_us": 35,
+          "checkpoint_us": 223,
+          "event_frame_us": 812,
+          "frame_work_us": 408,
+          "hud_us": 48,
+          "notification_ui_us": 232,
+          "shot_us": 399,
+          "snapshot_us": 53,
+          "target_move_us": 26
+        }
+      },
+      {
+        "event": "kill2",
+        "frame_wait_us": 651,
+        "history": 0,
+        "us": {
+          "frame_work_us": 150,
+          "hud_us": 39,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill3",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 3,
+        "us": {
+          "audio_hit_us": 14,
+          "audio_shot_us": 46,
+          "checkpoint_us": 125,
+          "event_frame_us": 570,
+          "frame_work_us": 303,
+          "hud_us": 30,
+          "notification_ui_us": 198,
+          "shot_us": 264,
+          "snapshot_us": 53,
+          "target_move_us": 18
+        }
+      },
+      {
+        "event": "kill3",
+        "frame_wait_us": 585,
+        "history": 0,
+        "us": {
+          "frame_work_us": 214,
+          "hud_us": 64,
+          "notification_ui_us": 19
+        }
+      },
+      {
+        "event": "kill4",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 4,
+        "us": {
+          "audio_hit_us": 21,
+          "audio_shot_us": 43,
+          "checkpoint_us": 221,
+          "event_frame_us": 1104,
+          "frame_work_us": 668,
+          "hud_us": 51,
+          "notification_ui_us": 300,
+          "shot_us": 429,
+          "snapshot_us": 76,
+          "target_move_us": 27
+        }
+      },
+      {
+        "event": "kill4",
+        "frame_wait_us": 930,
+        "history": 0,
+        "us": {
+          "frame_work_us": 163,
+          "hud_us": 45,
+          "notification_ui_us": 11
+        }
+      },
+      {
+        "event": "kill5",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 5,
+        "us": {
+          "audio_hit_us": 14,
+          "audio_shot_us": 34,
+          "checkpoint_us": 134,
+          "event_frame_us": 2409,
+          "frame_work_us": 2115,
+          "hud_us": 38,
+          "notification_ui_us": 1852,
+          "shot_us": 289,
+          "snapshot_us": 54,
+          "target_move_us": 21
+        }
+      },
+      {
+        "event": "kill5",
+        "frame_wait_us": 2508,
+        "history": 0,
+        "us": {
+          "frame_work_us": 274,
+          "hud_us": 81,
+          "notification_ui_us": 13
+        }
+      },
+      {
+        "event": "kill6",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 6,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 32,
+          "checkpoint_us": 128,
+          "event_frame_us": 1282,
+          "frame_work_us": 997,
+          "hud_us": 40,
+          "notification_ui_us": 747,
+          "shot_us": 280,
+          "snapshot_us": 42,
+          "target_move_us": 22
+        }
+      },
+      {
+        "event": "kill6",
+        "frame_wait_us": 967,
+        "history": 0,
+        "us": {
+          "frame_work_us": 128,
+          "hud_us": 33,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill7",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 7,
+        "us": {
+          "audio_hit_us": 54,
+          "audio_shot_us": 44,
+          "checkpoint_us": 292,
+          "event_frame_us": 2653,
+          "frame_work_us": 2099,
+          "hud_us": 62,
+          "notification_ui_us": 1565,
+          "shot_us": 547,
+          "snapshot_us": 81,
+          "target_move_us": 34
+        }
+      },
+      {
+        "event": "kill7",
+        "frame_wait_us": 1542,
+        "history": 0,
+        "us": {
+          "frame_work_us": 235,
+          "hud_us": 65,
+          "notification_ui_us": 12
+        }
+      },
+      {
+        "event": "kill8",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 8,
+        "us": {
+          "audio_hit_us": 34,
+          "audio_shot_us": 54,
+          "checkpoint_us": 216,
+          "event_frame_us": 11081,
+          "frame_work_us": 1517,
+          "hud_us": 59,
+          "notification_ui_us": 1319,
+          "shot_us": 9558,
+          "snapshot_us": 81,
+          "target_move_us": 198
+        }
+      },
+      {
+        "event": "kill8",
+        "frame_wait_us": 2304,
+        "history": 0,
+        "us": {
+          "frame_work_us": 236,
+          "hud_us": 64,
+          "notification_ui_us": 12
+        }
+      },
+      {
+        "event": "kill9",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 9,
+        "us": {
+          "audio_hit_us": 29,
+          "audio_shot_us": 74,
+          "checkpoint_us": 194,
+          "event_frame_us": 2389,
+          "frame_work_us": 948,
+          "hud_us": 43,
+          "notification_ui_us": 799,
+          "shot_us": 1435,
+          "snapshot_us": 81,
+          "target_move_us": 41
+        }
+      },
+      {
+        "event": "kill9",
+        "frame_wait_us": 1261,
+        "history": 0,
+        "us": {
+          "frame_work_us": 394,
+          "hud_us": 61,
+          "notification_ui_us": 12
+        }
+      },
+      {
+        "event": "kill10",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 31,
+          "audio_shot_us": 60,
+          "checkpoint_us": 195,
+          "event_frame_us": 2065,
+          "frame_work_us": 1584,
+          "hud_us": 42,
+          "notification_ui_us": 1430,
+          "shot_us": 475,
+          "snapshot_us": 67,
+          "target_move_us": 41
+        }
+      },
+      {
+        "event": "kill10",
+        "frame_wait_us": 1766,
+        "history": 0,
+        "us": {
+          "frame_work_us": 173,
+          "hud_us": 48,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 16,
+          "audio_shot_us": 38,
+          "event_frame_us": 436,
+          "frame_work_us": 291,
+          "hud_us": 44,
+          "notification_ui_us": 9,
+          "shot_us": 140,
+          "snapshot_us": 46
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "frame_wait_us": 755,
+        "history": 0,
+        "us": {
+          "frame_work_us": 150,
+          "hud_us": 40,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "PROFILE023_WORKER",
+        "history": 0,
+        "last_worker_us": 9915,
+        "requests": 14,
+        "writes": 7
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": false,
+        "focus": true,
+        "frame_wait_us": 1902,
+        "history": 0,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 46,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 142,
+          "pause_menu_checkpoint_us": 10573,
+          "pause_total_us": 10577
+        }
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": true,
+        "focus": true,
+        "frame_wait_us": 542,
+        "history": 0,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 58,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 231,
+          "pause_menu_checkpoint_us": 7971,
+          "pause_total_us": 7975
+        }
+      },
+      {
+        "event": "PROFILE023_JSON",
+        "characters": 2456,
+        "history": 0,
+        "json_us": 390
+      },
+      {
+        "event": "PROFILE023_SAVE",
+        "full_save_us": 3387,
+        "history": 0
+      },
+      {
+        "event": "PROFILE023_FIXTURE",
+        "history": 100,
+        "kind": "synthetic_payload",
+        "profiles": 0
+      },
+      {
+        "event": "PROFILE023_CACHE",
+        "cache_setup_us": 113102,
+        "history": 100
+      },
+      {
+        "event": "miss",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 0,
+        "us": {
+          "audio_shot_us": 53,
+          "event_frame_us": 571,
+          "frame_work_us": 259,
+          "hud_us": 71,
+          "notification_ui_us": 16,
+          "shot_us": 304,
+          "snapshot_us": 58
+        }
+      },
+      {
+        "event": "miss",
+        "frame_wait_us": 795,
+        "history": 100,
+        "us": {
+          "frame_work_us": 257,
+          "hud_us": 67,
+          "notification_ui_us": 12
+        }
+      },
+      {
+        "event": "kill1",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 20,
+          "audio_shot_us": 34,
+          "checkpoint_us": 393,
+          "event_frame_us": 1394,
+          "frame_work_us": 693,
+          "hud_us": 64,
+          "notification_ui_us": 348,
+          "shot_us": 696,
+          "snapshot_us": 68,
+          "target_move_us": 20
+        }
+      },
+      {
+        "event": "kill1",
+        "frame_wait_us": 1758,
+        "history": 100,
+        "us": {
+          "frame_work_us": 212,
+          "hud_us": 58,
+          "notification_ui_us": 12
+        }
+      },
+      {
+        "event": "kill2",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 2,
+        "us": {
+          "audio_hit_us": 23,
+          "audio_shot_us": 64,
+          "checkpoint_us": 377,
+          "event_frame_us": 1142,
+          "frame_work_us": 515,
+          "hud_us": 52,
+          "notification_ui_us": 338,
+          "shot_us": 624,
+          "snapshot_us": 68,
+          "target_move_us": 37
+        }
+      },
+      {
+        "event": "kill2",
+        "frame_wait_us": 937,
+        "history": 100,
+        "us": {
+          "frame_work_us": 232,
+          "hud_us": 64,
+          "notification_ui_us": 13
+        }
+      },
+      {
+        "event": "kill3",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 3,
+        "us": {
+          "audio_hit_us": 24,
+          "audio_shot_us": 47,
+          "checkpoint_us": 372,
+          "event_frame_us": 1112,
+          "frame_work_us": 506,
+          "hud_us": 58,
+          "notification_ui_us": 319,
+          "shot_us": 600,
+          "snapshot_us": 68,
+          "target_move_us": 33
+        }
+      },
+      {
+        "event": "kill3",
+        "frame_wait_us": 908,
+        "history": 100,
+        "us": {
+          "frame_work_us": 173,
+          "hud_us": 45,
+          "notification_ui_us": 11
+        }
+      },
+      {
+        "event": "kill4",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 4,
+        "us": {
+          "audio_hit_us": 21,
+          "audio_shot_us": 54,
+          "checkpoint_us": 352,
+          "event_frame_us": 1037,
+          "frame_work_us": 453,
+          "hud_us": 51,
+          "notification_ui_us": 283,
+          "shot_us": 580,
+          "snapshot_us": 68,
+          "target_move_us": 31
+        }
+      },
+      {
+        "event": "kill4",
+        "frame_wait_us": 692,
+        "history": 100,
+        "us": {
+          "frame_work_us": 119,
+          "hud_us": 33,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill5",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 5,
+        "us": {
+          "audio_hit_us": 19,
+          "audio_shot_us": 40,
+          "checkpoint_us": 373,
+          "event_frame_us": 2349,
+          "frame_work_us": 1785,
+          "hud_us": 48,
+          "notification_ui_us": 1615,
+          "shot_us": 558,
+          "snapshot_us": 68,
+          "target_move_us": 24
+        }
+      },
+      {
+        "event": "kill5",
+        "frame_wait_us": 1239,
+        "history": 100,
+        "us": {
+          "frame_work_us": 190,
+          "hud_us": 48,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill6",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 6,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 36,
+          "checkpoint_us": 250,
+          "event_frame_us": 1361,
+          "frame_work_us": 944,
+          "hud_us": 43,
+          "notification_ui_us": 805,
+          "shot_us": 412,
+          "snapshot_us": 68,
+          "target_move_us": 22
+        }
+      },
+      {
+        "event": "kill6",
+        "frame_wait_us": 1127,
+        "history": 100,
+        "us": {
+          "frame_work_us": 180,
+          "hud_us": 48,
+          "notification_ui_us": 10
+        }
+      },
+      {
+        "event": "kill7",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 7,
+        "us": {
+          "audio_hit_us": 23,
+          "audio_shot_us": 53,
+          "checkpoint_us": 367,
+          "event_frame_us": 1563,
+          "frame_work_us": 963,
+          "hud_us": 45,
+          "notification_ui_us": 812,
+          "shot_us": 595,
+          "snapshot_us": 68,
+          "target_move_us": 36
+        }
+      },
+      {
+        "event": "kill7",
+        "frame_wait_us": 915,
+        "history": 100,
+        "us": {
+          "frame_work_us": 132,
+          "hud_us": 36,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill8",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 8,
+        "us": {
+          "audio_hit_us": 17,
+          "audio_shot_us": 38,
+          "checkpoint_us": 258,
+          "event_frame_us": 1432,
+          "frame_work_us": 1002,
+          "hud_us": 43,
+          "notification_ui_us": 852,
+          "shot_us": 424,
+          "snapshot_us": 68,
+          "target_move_us": 21
+        }
+      },
+      {
+        "event": "kill8",
+        "frame_wait_us": 893,
+        "history": 100,
+        "us": {
+          "frame_work_us": 132,
+          "hud_us": 35,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "kill9",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 9,
+        "us": {
+          "audio_hit_us": 17,
+          "audio_shot_us": 35,
+          "checkpoint_us": 256,
+          "event_frame_us": 1649,
+          "frame_work_us": 1226,
+          "hud_us": 68,
+          "notification_ui_us": 1044,
+          "shot_us": 418,
+          "snapshot_us": 68,
+          "target_move_us": 23
+        }
+      },
+      {
+        "event": "kill9",
+        "frame_wait_us": 1106,
+        "history": 100,
+        "us": {
+          "frame_work_us": 161,
+          "hud_us": 41,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill10",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 16,
+          "audio_shot_us": 36,
+          "checkpoint_us": 257,
+          "event_frame_us": 1252,
+          "frame_work_us": 830,
+          "hud_us": 40,
+          "notification_ui_us": 700,
+          "shot_us": 418,
+          "snapshot_us": 68,
+          "target_move_us": 23
+        }
+      },
+      {
+        "event": "kill10",
+        "frame_wait_us": 1085,
+        "history": 100,
+        "us": {
+          "frame_work_us": 109,
+          "hud_us": 31,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 17,
+          "audio_shot_us": 35,
+          "event_frame_us": 283,
+          "frame_work_us": 146,
+          "hud_us": 43,
+          "notification_ui_us": 8,
+          "shot_us": 133,
+          "snapshot_us": 68
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "frame_wait_us": 666,
+        "history": 100,
+        "us": {
+          "frame_work_us": 106,
+          "hud_us": 29,
+          "notification_ui_us": 6
+        }
+      },
+      {
+        "event": "PROFILE023_WORKER",
+        "history": 100,
+        "last_worker_us": 1776856,
+        "requests": 31,
+        "writes": 9
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": false,
+        "focus": true,
+        "frame_wait_us": 933,
+        "history": 100,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 68,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 268,
+          "pause_menu_checkpoint_us": 1874847,
+          "pause_total_us": 1874853
+        }
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": true,
+        "focus": true,
+        "frame_wait_us": 423,
+        "history": 100,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 43,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 306,
+          "pause_menu_checkpoint_us": 3877811,
+          "pause_total_us": 3877816
+        }
+      },
+      {
+        "event": "PROFILE023_JSON",
+        "characters": 3918946,
+        "history": 100,
+        "json_us": 1225396
+      },
+      {
+        "event": "PROFILE023_SAVE",
+        "full_save_us": 1880085,
+        "history": 100
+      }
+    ],
+    "current": [
+      {
+        "event": "PROFILE023_FIXTURE",
+        "history": 0,
+        "kind": "synthetic_payload",
+        "profiles": 0
+      },
+      {
+        "event": "PROFILE023_CACHE",
+        "cache_setup_us": 26,
+        "history": 0
+      },
+      {
+        "event": "miss",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 0,
+        "us": {
+          "audio_shot_us": 29,
+          "event_frame_us": 285,
+          "frame_work_us": 203,
+          "hud_us": 44,
+          "notification_ui_us": 9,
+          "shot_us": 78,
+          "snapshot_us": 0
+        }
+      },
+      {
+        "event": "miss",
+        "frame_wait_us": 406,
+        "history": 0,
+        "us": {
+          "frame_work_us": 118,
+          "hud_us": 34,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "kill1",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 14,
+          "audio_shot_us": 23,
+          "checkpoint_us": 143,
+          "event_frame_us": 2426,
+          "frame_work_us": 2052,
+          "hud_us": 34,
+          "notification_ui_us": 1768,
+          "shot_us": 370,
+          "snapshot_us": 78,
+          "target_move_us": 21
+        }
+      },
+      {
+        "event": "kill1",
+        "frame_wait_us": 2816,
+        "history": 0,
+        "us": {
+          "frame_work_us": 175,
+          "hud_us": 50,
+          "notification_ui_us": 10
+        }
+      },
+      {
+        "event": "kill2",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 2,
+        "us": {
+          "audio_hit_us": 32,
+          "audio_shot_us": 26,
+          "checkpoint_us": 153,
+          "event_frame_us": 682,
+          "frame_work_us": 377,
+          "hud_us": 41,
+          "notification_ui_us": 252,
+          "shot_us": 302,
+          "snapshot_us": 78,
+          "target_move_us": 20
+        }
+      },
+      {
+        "event": "kill2",
+        "frame_wait_us": 795,
+        "history": 0,
+        "us": {
+          "frame_work_us": 152,
+          "hud_us": 44,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill3",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 3,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 39,
+          "checkpoint_us": 133,
+          "event_frame_us": 734,
+          "frame_work_us": 431,
+          "hud_us": 39,
+          "notification_ui_us": 197,
+          "shot_us": 298,
+          "snapshot_us": 40,
+          "target_move_us": 25
+        }
+      },
+      {
+        "event": "kill3",
+        "frame_wait_us": 853,
+        "history": 0,
+        "us": {
+          "frame_work_us": 117,
+          "hud_us": 33,
+          "notification_ui_us": 10
+        }
+      },
+      {
+        "event": "kill4",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 4,
+        "us": {
+          "audio_hit_us": 14,
+          "audio_shot_us": 38,
+          "checkpoint_us": 132,
+          "event_frame_us": 737,
+          "frame_work_us": 441,
+          "hud_us": 42,
+          "notification_ui_us": 204,
+          "shot_us": 293,
+          "snapshot_us": 40,
+          "target_move_us": 20
+        }
+      },
+      {
+        "event": "kill4",
+        "frame_wait_us": 1223,
+        "history": 0,
+        "us": {
+          "frame_work_us": 287,
+          "hud_us": 78,
+          "notification_ui_us": 14
+        }
+      },
+      {
+        "event": "kill5",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 5,
+        "us": {
+          "audio_hit_us": 14,
+          "audio_shot_us": 36,
+          "checkpoint_us": 143,
+          "event_frame_us": 2520,
+          "frame_work_us": 2213,
+          "hud_us": 41,
+          "notification_ui_us": 1937,
+          "shot_us": 301,
+          "snapshot_us": 65,
+          "target_move_us": 21
+        }
+      },
+      {
+        "event": "kill5",
+        "frame_wait_us": 2635,
+        "history": 0,
+        "us": {
+          "frame_work_us": 171,
+          "hud_us": 51,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill6",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 6,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 42,
+          "checkpoint_us": 155,
+          "event_frame_us": 1493,
+          "frame_work_us": 1159,
+          "hud_us": 47,
+          "notification_ui_us": 874,
+          "shot_us": 329,
+          "snapshot_us": 55,
+          "target_move_us": 22
+        }
+      },
+      {
+        "event": "kill6",
+        "frame_wait_us": 1148,
+        "history": 0,
+        "us": {
+          "frame_work_us": 138,
+          "hud_us": 43,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "kill7",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 7,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 37,
+          "checkpoint_us": 153,
+          "event_frame_us": 1462,
+          "frame_work_us": 1140,
+          "hud_us": 46,
+          "notification_ui_us": 859,
+          "shot_us": 317,
+          "snapshot_us": 56,
+          "target_move_us": 23
+        }
+      },
+      {
+        "event": "kill7",
+        "frame_wait_us": 1889,
+        "history": 0,
+        "us": {
+          "frame_work_us": 565,
+          "hud_us": 397,
+          "notification_ui_us": 16
+        }
+      },
+      {
+        "event": "kill8",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 8,
+        "us": {
+          "audio_hit_us": 23,
+          "audio_shot_us": 48,
+          "checkpoint_us": 216,
+          "event_frame_us": 1737,
+          "frame_work_us": 1290,
+          "hud_us": 63,
+          "notification_ui_us": 984,
+          "shot_us": 439,
+          "snapshot_us": 46,
+          "target_move_us": 29
+        }
+      },
+      {
+        "event": "kill8",
+        "frame_wait_us": 1109,
+        "history": 0,
+        "us": {
+          "frame_work_us": 144,
+          "hud_us": 41,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "kill9",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 9,
+        "us": {
+          "audio_hit_us": 24,
+          "audio_shot_us": 33,
+          "checkpoint_us": 129,
+          "event_frame_us": 1265,
+          "frame_work_us": 971,
+          "hud_us": 41,
+          "notification_ui_us": 729,
+          "shot_us": 290,
+          "snapshot_us": 46,
+          "target_move_us": 22
+        }
+      },
+      {
+        "event": "kill9",
+        "frame_wait_us": 1526,
+        "history": 0,
+        "us": {
+          "frame_work_us": 205,
+          "hud_us": 57,
+          "notification_ui_us": 11
+        }
+      },
+      {
+        "event": "kill10",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 14,
+          "audio_shot_us": 34,
+          "checkpoint_us": 147,
+          "event_frame_us": 1550,
+          "frame_work_us": 1247,
+          "hud_us": 40,
+          "notification_ui_us": 1003,
+          "shot_us": 299,
+          "snapshot_us": 47,
+          "target_move_us": 21
+        }
+      },
+      {
+        "event": "kill10",
+        "frame_wait_us": 1884,
+        "history": 0,
+        "us": {
+          "frame_work_us": 190,
+          "hud_us": 54,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "focus": true,
+        "history": 0,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 16,
+          "audio_shot_us": 35,
+          "event_frame_us": 340,
+          "frame_work_us": 204,
+          "hud_us": 68,
+          "notification_ui_us": 10,
+          "shot_us": 130,
+          "snapshot_us": 47
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "frame_wait_us": 1043,
+        "history": 0,
+        "us": {
+          "frame_work_us": 174,
+          "hud_us": 54,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "PROFILE023_WORKER",
+        "history": 0,
+        "last_worker_us": 10326,
+        "requests": 14,
+        "writes": 9
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": false,
+        "focus": true,
+        "frame_wait_us": 4826,
+        "history": 0,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 48,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 180,
+          "pause_menu_checkpoint_us": 298,
+          "pause_menu_ui_us": 120,
+          "pause_post_frame_us": 1690,
+          "pause_total_us": 300
+        }
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": true,
+        "focus": true,
+        "frame_wait_us": 548,
+        "history": 0,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 51,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 197,
+          "pause_menu_checkpoint_us": 282,
+          "pause_menu_ui_us": 87,
+          "pause_post_frame_us": 357,
+          "pause_total_us": 284
+        }
+      },
+      {
+        "event": "PROFILE023_JSON",
+        "characters": 2457,
+        "history": 0,
+        "json_us": 293
+      },
+      {
+        "event": "PROFILE023_SAVE",
+        "full_save_us": 3580,
+        "history": 0
+      },
+      {
+        "event": "PROFILE023_FIXTURE",
+        "history": 100,
+        "kind": "synthetic_payload",
+        "profiles": 0
+      },
+      {
+        "event": "PROFILE023_CACHE",
+        "cache_setup_us": 95012,
+        "history": 100
+      },
+      {
+        "event": "miss",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 0,
+        "us": {
+          "audio_shot_us": 26,
+          "event_frame_us": 218,
+          "frame_work_us": 144,
+          "hud_us": 41,
+          "notification_ui_us": 14,
+          "shot_us": 71,
+          "snapshot_us": 51
+        }
+      },
+      {
+        "event": "miss",
+        "frame_wait_us": 383,
+        "history": 100,
+        "us": {
+          "frame_work_us": 104,
+          "hud_us": 31,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill1",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 13,
+          "audio_shot_us": 17,
+          "checkpoint_us": 222,
+          "event_frame_us": 778,
+          "frame_work_us": 386,
+          "hud_us": 29,
+          "notification_ui_us": 218,
+          "shot_us": 389,
+          "snapshot_us": 38,
+          "target_move_us": 14
+        }
+      },
+      {
+        "event": "kill1",
+        "frame_wait_us": 754,
+        "history": 100,
+        "us": {
+          "frame_work_us": 103,
+          "hud_us": 33,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill2",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 2,
+        "us": {
+          "audio_hit_us": 43,
+          "audio_shot_us": 54,
+          "checkpoint_us": 330,
+          "event_frame_us": 1057,
+          "frame_work_us": 454,
+          "hud_us": 48,
+          "notification_ui_us": 313,
+          "shot_us": 598,
+          "snapshot_us": 38,
+          "target_move_us": 32
+        }
+      },
+      {
+        "event": "kill2",
+        "frame_wait_us": 816,
+        "history": 100,
+        "us": {
+          "frame_work_us": 148,
+          "hud_us": 42,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill3",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 3,
+        "us": {
+          "audio_hit_us": 20,
+          "audio_shot_us": 41,
+          "checkpoint_us": 326,
+          "event_frame_us": 980,
+          "frame_work_us": 456,
+          "hud_us": 59,
+          "notification_ui_us": 295,
+          "shot_us": 520,
+          "snapshot_us": 38,
+          "target_move_us": 26
+        }
+      },
+      {
+        "event": "kill3",
+        "frame_wait_us": 1039,
+        "history": 100,
+        "us": {
+          "frame_work_us": 167,
+          "hud_us": 46,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill4",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 4,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 34,
+          "checkpoint_us": 232,
+          "event_frame_us": 724,
+          "frame_work_us": 328,
+          "hud_us": 43,
+          "notification_ui_us": 205,
+          "shot_us": 391,
+          "snapshot_us": 38,
+          "target_move_us": 22
+        }
+      },
+      {
+        "event": "kill4",
+        "frame_wait_us": 771,
+        "history": 100,
+        "us": {
+          "frame_work_us": 138,
+          "hud_us": 45,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "kill5",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 5,
+        "us": {
+          "audio_hit_us": 23,
+          "audio_shot_us": 45,
+          "checkpoint_us": 410,
+          "event_frame_us": 2662,
+          "frame_work_us": 2028,
+          "hud_us": 63,
+          "notification_ui_us": 1836,
+          "shot_us": 629,
+          "snapshot_us": 38,
+          "target_move_us": 30
+        }
+      },
+      {
+        "event": "kill5",
+        "frame_wait_us": 1452,
+        "history": 100,
+        "us": {
+          "frame_work_us": 183,
+          "hud_us": 56,
+          "notification_ui_us": 10
+        }
+      },
+      {
+        "event": "kill6",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 6,
+        "us": {
+          "audio_hit_us": 19,
+          "audio_shot_us": 39,
+          "checkpoint_us": 384,
+          "event_frame_us": 1612,
+          "frame_work_us": 1025,
+          "hud_us": 68,
+          "notification_ui_us": 845,
+          "shot_us": 581,
+          "snapshot_us": 38,
+          "target_move_us": 27
+        }
+      },
+      {
+        "event": "kill6",
+        "frame_wait_us": 1065,
+        "history": 100,
+        "us": {
+          "frame_work_us": 133,
+          "hud_us": 39,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill7",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 7,
+        "us": {
+          "audio_hit_us": 16,
+          "audio_shot_us": 35,
+          "checkpoint_us": 329,
+          "event_frame_us": 1746,
+          "frame_work_us": 1241,
+          "hud_us": 69,
+          "notification_ui_us": 1048,
+          "shot_us": 498,
+          "snapshot_us": 38,
+          "target_move_us": 22
+        }
+      },
+      {
+        "event": "kill7",
+        "frame_wait_us": 1130,
+        "history": 100,
+        "us": {
+          "frame_work_us": 157,
+          "hud_us": 47,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "kill8",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 8,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 34,
+          "checkpoint_us": 243,
+          "event_frame_us": 1284,
+          "frame_work_us": 884,
+          "hud_us": 43,
+          "notification_ui_us": 758,
+          "shot_us": 396,
+          "snapshot_us": 38,
+          "target_move_us": 21
+        }
+      },
+      {
+        "event": "kill8",
+        "frame_wait_us": 917,
+        "history": 100,
+        "us": {
+          "frame_work_us": 105,
+          "hud_us": 32,
+          "notification_ui_us": 5
+        }
+      },
+      {
+        "event": "kill9",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 9,
+        "us": {
+          "audio_hit_us": 17,
+          "audio_shot_us": 39,
+          "checkpoint_us": 271,
+          "event_frame_us": 1409,
+          "frame_work_us": 956,
+          "hud_us": 47,
+          "notification_ui_us": 820,
+          "shot_us": 447,
+          "snapshot_us": 38,
+          "target_move_us": 25
+        }
+      },
+      {
+        "event": "kill9",
+        "frame_wait_us": 1062,
+        "history": 100,
+        "us": {
+          "frame_work_us": 145,
+          "hud_us": 43,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "kill10",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 20,
+          "audio_shot_us": 59,
+          "checkpoint_us": 270,
+          "event_frame_us": 1456,
+          "frame_work_us": 935,
+          "hud_us": 47,
+          "notification_ui_us": 797,
+          "shot_us": 515,
+          "snapshot_us": 38,
+          "target_move_us": 39
+        }
+      },
+      {
+        "event": "kill10",
+        "frame_wait_us": 1506,
+        "history": 100,
+        "us": {
+          "frame_work_us": 168,
+          "hud_us": 51,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 10,
+        "us": {
+          "audio_hit_us": 19,
+          "audio_shot_us": 39,
+          "event_frame_us": 371,
+          "frame_work_us": 195,
+          "hud_us": 69,
+          "notification_ui_us": 12,
+          "shot_us": 168,
+          "snapshot_us": 38
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "frame_wait_us": 771,
+        "history": 100,
+        "us": {
+          "frame_work_us": 130,
+          "hud_us": 38,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "PROFILE023_WORKER",
+        "history": 100,
+        "last_worker_us": 1656520,
+        "requests": 33,
+        "writes": 12
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": false,
+        "focus": true,
+        "frame_wait_us": 1056,
+        "history": 100,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 55,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 268,
+          "pause_menu_checkpoint_us": 391,
+          "pause_menu_ui_us": 126,
+          "pause_post_frame_us": 686,
+          "pause_total_us": 394
+        }
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": true,
+        "focus": true,
+        "frame_wait_us": 597,
+        "history": 100,
+        "kind": "synthetic_payload",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 48,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 264,
+          "pause_menu_checkpoint_us": 322,
+          "pause_menu_ui_us": 60,
+          "pause_post_frame_us": 331,
+          "pause_total_us": 324
+        }
+      },
+      {
+        "event": "PROFILE023_JSON",
+        "characters": 3918944,
+        "history": 100,
+        "json_us": 1012875
+      },
+      {
+        "event": "PROFILE023_SAVE",
+        "full_save_us": 1667830,
+        "history": 100
+      }
+    ],
+    "baseline-valid": [
+      {
+        "event": "PROFILE023_FIXTURE",
+        "history": 100,
+        "kind": "valid_measurement",
+        "profiles": 6
+      },
+      {
+        "event": "PROFILE023_CACHE",
+        "cache_setup_us": 873918,
+        "history": 100
+      },
+      {
+        "event": "miss",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 0,
+        "us": {
+          "audio_shot_us": 30,
+          "event_frame_us": 333,
+          "frame_work_us": 230,
+          "hud_us": 40,
+          "notification_ui_us": 11,
+          "shot_us": 99,
+          "snapshot_us": 0
+        }
+      },
+      {
+        "event": "miss",
+        "frame_wait_us": 387,
+        "history": 100,
+        "us": {
+          "frame_work_us": 116,
+          "hud_us": 30,
+          "notification_ui_us": 7
+        }
+      },
+      {
+        "event": "kill1",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 17,
+          "checkpoint_us": 288,
+          "event_frame_us": 2851,
+          "frame_work_us": 2341,
+          "hud_us": 30,
+          "notification_ui_us": 2076,
+          "shot_us": 506,
+          "snapshot_us": 71,
+          "target_move_us": 17
+        }
+      },
+      {
+        "event": "kill1",
+        "frame_wait_us": 3312,
+        "history": 100,
+        "us": {
+          "frame_work_us": 148,
+          "hud_us": 41,
+          "notification_ui_us": 8
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 13,
+          "audio_shot_us": 24,
+          "event_frame_us": 188,
+          "frame_work_us": 97,
+          "hud_us": 28,
+          "notification_ui_us": 6,
+          "shot_us": 89,
+          "snapshot_us": 71
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "frame_wait_us": 554,
+        "history": 100,
+        "us": {
+          "frame_work_us": 106,
+          "hud_us": 30,
+          "notification_ui_us": 6
+        }
+      },
+      {
+        "event": "PROFILE023_WORKER",
+        "history": 100,
+        "last_worker_us": 13769704,
+        "requests": 2,
+        "writes": 1
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": false,
+        "focus": true,
+        "frame_wait_us": 2077,
+        "history": 100,
+        "kind": "valid_measurement",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 71,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 324,
+          "pause_menu_checkpoint_us": 15418133,
+          "pause_menu_ui_us": 15417814,
+          "pause_post_frame_us": 360,
+          "pause_total_us": 15418138,
+          "save_current_us": 15417677
+        }
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": true,
+        "focus": true,
+        "frame_wait_us": 565,
+        "history": 100,
+        "kind": "valid_measurement",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 59,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 276,
+          "pause_menu_checkpoint_us": 32047661,
+          "pause_menu_ui_us": 32047389,
+          "pause_post_frame_us": 258,
+          "pause_total_us": 32047665,
+          "save_current_us": 32047265
+        }
+      },
+      {
+        "event": "PROFILE023_JSON",
+        "characters": 40811105,
+        "history": 100,
+        "json_us": 7753070
+      },
+      {
+        "event": "PROFILE023_SAVE",
+        "full_save_us": 17511987,
+        "history": 100
+      }
+    ],
+    "current-valid": [
+      {
+        "event": "PROFILE023_FIXTURE",
+        "history": 100,
+        "kind": "valid_measurement",
+        "profiles": 6
+      },
+      {
+        "event": "PROFILE023_CACHE",
+        "cache_setup_us": 903666,
+        "history": 100
+      },
+      {
+        "event": "miss",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 0,
+        "us": {
+          "audio_shot_us": 36,
+          "event_frame_us": 351,
+          "frame_work_us": 229,
+          "hud_us": 49,
+          "notification_ui_us": 11,
+          "shot_us": 106,
+          "snapshot_us": 0
+        }
+      },
+      {
+        "event": "miss",
+        "frame_wait_us": 561,
+        "history": 100,
+        "us": {
+          "frame_work_us": 165,
+          "hud_us": 46,
+          "notification_ui_us": 11
+        }
+      },
+      {
+        "event": "kill1",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 14,
+          "audio_shot_us": 25,
+          "checkpoint_us": 292,
+          "event_frame_us": 2725,
+          "frame_work_us": 2185,
+          "hud_us": 37,
+          "notification_ui_us": 1938,
+          "shot_us": 536,
+          "snapshot_us": 57,
+          "target_move_us": 20
+        }
+      },
+      {
+        "event": "kill1",
+        "frame_wait_us": 2670,
+        "history": 100,
+        "us": {
+          "frame_work_us": 157,
+          "hud_us": 47,
+          "notification_ui_us": 9
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "focus": true,
+        "history": 100,
+        "mode": 3,
+        "mouse": 0,
+        "paused": false,
+        "time_scale": 1,
+        "total": 1,
+        "us": {
+          "audio_hit_us": 15,
+          "audio_shot_us": 27,
+          "event_frame_us": 212,
+          "frame_work_us": 111,
+          "hud_us": 36,
+          "notification_ui_us": 7,
+          "shot_us": 99,
+          "snapshot_us": 57
+        }
+      },
+      {
+        "event": "ordinary_hit",
+        "frame_wait_us": 710,
+        "history": 100,
+        "us": {
+          "frame_work_us": 144,
+          "hud_us": 50,
+          "notification_ui_us": 10
+        }
+      },
+      {
+        "event": "PROFILE023_WORKER",
+        "history": 100,
+        "last_worker_us": 16408180,
+        "requests": 2,
+        "writes": 1
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": false,
+        "focus": true,
+        "frame_wait_us": 2361,
+        "history": 100,
+        "kind": "valid_measurement",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 54,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 336,
+          "pause_menu_checkpoint_us": 502,
+          "pause_menu_ui_us": 169,
+          "pause_post_frame_us": 1390,
+          "pause_total_us": 505,
+          "save_current_us": 31
+        }
+      },
+      {
+        "event": "PROFILE024_PAUSE",
+        "busy_worker": true,
+        "focus": true,
+        "frame_wait_us": 399,
+        "history": 100,
+        "kind": "valid_measurement",
+        "menu_visible": true,
+        "mode": 5,
+        "mouse": 0,
+        "paused": false,
+        "snapshot_us": 44,
+        "time_scale": 1,
+        "us": {
+          "checkpoint_us": 304,
+          "pause_menu_checkpoint_us": 385,
+          "pause_menu_ui_us": 84,
+          "pause_post_frame_us": 338,
+          "pause_total_us": 388,
+          "save_current_us": 27
+        }
+      },
+      {
+        "event": "PROFILE023_JSON",
+        "characters": 40811106,
+        "history": 100,
+        "json_us": 7995936
+      },
+      {
+        "event": "PROFILE023_SAVE",
+        "full_save_us": 17407893,
+        "history": 100
+      }
+    ]
+  },
+  "normal_boot_gpu": [
+    {
+      "measurement": false,
+      "pop_count": 1,
+      "size": "(1280, 720)",
+      "transitions": [
+        {
+          "ms": 139,
+          "phase": "iris"
+        },
+        {
+          "ms": 969,
+          "phase": "3"
+        },
+        {
+          "ms": 2035,
+          "phase": "2"
+        },
+        {
+          "ms": 3035,
+          "phase": "1"
+        },
+        {
+          "ms": 4035,
+          "phase": "training"
+        }
+      ],
+      "weapon": 0
+    },
+    {
+      "measurement": false,
+      "pop_count": 1,
+      "size": "(1920, 1080)",
+      "transitions": [
+        {
+          "ms": 70,
+          "phase": "iris"
+        },
+        {
+          "ms": 961,
+          "phase": "3"
+        },
+        {
+          "ms": 2078,
+          "phase": "2"
+        },
+        {
+          "ms": 3078,
+          "phase": "1"
+        },
+        {
+          "ms": 4078,
+          "phase": "training"
+        }
+      ],
+      "weapon": 0
+    },
+    {
+      "measurement": false,
+      "pop_count": 1,
+      "size": "(1024, 768)",
+      "transitions": [
+        {
+          "ms": 67,
+          "phase": "iris"
+        },
+        {
+          "ms": 906,
+          "phase": "3"
+        },
+        {
+          "ms": 1972,
+          "phase": "2"
+        },
+        {
+          "ms": 2972,
+          "phase": "1"
+        },
+        {
+          "ms": 3972,
+          "phase": "training"
+        }
+      ],
+      "weapon": 0
+    }
+  ],
+  "checks": {
+    "integration": 599,
+    "v2_integration": 290,
+    "v2_boundary": 26,
+    "review": 30,
+    "independent_worker_and_phase": 42,
+    "persistence": "create and reload passed"
+  }
+}

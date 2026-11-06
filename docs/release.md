@@ -1,4 +1,10 @@
-# Aim Runner 0.23の配布
+# Aim Runner 0.24の配布
+
+起動をHG無限自由練習へ直結し、自動開口・3秒表示・非同期の一時停止保存を反映したWindows版です。新規タグv0.24、ZIPは`SupplyLineTrainer_Windows_v0.24.zip`。過去のタグ・配布物を上書きしません。
+
+[検証・画像・未確認事項](024-verification.md) ／ [CPUの前後計測](024-performance.md) ／ [配布EXEの照合結果](024-release-exe.json)。外部画面操作へ依存せず、同一EXEと未変更製品PCKを検証ラッパーで確認しました。OS物理入力とは区別します。
+
+## 0.23の配布記録
 
 命中時の停止原因計測、保存要求の集約、初回の円形開口・出現音・新規武器ロックを反映したWindows版です。タグはv0.23、配布ZIPは`SupplyLineTrainer_Windows_v0.23.zip`。既存v2のセーブを保持します。
 

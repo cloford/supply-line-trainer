@@ -233,6 +233,9 @@ static func _build_hud(g)->void:
 	g.crosshair = AimCrosshair.new()
 	g.crosshair.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	g.hud.add_child(g.crosshair)
+	# Presentation-only overlay. Kept in the HUD subtree so pause UI stays above it.
+	g.countdown_display = load("res://countdown_display.gd").new()
+	g.hud.add_child(g.countdown_display)
 	g.exit_ring = load("res://exit_ring.gd").new()
 	g.exit_ring.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	g.exit_ring.offset_left = 24

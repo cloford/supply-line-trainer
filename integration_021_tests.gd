@@ -43,6 +43,7 @@ func begin(weapon:int, measured:bool = false)->void:
 	game.selected_weapon = weapon
 	game.selected_measurement = measured
 	game._request_start()
+	game._presentation_drawn_for_test()
 	for frame in 31:
 		game._process(0.1)
 		if game.mode == game.Mode.TRAINING:
@@ -88,17 +89,41 @@ func _run()->void:
 	await capture("01-first-preparation")
 	game._select_weapon(1)
 	check(game.selected_weapon == 0, "locked selection allowed")
-	begin(0)
+	game._begin_boot()
 	var fov:float = game.camera.fov
-	check(game.iris_intro.waiting and game.intro_session and game.targets.size() == 1, "new HG intro did not wait")
-	check(game.targets[0].position == Vector3(0,1.7,-7), "intro target was not static/centered")
-	check(Rect2(Vector2.ZERO,Vector2(root.size)).encloses(game.intro_hint.get_global_rect()), "intro hint outside viewport")
+	check(game.mode == game.Mode.COUNTDOWN and game.intro_session and game.iris_intro.waiting and not game.prep_panel.visible,"boot did not enter dark training directly")
+	check(game.targets[0].position == Vector3(0,1.7,-7),"boot target was not static/centered")
+	game._process(0.1)
+	check(game.training_elapsed == 0.0 and game.iris_intro.waiting,"boot advanced before first drawing")
+	game._fire_shot()
+	check(game.stats.shots == 0 and Progression.total(game.data) == 0,"intro shot counted")
 	await capture("iris-wait-1280x720")
 	game._open_pause()
 	game._process(0.1)
-	check(not game.iris_intro.visible and game.pause_panel.visible, "iris hid pause menu")
+	check(not game.iris_intro.visible and game.pause_panel.visible,"iris hid pause menu")
 	await capture("iris-pause-1280x720")
 	game._resume_pause()
+	game._presentation_drawn_for_test()
+	game._process(0.1)
+	check(game.iris_intro.opening,"iris did not open automatically")
+	var elapsed:float = game.iris_intro.elapsed
+	game.app_focused = false
+	game._process(0.1)
+	check(game.iris_intro.elapsed == elapsed,"unfocused iris advanced")
+	game.app_focused = true
+	for tick in 8:game._process(0.1)
+	check(not game.intro_session and game.mode == game.Mode.COUNTDOWN and game.countdown == 3.0,"intro did not lead to fresh countdown")
+	game._presentation_drawn_for_test()
+	game._process(0.1)
+	var boot_anchor:Vector2 = game.camera.unproject_position(game.targets[0].global_position)
+	for number in [3,2,1]:
+		check(game.crosshair.is_visible_in_tree() and game.targets[0].is_visible_in_tree(),"countdown hid target/crosshair")
+		check(game.camera.unproject_position(game.targets[0].global_position).is_equal_approx(boot_anchor),"countdown moved target projection")
+		check(ceili(game.countdown-0.000001) == number,"countdown number missing")
+		await capture("countdown-%d-1280x720" % number)
+		for tick in 10:game._process(0.1)
+	check(game.mode == game.Mode.TRAINING and game.training_elapsed == 0.0 and game.stats.shots == 0,"countdown counted shooting or elapsed")
+	game.training_elapsed = 0.2
 	game.mouse_blocked = false
 	for kill in 10:
 		await aim()
@@ -106,21 +131,7 @@ func _run()->void:
 		game._process(0.1)
 		check(Progression.total(game.data) == kill + 1, "actual HG kill not once")
 		if kill == 0:
-			check(game.data.progression.achievements.has("first_kill"), "first kill missing achievement")
-			check(game.iris_intro.opening and game.stats.kills == 1, "actual first kill did not open iris once")
-			var anchor:Vector2 = game.iris_intro.anchor
-			game.camera.rotation.y += 0.1
-			game._process(0.1)
-			check(game.iris_intro.anchor == anchor, "opening center followed camera")
-			var elapsed:float = game.iris_intro.elapsed
-			game.app_focused = false
-			game._process(0.1)
-			check(game.iris_intro.elapsed == elapsed, "unfocused iris advanced")
-			game.app_focused = true
-			await capture("iris-open-mid-1280x720")
-			game._process(0.7)
-			check(not game.iris_intro.is_active() and game.data.intro_seen, "iris completion missing")
-			await capture("iris-done-1280x720")
+			check(game.data.progression.achievements.has("first_kill"),"first kill missing achievement")
 			game.progression_view._process(0.4)
 			await capture("02-first-achievement")
 		if kill == 4:
@@ -278,7 +289,42 @@ func _run()->void:
 	game._process(0.016)
 	check(Progression.total(game.data) == before_poll+1, "stale async snapshot rolled back live kill")
 	game._open_pause()
-	check(not game.save_worker.pending(), "pause did not flush pending saves")
+	check(game.pause_panel.visible and game.mode == game.Mode.PAUSED, "pause did not appear immediately")
+	check(game.save_worker.pending(), "request was incorrectly treated as durable")
+	# 本番commit経路:保存完了まで購入候補を残高/能力へ反映せず、描画を継続する。
+	game.save_worker.finish()
+	game.data.credits = "5000"
+	game.data.lifetime_credits = "5000"
+	game._visit_army()
+	game.selected_soldier = 0
+	var balance:String = game.data.credits
+	var level:int = game.data.protection[0]
+	game._purchase_protection()
+	check(game.durable_busy and game.busy_panel.visible,"durable purchase had no processing UI")
+	check(game.data.credits == balance and game.data.protection[0] == level,"uncommitted purchase changed live data")
+	var drawn_frames := 0
+	while game.durable_busy:
+		await process_frame
+		drawn_frames += 1
+	check(drawn_frames >= 2 and game.data.protection[0] == level+1,"purchase froze rendering or did not commit")
+	balance = game.data.credits
+	level = game.data.protection[0]
+	V2Save.test_fail_step = "temp"
+	await game._purchase_protection()
+	check(game.data.credits == balance and game.data.protection[0] == level,"failed purchase changed data")
+	V2Save.test_fail_step = ""
+	await game._purchase_protection()
+	check(game.data.protection[0] == level+1,"purchase retry failed")
+	game._resume_from_army()
+	check(game.mode == game.Mode.TRAINING,"army did not restore same practice")
+	game._open_pause()
+	game._open_condition_picker()
+	game.condition_weapon.select(1)
+	game.condition_measure.set_pressed_no_signal(false)
+	game._confirm_condition_picker()
+	check(game.durable_busy and game.training_weapon == 0,"condition changed before durable save")
+	while game.durable_busy:await process_frame
+	check(game.training_weapon == 1 and game.mode == game.Mode.COUNTDOWN,"condition did not start new countdown")
 	game.is_test_mode = true
 	game._finish_training(false)
 	for dimensions in [Vector2i(1280,720),Vector2i(1920,1080),Vector2i(1024,768)]:
@@ -298,54 +344,53 @@ func _run()->void:
 		await capture("settings-%dx%d" % [dimensions.x,dimensions.y])
 		game._settings_back()
 		game._finish_training(false)
-	# 初回の別比率も同じ実sceneで描画。ここからは独立の新規fixture。
+	# 全起動で自動iris。履歴や解放済み状態と演出は独立している。
 	for dimensions in [Vector2i(1920,1080),Vector2i(1024,768)]:
 		root.size = dimensions
 		root.content_scale_size = dimensions
-		game.data = V2Save.defaults()
-		game.combat.configure(game.data)
-		begin(0)
-		game._process(0.016)
-		check(game.iris_intro.waiting and Rect2(Vector2.ZERO,Vector2(root.size)).encloses(game.intro_hint.get_global_rect()), "alternate intro bounds failed")
+		var retained:int = game.data.training_history.size()
+		game._begin_boot()
+		check(game.iris_intro.waiting and game.training_weapon == 0 and not game.training_measurement and not game.prep_panel.visible,"repeat boot was not HG intro")
+		check(game.data.training_history.size() == retained and Progression.unlocked(game.data,4),"boot reset records/unlocks")
 		await capture("iris-wait-%dx%d" % [dimensions.x,dimensions.y])
-		await aim()
-		game._fire_shot()
-		game._process(0.32)
-		check(game.iris_intro.opening and game.stats.kills == 1 and Progression.total(game.data) == 1, "alternate intro kill was not exactly once")
+		game._presentation_drawn_for_test()
+		game._process(0.1)
+		game._process(0.2)
 		await capture("iris-open-mid-%dx%d" % [dimensions.x,dimensions.y])
-		game._process(0.6)
-		check(not game.iris_intro.is_active(), "alternate intro left black overlay")
+		for tick in 7:game._process(0.1)
+		game._presentation_drawn_for_test()
+		game._process(0.1)
+		for number in [3,2,1]:
+			check(game.crosshair.is_visible_in_tree() and game.targets[0].is_visible_in_tree(),"alternate countdown hid target/crosshair")
+			await capture("countdown-%d-%dx%d" % [number,dimensions.x,dimensions.y])
+			for tick in 10:game._process(0.1)
+		check(game.mode == game.Mode.TRAINING and not game.iris_intro.is_active(),"boot left black overlay")
 		await capture("iris-done-%dx%d" % [dimensions.x,dimensions.y])
 		game._finish_training(false)
-	# 無射撃の途中測定は「最初の自由練習」の案内を消費しない。
+	# freshには確認操作を挟まず、真の移行/復旧と失敗だけ専用説明へ進む。
 	game.data = V2Save.defaults()
-	game.combat.configure(game.data)
-	begin(0,true)
-	game._process(0.2)
-	game._finish_training(false)
-	check(game.data.training_history.size() == 1 and not game.data.intro_seen and Progression.total(game.data) == 0, "aborted measurement consumed first-free intro")
-	begin(0)
-	check(game.iris_intro.waiting, "first free intro missing after zero-progress measurement")
-	game._finish_training(false)
-	begin(0)
-	check(not game.iris_intro.is_active(), "finished/skipped intro replayed without a kill")
-	game._finish_training(false)
-	# 有効測定を既に持つ場合は、全外しで達成0でも新規案内を挿入しない。
+	game.data.legacy_backup = "user://fixture-preserved-v1.json"
+	game._begin_boot()
+	check(game.boot_notice and game.busy_panel.visible and not game.prep_panel.visible,"legacy migration bypassed safety explanation")
+	await game._boot_retry_action()
+	check(game.data.v2_notice_seen and game.intro_session and game.mode == game.Mode.COUNTDOWN,"migration acknowledgement did not lead directly to HG")
 	game.data = V2Save.defaults()
-	game.combat.configure(game.data)
-	begin(0,true)
-	game.camera.rotation.y += 1.5
-	game._accept_measurement_shoot(true,0.21)
-	game._accept_measurement_shoot(false,0.3)
-	for tick in 601:
-		if game.mode != game.Mode.TRAINING:break
-		game._process(0.1)
-	check(game.data.measurement_counts[0] == 1 and Progression.total(game.data) == 0, "valid miss-only measurement boundary failed")
-	begin(0)
-	check(not game.iris_intro.is_active(), "completed measurement replayed new-user intro")
-	game._finish_training(false)
+	game.data.recovery_notice = "直前の確定保存から復旧しました。"
+	game._begin_boot()
+	check(game.boot_notice and not game.prep_panel.visible,"recovery bypassed explanation")
+	await game._boot_retry_action()
+	check(not game.data.has("recovery_notice") and game.intro_session,"recovery explanation repeated after acknowledgement")
+	game.data = V2Save._failure("fixture 保存を読み込めません")
+	game._begin_boot()
+	check(game.boot_error and game.boot_retry.visible and not game.prep_panel.visible,"failed load exposed prep or hid retry")
+	var escape := InputEventAction.new()
+	escape.action = "pause"
+	escape.pressed = true
+	game._unhandled_input(escape)
+	check(game.boot_error and not game.prep_panel.visible,"Esc ignored save failure and entered prep")
 	game.queue_free()
 	await frames()
+	await create_timer(0.15).timeout
 	if failures.is_empty():
 		print("INTEGRATION_021_OK checks=", checks, " five actual modes, progression boundaries, switching, pause, save retry and layouts")
 		quit(0)

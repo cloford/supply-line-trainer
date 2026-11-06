@@ -94,6 +94,35 @@ func run()->void:
 		if game.get("save_worker") != null:
 			game.save_worker.finish()
 			print("PROFILE023_WORKER ",JSON.stringify({"history":history_size,"last_worker_us":game.save_worker.last_write_us,"writes":game.save_worker.writes,"requests":game.save_worker.requests}))
+		# Esc公開版比較。idleと保存worker稼働中を同じfixtureで測る。
+		for busy in [false,true]:
+			game.mode = game.Mode.TRAINING
+			game.training_weapon = 0
+			game.timings.clear()
+			if busy and game.get("save_worker") != null:
+				game.save_worker.request()
+				game.save_worker.dispatch(game.data)
+			game.profile_enabled = true
+			var pause_started := Time.get_ticks_usec()
+			game._open_pause()
+			game.timings["pause_total_us"] = Time.get_ticks_usec()-pause_started
+			game.profile_enabled = false
+			game.timings["pause_menu_ui_us"] = maxi(0,int(game.timings.pause_total_us)-int(game.timings.get("checkpoint_us",0)))
+			var pause_timings:Dictionary = game.timings.duplicate()
+			var menu_visible:bool = game.pause_panel.visible and game.pause_menu.visible
+			var render_started := Time.get_ticks_usec()
+			await process_frame
+			var frame_wait := Time.get_ticks_usec()-render_started
+			game.timings.clear()
+			game.profile_enabled = true
+			game._process(0.016)
+			game.profile_enabled = false
+			pause_timings["pause_post_frame_us"] = game.timings.get("frame_work_us",0)
+			print("PROFILE024_PAUSE ",JSON.stringify({"history":history_size,"kind":"valid_measurement" if valid_measurements else "synthetic_payload","busy_worker":busy,"us":pause_timings,"snapshot_us":game.save_worker.last_snapshot_us if game.get("save_worker") != null else 0,"frame_wait_us":frame_wait,"menu_visible":menu_visible,"mode":game.mode,"paused":paused,"time_scale":Engine.time_scale,"focus":game.app_focused,"mouse":Input.mouse_mode}))
+			if game.get("save_worker") != null:game.save_worker.finish()
+			game.is_test_mode = true
+			game._resume_pause()
+			game.is_test_mode = false
 		var json_started := Time.get_ticks_usec()
 		var payload := JSON.stringify(V2Measurement.json_value(game.data))
 		print("PROFILE023_JSON ",JSON.stringify({"history":history_size,"json_us":Time.get_ticks_usec()-json_started,"characters":payload.length()}))

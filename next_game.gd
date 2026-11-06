@@ -29,6 +29,19 @@ var intro_session := false
 var intro_first_spawn := false
 var sound_cache:Dictionary = {}
 var async_save_warning := false
+var countdown_display:CountdownDisplay
+var durable_busy := false
+var busy_panel:Control
+var busy_label:Label
+var boot_error := false
+var boot_notice := false
+var boot_launching := false
+var presentation_ready := false
+var presentation_serial := 0
+var countdown_first_frame := false
+var phase_shoot_held := false
+var boot_retry:Button
+var close_requested := false
 
 func _ready()->void:
 	super._ready()
@@ -36,6 +49,8 @@ func _ready()->void:
 	DisplayServer.window_set_title("Aim Runner " + SupplyLineUpdater.current_version())
 	_update_progress_ui()
 	_build_sound_cache()
+	if not is_test_mode:
+		_begin_boot()
 
 func _build_ui()->void:
 	super._build_ui()
@@ -71,28 +86,170 @@ func _build_ui()->void:
 	extra_result.custom_minimum_size = Vector2(400, 180)
 	replay_diorama.get_parent().move_child(extra_result, replay_diorama.get_index() + 1)
 	extra_result.hide()
+	_build_busy_panel()
+
+func _build_busy_panel()->void:
+	busy_panel = ColorRect.new()
+	busy_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	busy_panel.color = Color(0.02,0.03,0.04,0.88)
+	busy_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	ui.add_child(busy_panel)
+	busy_label = V2Interface.label(busy_panel,"保存しています…",28)
+	busy_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	busy_label.offset_left = -340
+	busy_label.offset_right = 340
+	busy_label.offset_top = -60
+	busy_label.offset_bottom = 60
+	busy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boot_retry = V2Interface.button(busy_panel,"保存を再読み込み",_boot_retry_action)
+	boot_retry.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	boot_retry.offset_left = -130
+	boot_retry.offset_right = 130
+	boot_retry.offset_top = 110
+	boot_retry.offset_bottom = 160
+	boot_retry.hide()
+	busy_panel.hide()
 
 func _commit(candidate:Dictionary)->bool:
-	save_worker.finish()
-	async_save_warning = false
-	var okay := super._commit(candidate)
-	if okay:
+	if bool(data.get("migration_failed",false)) or durable_busy:
+		return false
+	if is_test_mode:
+		data = candidate
+		combat.set_data(data)
 		progress_dirty = true
+		return true
+	durable_busy = true
+	boot_retry.hide()
+	busy_label.text = "保存しています…\nこの画面のままお待ちください"
+	busy_panel.show()
+	ui.move_child(busy_panel,ui.get_child_count()-1)
+	Input.action_release("shoot")
+	measurement_shooting = false
+	burst_remaining = 0
+	mouse_blocked = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# まず処理中を描画し、進行中の保存だけを非同期で完了させる。
+	await get_tree().process_frame
+	while save_worker.running():
+		save_worker.poll()
+		await get_tree().process_frame
+	if not save_worker.configured():save_worker.configure(data)
+	save_worker.start_transaction(candidate)
+	while save_worker.running():
+		save_worker.poll()
+		await get_tree().process_frame
+	var okay := save_worker.error.is_empty()
+	if okay:
+		data = candidate
+		combat.set_data(data)
 		save_worker.mark_flushed()
+		save_worker.accept_refs(data)
+		progress_dirty = true
+		save_warning = false
+		async_save_warning = false
+	else:
+		save_warning = true
+	busy_panel.hide()
+	durable_busy = false
+	if close_requested:
+		close_requested = false
+		call_deferred("_notification",NOTIFICATION_WM_CLOSE_REQUEST)
 	return okay
 
+# 通常checkpointは受付だけ。確定が必要な境界は_flush_currentをawaitする。
 func _save_current()->bool:
-	if mode in [Mode.COUNTDOWN, Mode.TRAINING]:
-		_sync_combat_save()
-		_request_progress_save()
-		return true
-	save_worker.finish()
-	async_save_warning = false
-	var okay := super._save_current()
-	save_warning = not okay
-	if okay:
-		save_worker.mark_flushed()
-	return okay
+	if bool(data.get("migration_failed",false)):
+		return false
+	_sync_combat_save()
+	_request_progress_save()
+	return true
+
+func _flush_current()->bool:
+	_sync_combat_save()
+	return await _commit(V2Save.transaction_copy(data))
+
+func _begin_boot()->void:
+	prep_panel.hide()
+	army_panel.hide()
+	result_panel.hide()
+	records_view.hide()
+	if bool(data.get("migration_failed",false)):
+		_show_boot_failure()
+		return
+	if (data.has("legacy_backup") and not bool(data.get("v2_notice_seen",false))) or not str(data.get("recovery_notice","")).is_empty():
+		_show_boot_notice()
+		return
+	boot_error = false
+	boot_notice = false
+	busy_panel.hide()
+	boot_retry.hide()
+	selected_weapon = 0
+	selected_difficulty = 0
+	selected_measurement = false
+	boot_launching = true
+	_start_training()
+	boot_launching = false
+
+func _show_boot_failure()->void:
+	boot_error = true
+	boot_notice = false
+	boot_retry.text = "保存を再読み込み"
+	mode = Mode.PAUSED
+	mode_before_pause = Mode.PREP
+	prep_panel.hide()
+	pause_panel.hide()
+	info_panel.hide()
+	busy_label.text = "保存データを確認してください\n" + str(data.get("migration_error","保存を読み込めません。")) + "\n原本を保全したまま再試行できます。"
+	busy_label.add_theme_font_size_override("font_size",20)
+	busy_label.offset_left = -450
+	busy_label.offset_right = 450
+	busy_panel.show()
+	boot_retry.show()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _show_boot_notice()->void:
+	boot_notice = true
+	boot_error = false
+	mode = Mode.PAUSED
+	mode_before_pause = Mode.PREP
+	prep_panel.hide()
+	pause_panel.hide()
+	info_panel.hide()
+	busy_label.text = str(data.get("recovery_notice","旧データを別名で保全し、個人設定を引き継ぎました。\n旧版の育成・履歴は変更せず保存しています。"))
+	busy_label.add_theme_font_size_override("font_size",20)
+	busy_label.offset_left = -450
+	busy_label.offset_right = 450
+	boot_retry.text = "確認して練習へ"
+	busy_panel.show()
+	boot_retry.show()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _boot_retry_action()->void:
+	if durable_busy:return
+	if boot_error:
+		_retry_migration()
+	elif boot_notice:
+		var candidate := V2Save.transaction_copy(data)
+		candidate.v2_notice_seen = true
+		candidate.erase("recovery_notice")
+		if await _commit(candidate):
+			_begin_boot()
+		else:
+			_show_boot_notice()
+			busy_label.text = "確認状態の保存に失敗しました。原本と成果を保持しています。\n保存先を確認して再試行してください。"
+			boot_retry.text = "保存を再試行"
+
+func _retry_migration()->void:
+	if is_test_mode:
+		return
+	data = V2Save.load_data()
+	combat.configure(data)
+	_apply_settings()
+	if not bool(data.get("migration_failed",false)):
+		_close_info()
+		_begin_boot()
+	else:
+		_show_boot_failure()
 
 func _request_progress_save()->void:
 	if not is_test_mode:
@@ -113,6 +270,22 @@ func _complete_intro()->void:
 	intro_hint.hide()
 	data.intro_seen = true
 	_request_progress_save()
+	countdown = 3.0
+	countdown_first_frame = true
+	countdown_display.show_number(3)
+	_arm_presentation()
+
+func _arm_presentation()->void:
+	presentation_ready = false
+	presentation_serial += 1
+	var serial := presentation_serial
+	if DisplayServer.get_name() == "headless":return
+	RenderingServer.frame_post_draw.connect(func():
+		if serial == presentation_serial:presentation_ready = true
+	,CONNECT_ONE_SHOT)
+
+func _presentation_drawn_for_test()->void:
+	if is_test_mode or OS.get_environment("SLT_TEST_DATA") == "1":presentation_ready = true
 
 func _build_sound_cache()->void:
 	var silent := AudioStreamPlayer.new()
@@ -314,7 +487,21 @@ func _choose_roster_weapon(weapon:int)->void:
 		_show_prep()
 		_select_weapon(weapon)
 
+func _input(event:InputEvent)->void:
+	if durable_busy:
+		get_viewport().set_input_as_handled()
+
 func _unhandled_input(event:InputEvent)->void:
+	if event.is_action_released("shoot"):phase_shoot_held = false
+	if durable_busy or boot_error or boot_notice:return
+	if mode == Mode.COUNTDOWN and not event.is_action_pressed("pause"):
+		if event.is_action_pressed("shoot"):phase_shoot_held = true
+		elif event.is_action_released("shoot"):phase_shoot_held = false
+		Input.action_release("shoot")
+		measurement_shooting = false
+		burst_remaining = 0
+		mouse_blocked = true
+		return
 	if intro_session and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ENTER:
 		iris_intro.skip()
 		get_viewport().set_input_as_handled()
@@ -322,6 +509,10 @@ func _unhandled_input(event:InputEvent)->void:
 	if event.is_action_pressed("pause") and progression_view and (roster_open or progression_view.is_overlay_open()):
 		progression_view.close_overlay()
 		_close_progress_overlay()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("pause") and mode in [Mode.COUNTDOWN,Mode.TRAINING] and not info_panel.visible:
+		_open_pause()
 		get_viewport().set_input_as_handled()
 		return
 	if mode == Mode.TRAINING and not training_measurement and training_weapon >= 3 and event.is_action_pressed("shoot"):
@@ -332,8 +523,7 @@ func _unhandled_input(event:InputEvent)->void:
 	super._unhandled_input(event)
 
 func _resume_pause()->void:
-	if not is_test_mode:
-		save_worker.configure(data)
+	if boot_error or boot_notice or durable_busy:return
 	if pending_weapon >= 0 and pending_weapon != training_weapon:
 		if not Progression.unlocked(data, pending_weapon):
 			pending_weapon = -1
@@ -342,7 +532,7 @@ func _resume_pause()->void:
 		condition_difficulty.select(training_difficulty)
 		condition_measure.set_pressed_no_signal(training_measurement and pending_weapon < 3)
 		condition_panel.show()
-		_confirm_condition_picker()
+		await _confirm_condition_picker()
 		if mode != Mode.PAUSED:
 			pending_weapon = -1
 		return
@@ -352,19 +542,39 @@ func _resume_pause()->void:
 func _finish_training(full_time:bool)->void:
 	if iris_intro and iris_intro.is_active():
 		iris_intro.skip()
-	super._finish_training(full_time)
+	countdown_display.clear()
+	await super._finish_training(full_time)
 
 func _open_pause()->void:
-	super._open_pause()
-	# 基底のcheckpointはmode変更前なので、PAUSEDになってから確定保存する。
-	if not _save_current():
-		save_warning = true
-		pause_warning.text = "保存を再試行中です。成果はこの画面に保持しています。"
-		pause_warning.show()
-	if iris_intro:
-		iris_intro.hide()
-	if intro_hint:
-		intro_hint.hide()
+	if mode == Mode.PAUSED or durable_busy:
+		return
+	# 停止とmenuを最優先。checkpointとrequestにディスク待ちはない。
+	mode_before_pause = mode
+	mode = Mode.PAUSED
+	_reset_exit_hold()
+	burst_remaining = 0
+	measurement_shooting = false
+	next_auto_shot = -1.0
+	Input.action_release("shoot")
+	phase_shoot_held = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	audio_player.stop()
+	hit_audio_player.stop()
+	mouse_blocked = true
+	crosshair.hide()
+	pause_warning.hide()
+	settings_standalone = false
+	pause_panel.show()
+	pause_menu.show()
+	settings_page.hide()
+	pause_end_button.visible = true
+	iris_intro.hide()
+	intro_hint.hide()
+	countdown_display.clear()
+	_update_battle_view()
+	_sync_navigation()
+	_checkpoint_training()
+	_save_current()
 
 func _refresh_condition_picker()->void:
 	if not condition_measure:
@@ -391,17 +601,18 @@ func _confirm_condition_picker()->void:
 		condition_measure.set_pressed_no_signal(false)
 	if iris_intro and iris_intro.is_active():
 		iris_intro.skip()
-	super._confirm_condition_picker()
+	await super._confirm_condition_picker()
 
 func _start_training()->void:
 	if not Progression.unlocked(data, selected_weapon):
 		return
 	if selected_weapon >= 3:
 		selected_measurement = false
-	intro_session = selected_weapon == 0 and not selected_measurement and not bool(data.get("intro_seen",true)) and Progression.total(data) == 0 and data.completed_measurement_ids.is_empty()
+	intro_session = boot_launching
+	phase_shoot_held = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 	intro_first_spawn = intro_session
 	iris_intro.clear()
-	intro_hint.visible = intro_session
+	intro_hint.visible = false
 	intro_hint.text = "中央の標的を撃って開始 ／ Enterでスキップ"
 	selected_difficulty = TrainingCatalog.safe_difficulty(selected_difficulty)
 	pending_weapon = -1
@@ -416,10 +627,16 @@ func _start_training()->void:
 	group_respawn = -1.0
 	extra_rng.seed = int(Time.get_ticks_usec())
 	super._start_training()
-	if not is_test_mode:
+	if not is_test_mode and not save_worker.configured():
 		save_worker.configure(data)
+	countdown_label.hide()
+	countdown_first_frame = true
+	_arm_presentation()
 	if intro_session:
 		iris_intro.start_wait(get_viewport().get_visible_rect().size * 0.5, 74.0)
+		countdown_display.clear()
+	else:
+		countdown_display.show_number(3)
 	if not training_measurement:
 		shooting_metrics.setting_key = ShootingMetrics.setting_key(training_weapon, training_difficulty, data.settings)
 		shooting_metrics.setting_key += "|practice-021"
@@ -550,16 +767,9 @@ func _ray_hit()->Dictionary:
 	return result
 
 func _fire_shot()->void:
+	if mode != Mode.TRAINING or durable_busy or intro_session:return
 	if training_weapon < 3:
-		var previous_kills := int(stats.get("kills",0))
-		var opening_anchor := Vector2.ZERO
-		if intro_session and iris_intro.waiting:
-			var hit := _ray_hit()
-			if not hit.is_empty():
-				opening_anchor = camera.unproject_position(targets[int(hit.index)].global_position)
 		super._fire_shot()
-		if intro_session and iris_intro.waiting and int(stats.get("kills",0)) > previous_kills:
-			iris_intro.open_from(opening_anchor,bool(data.settings.get("effects_enabled",true)))
 		_maybe_progress_checkpoint()
 		return
 	if mode != Mode.TRAINING or mouse_blocked or exit_holding or fire_cooldown > 0.0:
@@ -719,6 +929,12 @@ func _clear_extra_visuals()->void:
 		trajectory.queue_free()
 	trajectory = null
 
+func _physics_process(delta:float)->void:
+	if durable_busy:
+		player.velocity = Vector3.ZERO
+		return
+	super._physics_process(delta)
+
 func _process(delta:float)->void:
 	progress_retry_clock += minf(delta, 0.25)
 	save_worker.poll()
@@ -728,20 +944,26 @@ func _process(delta:float)->void:
 	elif async_save_warning and not save_worker.pending():
 		save_warning = false
 		async_save_warning = false
-	super._process(delta)
+	if durable_busy:
+		return
+	if mode == Mode.PAUSED and not boot_error and not boot_notice and pending_weapon < 0:
+		if not save_worker.error.is_empty():
+			pause_warning.text = "成果の保存に失敗しました。画面に保持して再試行中です。" if save_worker.pending() else "成果の保存に失敗しました。操作を再試行できます。"
+			pause_warning.show()
+		elif save_worker.pending():
+			pause_warning.text = "成果の保存中です。メニューは操作できます。"
+			pause_warning.show()
+		elif pause_warning.text.begins_with("成果の保存"):
+			pause_warning.hide()
+	if mode == Mode.COUNTDOWN:
+		_process_presentation(delta)
+	else:
+		super._process(delta)
 	_maybe_progress_checkpoint()
 	_update_progress_ui()
 	if iris_intro:
-		if iris_intro.waiting and not targets.is_empty() and not camera.is_position_behind(targets[0].global_position):
-			iris_intro.anchor = camera.unproject_position(targets[0].global_position)
-			iris_intro._sync_shader()
-		iris_intro.advance(delta, mode == Mode.TRAINING and app_focused and not info_panel.visible)
-		if iris_intro.opening:
-			intro_hint.text = "周囲が見えてきます ／ Enterでスキップ"
-		iris_intro.visible = iris_intro.is_active() and mode in [Mode.COUNTDOWN,Mode.TRAINING]
-		intro_hint.visible = intro_session and mode in [Mode.COUNTDOWN,Mode.TRAINING]
-		if not _training_session_open() and iris_intro.is_active():
-			iris_intro.skip()
+		iris_intro.visible = iris_intro.is_active() and mode == Mode.COUNTDOWN
+		intro_hint.hide()
 	if not is_test_mode:
 		save_worker.dispatch(data)
 	if mode not in [Mode.COUNTDOWN, Mode.TRAINING, Mode.PAUSED] and not training_in_army:
@@ -754,6 +976,67 @@ func _process(delta:float)->void:
 			if float(blast_effects[index].remaining) <= 0.0:
 				blast_effects[index].node.queue_free()
 				blast_effects.remove_at(index)
+
+func _process_presentation(delta:float)->void:
+	Input.action_release("shoot")
+	measurement_shooting = false
+	burst_remaining = 0
+	mouse_blocked = true
+	if not app_focused or not presentation_ready or delta <= 0.0 or delta > 0.25:
+		return
+	if intro_session:
+		if iris_intro.waiting:
+			iris_intro.open_from(get_viewport().get_visible_rect().size * 0.5,bool(data.settings.get("effects_enabled",true)))
+			return
+		iris_intro.advance(delta,true)
+		return
+	if countdown_first_frame:
+		countdown_first_frame = false
+		countdown_display.show_number(3)
+		return
+	countdown = maxf(0.0,countdown-delta)
+	if countdown > 0.000001:
+		countdown_display.show_number(clampi(ceili(countdown-0.000001),1,3))
+	else:
+		mode = Mode.TRAINING
+		countdown_label.text = ""
+		countdown_display.clear()
+		intention_label.hide()
+		Input.action_release("shoot")
+		mouse_blocked = phase_shoot_held or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		measurement_frame_elapsed = 0.0
+		measurement_frame_usec = Time.get_ticks_usec()
+	_update_battle_view()
+
+func _notification(what:int)->void:
+	if what != NOTIFICATION_WM_CLOSE_REQUEST:return
+	if durable_busy:
+		close_requested = true
+		return
+	if bool(data.get("migration_failed",false)):
+		get_tree().quit()
+		return
+	if _training_session_open():
+		await _finish_training(false)
+		if not reward_committed:return
+		# finishの確定候補が最新成果を含む。終了直前に同じ全履歴を二重保存しない。
+		get_tree().quit()
+		return
+	if not await _flush_current():
+		info_title.text = "終了保存に失敗しました"
+		info_text.text = "成果を保持して終了を中止しました。ウィンドウを閉じる操作で再試行できます。"
+		info_review.hide()
+		info_panel.show()
+		return
+	get_tree().quit()
+
+func _apply_update()->void:
+	if not updater or not updater.ready_to_apply or _training_session_open() or durable_busy:
+		return
+	if not await _flush_current():
+		_update_status("保存に失敗したため更新を中止しました")
+		return
+	updater.apply_update()
 
 func _maybe_progress_checkpoint()->void:
 	if training_measurement or mode != Mode.TRAINING or training_elapsed <= 0.0:
@@ -791,6 +1074,8 @@ func _grenade_score_stats()->Dictionary:
 
 func _update_hud()->void:
 	super._update_hud()
+	if save_worker.pending() and not save_warning:
+		credit_hud.text += " ／ 保存中"
 	credit_hud.text += " ／ 撃破・追従達成 %d" % Progression.total(data)
 	if training_measurement:
 		credit_hud.text += "（今回分は有効完了時）"

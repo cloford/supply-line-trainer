@@ -21,6 +21,7 @@ func start(weapon:int)->void:
 	game.selected_measurement = true
 	game.selected_weapon = weapon
 	game._start_training()
+	game._presentation_drawn_for_test()
 	game.mode = game.Mode.TRAINING
 	game.mouse_blocked = false
 	game.training_elapsed = 0.0
@@ -39,6 +40,7 @@ func _run()->void:
 	game.get_viewport().focus_exited.disconnect(game._on_focus_lost)
 	game.selected_measurement = true
 	game._start_training()
+	game._presentation_drawn_for_test()
 	check(game.mode == game.Mode.COUNTDOWN and not game.target_root.visible, "measurement target exposed before active clock")
 	for tick in 31:
 		game._process(0.1)
@@ -128,14 +130,14 @@ func _run()->void:
 	V2Save.test_fail_step = "temp"
 	var before:Dictionary = game.data.duplicate(true)
 	var runtime:Dictionary = game.combat.snapshot()
-	game._retry_battle()
+	await game._retry_battle()
 	check(game.data == before and game.combat.snapshot() == runtime, "failed retry changed runtime/data")
 	game.combat.state.status = "complete"
 	game.combat.state.section = 12
 	game._sync_combat_save()
 	before = game.data.duplicate(true)
 	runtime = game.combat.snapshot()
-	game._continue_battle()
+	await game._continue_battle()
 	check(game.data == before and game.combat.snapshot() == runtime, "failed continuation changed runtime/data")
 	game.is_test_mode = true
 	V2Save.test_fail_step = ""
@@ -144,7 +146,7 @@ func _run()->void:
 	game._accept_measurement_shoot(true, 1.0)
 	game.is_test_mode = false
 	V2Save.test_fail_step = "temp"
-	game._notification(game.NOTIFICATION_WM_CLOSE_REQUEST)
+	await game._notification(game.NOTIFICATION_WM_CLOSE_REQUEST)
 	check(not game.reward_committed and game.mode == game.Mode.PAUSED and game.pause_warning.visible, "failed close discarded retry state")
 	V2Save.test_fail_step = ""
 	game.is_test_mode = true

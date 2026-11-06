@@ -20,7 +20,11 @@ func _run()->void:
 	# 同時に3D世界へ重ねないため、片方の標的を消してから次の実装を走らせる。
 	for game in [old,current]:
 		for weapon in 3:
-			game.selected_weapon=weapon;seed(1600+weapon);game._start_training();game._process(3.1)
+			game.selected_weapon=weapon;seed(1600+weapon);game._start_training()
+			if game.has_method("_presentation_drawn_for_test"):
+				game._presentation_drawn_for_test()
+				for tick in 31:game._process(0.1)
+			else:game._process(3.1)
 			for index in 15:
 				game.training_elapsed+=0.3
 				# 0.21は出現領域を整理したため、採点回帰は同一の空間条件を注入して比較する。
