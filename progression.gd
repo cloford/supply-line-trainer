@@ -4,6 +4,26 @@ extends RefCounted
 const THRESHOLDS := [0,10,100,500,1500]
 const WEAPON_IDS := ["handgun","auto_rifle","burst_rifle","marksman_rifle","grenade_launcher"]
 const WEAPON_NAMES := ["ハンドガン","アサルトライフル","バーストライフル","マークスマンライフル","グレネードランチャー"]
+const MEASUREMENT_THRESHOLD := 100
+
+static func measurement_unlocked(data:Dictionary)->bool:
+	if total(data) >= MEASUREMENT_THRESHOLD:return true
+	if not data.get("completed_measurement_ids",[]).is_empty():return true
+	for key in ["profiles","previous_profiles"]:
+		for bundle in data.get(key,[]):
+			if bundle is Dictionary and not bundle.is_empty():return true
+	for count in data.get("measurement_counts",[]):
+		if int(count) > 0:return true
+	for record in data.get("training_history",[]):
+		# 旧版で測定を利用した人は、中断履歴だけの場合も利用権を保つ。
+		if record is Dictionary and record.get("measurement") is Dictionary and not record.measurement.is_empty():return true
+	return false
+
+static func guidance_hit(data:Dictionary)->bool:
+	if bool(data.get("guidance_credited",false)):return false
+	data.guidance_credited = true
+	apply_record(data,{"weapon":0,"progress_kills":1})
+	return true
 
 static func defaults()->Dictionary:
 	return {"kills":0,"tracking_seconds":0.0,"total":0,"achievements":{},"seen":[],"preserved_weapons":[],"list_seen":false,"migrated":false}

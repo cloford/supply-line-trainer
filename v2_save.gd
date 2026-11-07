@@ -5,12 +5,13 @@ const PATH := "user://save_v2.json"
 const TEMP := "user://save_v2.tmp"
 const PREVIOUS := "user://save_v2.previous.json"
 const LEGACY := "user://save_v1.json"
+const RESET_GUARD := "user://reset_generation.json"
 const SETTING_DEFAULTS := {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true,"show_training_goal":false,"goal_notifications":true,"effects_enabled":true}
 static var last_error := ""
 static var test_fail_step := ""
 
 static func defaults()->Dictionary:
-	return {"version":V2Rules.SAVE_VERSION,"scoring_version":4,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0,"intro_seen":false,"progression":Progression.defaults()}
+	return {"version":V2Rules.SAVE_VERSION,"scoring_version":TargetScoring.VERSION,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0,"intro_seen":false,"guidance_credited":false,"target_risk":TargetScoring.DEFAULT_RISK,"progression":Progression.defaults()}
 
 static func validate_settings(source:Variant)->Dictionary:
 	var result := SETTING_DEFAULTS.duplicate(true)
@@ -47,6 +48,8 @@ static func _valid_data(data:Variant)->bool:
 		return false
 	if data.has("intro_seen") and typeof(data.intro_seen) != TYPE_BOOL:
 		return false
+	if data.has("guidance_credited") and typeof(data.guidance_credited) != TYPE_BOOL:return false
+	if data.has("target_risk") and (typeof(data.target_risk) not in [TYPE_INT,TYPE_FLOAT] or not is_finite(float(data.target_risk)) or float(data.target_risk) < 0.0 or float(data.target_risk) > 1.0):return false
 	for key in ["credits","lifetime_credits"]:
 		if not data.get(key) is String or BigUInt.normalize(data[key]) != data[key]:
 			return false
@@ -139,10 +142,15 @@ static func _fail(step:String)->bool:
 
 static func load_data()->Dictionary:
 	last_error = ""
+	var guard:Variant = _read(RESET_GUARD) if FileAccess.file_exists(RESET_GUARD) else {}
+	if not guard is Dictionary:return _failure("初期化世代の確認に失敗しました。保存ファイルと初期化前バックアップを保全しています。")
+	var expected := str(guard.get("generation",""))
 	if FileAccess.file_exists(PATH) or FileAccess.file_exists(PREVIOUS):
 		var parsed:Variant = _read(PATH) if FileAccess.file_exists(PATH) else null
+		if not expected.is_empty() and (not parsed is Dictionary or str(parsed.get("reset_generation","")) != expected):parsed = null
 		if not _valid_data(parsed):
 			var previous:Variant = _read(PREVIOUS)
+			if not expected.is_empty() and (not previous is Dictionary or str(previous.get("reset_generation","")) != expected):previous = null
 			if not _valid_data(previous):
 				return _failure("新セーブが読めません。原本を保全したまま再試行できます。")
 			if FileAccess.file_exists(PATH):
@@ -159,6 +167,9 @@ static func load_data()->Dictionary:
 		# 既存プレイヤーには新規導入演出を挿入しない。
 		if not data.has("intro_seen"):
 			data.intro_seen = true
+		# 既存進行へ後日の誘導一発を追加しない。旧難易度の履歴は不変、未設定の曲線は初期値へ。
+		if not data.has("guidance_credited"):data.guidance_credited = bool(data.intro_seen) or Progression.total(data) > 0
+		data.target_risk = TargetScoring.safe_risk(data.get("target_risk",TargetScoring.DEFAULT_RISK))
 		data.settings = validate_settings(data.settings)
 		data.training_history.resize(mini(data.training_history.size(),V2Rules.HISTORY_LIMIT))
 		var migrated := Progression.migrate(data)
@@ -167,6 +178,7 @@ static func load_data()->Dictionary:
 			return _failure("中断記録の確定保存に失敗しました。" + last_error)
 		return data
 	var data := defaults()
+	if not expected.is_empty():return _failure("初期化後の保存が読めません。旧データの自動復元を停止しています。初期化前バックアップ："+str(guard.get("backup","")))
 	if FileAccess.file_exists(LEGACY):
 		if _fail("backup"):
 			return _failure("旧データのバックアップに失敗しました。")
@@ -181,6 +193,45 @@ static func load_data()->Dictionary:
 	if not save_data(data):
 		return _failure("新セーブの初回作成に失敗しました。" + last_error)
 	return data
+
+# 呼出側はwriterを排他停止してから実行する。退避先は通常復旧の検索対象外。
+static func reset_all()->Dictionary:
+	last_error = ""
+	var generation := "%d_%d" % [int(Time.get_unix_time_from_system()),Time.get_ticks_usec()]
+	var backup := "user://reset_archive_"+generation
+	if DirAccess.make_dir_absolute(ProjectSettings.globalize_path(backup)) != OK:return {"okay":false,"error":"初期化前バックアップの保存先を作れません。"}
+	for path in [PATH,PREVIOUS,TEMP,LEGACY,RESET_GUARD]:
+		if FileAccess.file_exists(path) and (not _copy(path,backup+"/"+path.get_file()) or FileAccess.get_sha256(path) != FileAccess.get_sha256(backup+"/"+path.get_file())):
+			return {"okay":false,"error":"初期化前データの退避・照合に失敗しました。元データを保持しています。","backup":backup}
+	var candidate := defaults()
+	candidate.reset_generation = generation
+	candidate.v2_notice_seen = true
+	var old_guard:Variant = _read(RESET_GUARD)
+	var guard_file := FileAccess.open(RESET_GUARD,FileAccess.WRITE)
+	if guard_file == null:return {"okay":false,"error":"初期化世代を保存できません。元データを保持しています。","backup":backup}
+	guard_file.store_string(JSON.stringify({"generation":generation,"backup":backup}))
+	guard_file.flush()
+	var guard_error := guard_file.get_error()
+	guard_file = null
+	var checked_guard:Variant = _read(RESET_GUARD)
+	if guard_error != OK or not checked_guard is Dictionary or str(checked_guard.get("generation","")) != generation:
+		_restore_reset_guard(old_guard)
+		return {"okay":false,"error":"初期化世代の検証に失敗しました。元データを保持しています。","backup":backup}
+	if not save_data(candidate):
+		var reason := last_error
+		_restore_reset_guard(old_guard)
+		return {"okay":false,"error":reason+" 初期化前バックアップから復旧できます。","backup":backup}
+	# 通常fallbackも新世代へ揃える。失敗時もguardが旧進行の復活を防ぐ。
+	if not _copy(PATH,PREVIOUS):
+		return {"okay":false,"error":"新規状態は保存しましたが復旧用コピーに失敗しました。再読み込み後に初期化を再試行できます。","backup":backup,"new_data":candidate}
+	return {"okay":true,"data":candidate,"backup":backup}
+
+static func _restore_reset_guard(previous:Variant)->void:
+	if previous is Dictionary:
+		var file := FileAccess.open(RESET_GUARD,FileAccess.WRITE)
+		if file:file.store_string(JSON.stringify(previous));file.flush()
+	elif FileAccess.file_exists(RESET_GUARD):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(RESET_GUARD))
 
 # 履歴の各確定recordは不変。外側の配列だけ複製し、候補への追加/差替えを隔離する。
 # mutableな現行セッション・設定・進行・所持量は深く複製する。

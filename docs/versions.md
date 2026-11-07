@@ -6,6 +6,7 @@
 
 | 公開版 | 配布・詳細 | 感想・不具合報告 |
 | --- | --- | --- |
+| 0.25 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.25) | [Discussion #17](https://github.com/cloford/supply-line-trainer/discussions/17) |
 | 0.24 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.24) | [Discussion #16](https://github.com/cloford/supply-line-trainer/discussions/16) |
 | 0.23 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.23) | [Discussion #15](https://github.com/cloford/supply-line-trainer/discussions/15) |
 | 0.22 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.22) | [Discussion #14](https://github.com/cloford/supply-line-trainer/discussions/14) |
@@ -30,6 +31,10 @@
 - 1.xから初めてv2系へ移る場合：v2.0.0で導入した設定のみの移行が適用されます。旧育成をv2育成に換算するものではありません。
 
 ## 各版で変わったこと
+
+### 0.25
+
+Tabを押している間の武器・練習切り替え、アイコン中心の通常UI、指による初回射撃誘導、最後の武器復元、自由練習の中心報酬と標的編集、長い集約加点表示、100達成の兵士作成解放、確認付き全データ初期化を追加。既存の記録・プロフィール・残高を保持し、測定の固定条件と兵士能力は変更しません。[検証・調整値・画像](025-verification.md)。
 
 ### 0.24
 

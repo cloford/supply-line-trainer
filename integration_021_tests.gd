@@ -39,6 +39,7 @@ func capture(name:String)->void:
 		root.get_texture().get_image().save_png(output.path_join(name + ".png"))
 
 func begin(weapon:int, measured:bool = false)->void:
+	if measured:game.data.completed_measurement_ids = ["fixture-measurement-access"]
 	game._show_prep()
 	game.selected_weapon = weapon
 	game.selected_measurement = measured
@@ -92,7 +93,7 @@ func _run()->void:
 	game._begin_boot()
 	var fov:float = game.camera.fov
 	check(game.mode == game.Mode.COUNTDOWN and game.intro_session and game.iris_intro.waiting and not game.prep_panel.visible,"boot did not enter dark training directly")
-	check(game.targets[0].position == Vector3(0,1.7,-7),"boot target was not static/centered")
+	check(game.targets[0].position == Vector3(0,1.7,-5),"boot target was not static/centered")
 	game._process(0.1)
 	check(game.training_elapsed == 0.0 and game.iris_intro.waiting,"boot advanced before first drawing")
 	game._fire_shot()
@@ -105,7 +106,9 @@ func _run()->void:
 	game._resume_pause()
 	game._presentation_drawn_for_test()
 	game._process(0.1)
-	check(game.iris_intro.opening,"iris did not open automatically")
+	check(game.iris_intro.waiting,"resuming bypassed valid guidance hit")
+	check(game._guidance_shot(),"valid guidance hit did not open")
+	check(Progression.total(game.data) == 1 and game.stats.shots == 0,"guidance lifetime award and exclusion")
 	var elapsed:float = game.iris_intro.elapsed
 	game.app_focused = false
 	game._process(0.1)
@@ -125,20 +128,20 @@ func _run()->void:
 	check(game.mode == game.Mode.TRAINING and game.training_elapsed == 0.0 and game.stats.shots == 0,"countdown counted shooting or elapsed")
 	game.training_elapsed = 0.2
 	game.mouse_blocked = false
-	for kill in 10:
+	for kill in 9:
 		await aim()
 		game._fire_shot()
 		game._process(0.1)
-		check(Progression.total(game.data) == kill + 1, "actual HG kill not once")
+		check(Progression.total(game.data) == kill + 2, "actual HG kill not once")
 		if kill == 0:
 			check(game.data.progression.achievements.has("first_kill"),"first kill missing achievement")
 			game.progression_view._process(0.4)
 			await capture("02-first-achievement")
-		if kill == 4:
+		if kill == 3:
 			check(Progression.list_visible(game.data) and game.data.progression.list_seen, "5 did not show/save roster intro")
 			game.progression_view._process(0.4)
 			await capture("03-five-achievements")
-		if kill == 8:
+		if kill == 7:
 			check(not Progression.unlocked(game.data,1), "9 unlocked AR")
 	check(Progression.unlocked(game.data,1) and not Progression.unlocked(game.data,2), "10 boundary wrong")
 	check(game.training_weapon == 0 and game.camera.fov == fov and (DisplayServer.get_name() == "headless" or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED), "unlock changed weapon/FOV/capture")
@@ -344,17 +347,20 @@ func _run()->void:
 		await capture("settings-%dx%d" % [dimensions.x,dimensions.y])
 		game._settings_back()
 		game._finish_training(false)
-	# 全起動で自動iris。履歴や解放済み状態と演出は独立している。
+	# 再起動も有効命中待ち。後日の誘導は進行を追加しない。
 	for dimensions in [Vector2i(1920,1080),Vector2i(1024,768)]:
 		root.size = dimensions
 		root.content_scale_size = dimensions
 		var retained:int = game.data.training_history.size()
+		var retained_progress:int = Progression.total(game.data)
+		var remembered_weapon:int = game.data.selected_weapon
 		game._begin_boot()
-		check(game.iris_intro.waiting and game.training_weapon == 0 and not game.training_measurement and not game.prep_panel.visible,"repeat boot was not HG intro")
+		check(game.iris_intro.waiting and game.training_weapon == remembered_weapon and not game.training_measurement and not game.prep_panel.visible,"repeat boot lost selected weapon")
 		check(game.data.training_history.size() == retained and Progression.unlocked(game.data,4),"boot reset records/unlocks")
 		await capture("iris-wait-%dx%d" % [dimensions.x,dimensions.y])
 		game._presentation_drawn_for_test()
 		game._process(0.1)
+		check(game._guidance_shot() and Progression.total(game.data) == retained_progress,"repeat guidance reacquired progress")
 		game._process(0.2)
 		await capture("iris-open-mid-%dx%d" % [dimensions.x,dimensions.y])
 		for tick in 7:game._process(0.1)

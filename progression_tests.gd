@@ -159,6 +159,23 @@ func _init()->void:
 	var broken := migrated_file.duplicate(true)
 	broken.progression.total = 999
 	check(not V2Save.save_data(broken),"inconsistent progression rejected")
+	var fresh := V2Save.defaults()
+	check(not Progression.measurement_unlocked(fresh),"soldier measurement starts locked")
+	check(Progression.guidance_hit(fresh) and not Progression.guidance_hit(fresh) and Progression.total(fresh) == 1,"guidance lifetime award once")
+	Progression.apply_record(fresh,{"weapon":0,"progress_kills":4})
+	check(Progression.total(fresh) == 5 and Progression.list_visible(fresh),"guidance plus four regular kills reaches five")
+	Progression.apply_record(fresh,{"weapon":0,"progress_kills":94})
+	check(not Progression.measurement_unlocked(fresh),"99 measurement still locked")
+	Progression.apply_record(fresh,{"weapon":0,"progress_kills":1})
+	check(Progression.measurement_unlocked(fresh),"100 unlocks measurement")
+	for entitlement in ["counts","profile","history","interrupted_history","ids"]:
+		var veteran := V2Save.defaults()
+		if entitlement == "counts":veteran.measurement_counts[0] = 1
+		elif entitlement == "profile":veteran.profiles[0] = {"record":measurement("existing",0),"profile":{}}
+		elif entitlement == "history":veteran.training_history = [{"measurement":measurement("existing",0)}]
+		elif entitlement == "interrupted_history":veteran.training_history = [{"measurement":{"measurement_version":V2Rules.MEASUREMENT_VERSION,"elapsed":8.0,"interrupted":true,"completed":false}}]
+		else:veteran.completed_measurement_ids = ["existing"]
+		check(Progression.measurement_unlocked(veteran),"existing measurement right preserved "+entitlement)
 	if failures.is_empty():
 		print("PROGRESSION_OK: boundaries, fractional AR, valid measurement only, exclusions, save retry/reload, factual migration, preserved locks")
 		quit(0)

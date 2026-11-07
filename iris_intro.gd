@@ -15,6 +15,7 @@ var duration := DEFAULT_OPEN_SECONDS
 var _shade: ColorRect
 var _material: ShaderMaterial
 var _last_viewport := Vector2.ZERO
+var _aim_prompt: AimPrompt
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -37,6 +38,9 @@ void fragment() {
 	_shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_shade.material = _material
 	add_child(_shade)
+	_aim_prompt = AimPrompt.new()
+	_aim_prompt.name = "AimPrompt"
+	add_child(_aim_prompt)
 	visible = false
 	_sync_shader()
 
@@ -52,6 +56,18 @@ func start_wait(screen_pos: Vector2, radius: float) -> void:
 	elapsed = 0.0
 	visible = true
 	_sync_shader()
+	_aim_prompt.set_target(screen_pos)
+	_aim_prompt.set_clicking(true)
+
+## Allows the host to refresh the projected target point while the camera moves.
+func set_guidance_target(screen_pos: Vector2) -> void:
+	if waiting:
+		anchor = screen_pos
+		_aim_prompt.set_target(screen_pos)
+		_sync_shader()
+
+func set_prompt_clicking(value: bool) -> void:
+	_aim_prompt.set_clicking(value)
 
 func open_from(screen_pos: Vector2, effects_enabled: bool = true) -> void:
 	if not waiting and not opening:
@@ -60,6 +76,7 @@ func open_from(screen_pos: Vector2, effects_enabled: bool = true) -> void:
 	anchor = screen_pos
 	opening = true
 	waiting = false
+	_aim_prompt.clear()
 	elapsed = 0.0
 	duration = DEFAULT_OPEN_SECONDS if effects_enabled else FAST_OPEN_SECONDS
 	_sync_shader()
@@ -74,6 +91,7 @@ func start_boot(screen_pos: Vector2, effects_enabled: bool = true) -> void:
 	elapsed = 0.0
 	duration = DEFAULT_OPEN_SECONDS if effects_enabled else FAST_OPEN_SECONDS
 	visible = true
+	_aim_prompt.clear()
 	_sync_shader()
 
 func advance(delta: float, active: bool = true) -> void:
@@ -95,6 +113,8 @@ func clear() -> void:
 	waiting = false
 	elapsed = 0.0
 	visible = false
+	if _aim_prompt != null:
+		_aim_prompt.clear()
 
 func is_active() -> bool:
 	return waiting or opening

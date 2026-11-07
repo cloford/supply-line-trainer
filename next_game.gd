@@ -42,6 +42,28 @@ var countdown_first_frame := false
 var phase_shoot_held := false
 var boot_retry:Button
 var close_requested := false
+enum Interaction { NONE, TAB, TARGET_EDIT, RESET_TOOLS, RESET_CONFIRM, RESETTING }
+var interaction := Interaction.NONE
+var tab_resume_mode := Mode.TRAINING
+var tab_held := false
+var tab_panel:Control
+var tab_weapons:Array[Button] = []
+var tab_measure:Button
+var target_editor:Control
+var target_slider:HSlider
+var target_preview:Control
+var target_values:Label
+var draft_risk := TargetScoring.DEFAULT_RISK
+var training_risk := TargetScoring.DEFAULT_RISK
+var reset_panel:Control
+var reset_confirm:Control
+var reset_error:Label
+var reset_thread:Thread
+var switch_in_progress := false
+var credit_feedback_amount := 0
+var tab_error:Label
+var tab_hint:Label
+var reset_partial := false
 
 func _ready()->void:
 	super._ready()
@@ -57,10 +79,10 @@ func _build_ui()->void:
 	var prep_actions := HBoxContainer.new()
 	start_button.get_parent().add_child(prep_actions)
 	start_button.get_parent().move_child(prep_actions, start_button.get_index() + 1)
-	V2Interface.button(prep_actions, "武器一覧", _open_roster)
-	V2Interface.button(prep_actions, "実績一覧", _open_achievements)
-	V2Interface.button(pause_menu, "武器一覧・次の練習を選ぶ", _open_roster)
+	V2Interface.icon_button(prep_actions, "実績一覧", "award", _open_achievements).custom_minimum_size.y = 64
 	V2Interface.button(pause_menu, "実績一覧", _open_achievements)
+	for control in pause_menu.get_children():
+		if control is Button and control.text == "練習条件を変更":control.hide()
 	progression_view = ProgressionView.new()
 	ui.add_child(progression_view)
 	progression_view.theme = TrainerTheme.create()
@@ -87,6 +109,7 @@ func _build_ui()->void:
 	replay_diorama.get_parent().move_child(extra_result, replay_diorama.get_index() + 1)
 	extra_result.hide()
 	_build_busy_panel()
+	_build_session_controls()
 
 func _build_busy_panel()->void:
 	busy_panel = ColorRect.new()
@@ -183,8 +206,10 @@ func _begin_boot()->void:
 	boot_notice = false
 	busy_panel.hide()
 	boot_retry.hide()
-	selected_weapon = 0
-	selected_difficulty = 0
+	selected_weapon = TrainingCatalog.safe_index(data.get("selected_weapon",0))
+	if not Progression.unlocked(data,selected_weapon):selected_weapon = 0
+	if not bool(data.get("intro_seen",false)):selected_weapon = 0
+	selected_difficulty = TrainingCatalog.safe_difficulty(data.get("selected_difficulty",0))
 	selected_measurement = false
 	boot_launching = true
 	_start_training()
@@ -270,6 +295,7 @@ func _complete_intro()->void:
 	intro_hint.hide()
 	data.intro_seen = true
 	_request_progress_save()
+	for target in targets:target.show()
 	countdown = 3.0
 	countdown_first_frame = true
 	countdown_display.show_number(3)
@@ -365,27 +391,33 @@ func _refresh_prep()->void:
 		selected_measurement = false
 	free_button.text = ("✓ " if not selected_measurement else "") + "自由練習 — 無制限"
 	measure_button.text = ("✓ " if selected_measurement else "") + "兵士を作る — 60秒測定"
-	measure_button.disabled = selected_weapon >= 3
+	measure_button.disabled = selected_weapon >= 3 or not Progression.measurement_unlocked(data)
 	var rows := Progression.weapon_rows(data)
 	for weapon in 5:
 		var row:Dictionary = {}
 		for item in rows:
 			if int(item.id) == weapon:
 				row = item
-		weapon_buttons[weapon].visible = not row.is_empty() and (weapon == 0 or Progression.list_visible(data))
+		weapon_buttons[weapon].hide()
 		var unlocked := Progression.unlocked(data, weapon)
 		weapon_buttons[weapon].disabled = not unlocked
 		V2Interface.set_weapon_button(weapon_buttons[weapon], weapon, unlocked, weapon == selected_weapon, TrainingCatalog.NAMES[weapon]+"\n"+TrainingCatalog.TITLES[weapon] if unlocked else "???\n累計%d達成で解放" % Progression.THRESHOLDS[weapon])
 		weapon_buttons[weapon].set_pressed_no_signal(weapon == selected_weapon)
 	for difficulty in 3:
 		difficulty_buttons[difficulty].set_pressed_no_signal(difficulty == selected_difficulty)
-	difficulty_row.visible = not selected_measurement and selected_weapon < 3
+	difficulty_row.hide()
+	difficulty_info.hide()
+	training_kind_info.hide()
+	prep_goal.hide()
 	training_kind_info.text = "60秒の有効な測定から兵士を作ります。途中終了は進行達成に含めません。" if selected_measurement else "自由練習の撃破・有効追従1秒で達成を積み、次の武器へ。"
 	if selected_weapon >= 3:
 		training_kind_info.text += " この練習は兵士に採用できません。"
 	difficulty_info.text = "測定は従来の固定条件・位置固定。視点操作は自由です。" if selected_measurement else TrainingCatalog.difficulty_text(selected_weapon, selected_difficulty)
 	start_button.text = "60秒測定を開始" if selected_measurement else "自由練習を開始"
 	start_button.disabled = bool(data.get("migration_failed", false))
+	V2Interface.set_icon_state(free_button,"play",not selected_measurement)
+	V2Interface.set_icon_state(measure_button,"squad" if Progression.measurement_unlocked(data) else "lock",selected_measurement,measure_button.disabled)
+	V2Interface.set_icon_state(start_button,"play",true,start_button.disabled)
 	condition_label.visible = start_button.disabled or save_warning
 	condition_label.text = str(data.get("migration_error", "保存に失敗しました。保存先を確認して再試行してください。"))
 	prep_goal.text = "撃破・追従達成 %d ／ %s" % [Progression.total(data), "5達成で右側の武器一覧が登場" if not Progression.list_visible(data) else "武器一覧で次の条件を確認できます"]
@@ -410,7 +442,7 @@ func _select_difficulty(value:int)->void:
 	_remember_selection()
 
 func _select_measurement(value:bool)->void:
-	if value and (selected_weapon >= 3 or not Progression.unlocked(data, selected_weapon)):
+	if value and (selected_weapon >= 3 or not Progression.unlocked(data, selected_weapon) or not Progression.measurement_unlocked(data)):
 		return
 	super._select_measurement(value)
 
@@ -438,11 +470,9 @@ func _update_progress_ui()->void:
 		if Progression.list_visible(data) and not bool(data.progression.get("list_seen", false)):
 			Progression.mark_list_seen(data)
 			_request_progress_save()
-			progression_view.set_context(true, false, true)
-			progression_view.play_roster_intro()
 			progress_retry_clock = 0.0
 	var training := mode in [Mode.TRAINING, Mode.COUNTDOWN]
-	var context := [training, roster_open, roster_open or (training and Progression.list_visible(data))]
+	var context := [training, roster_open, roster_open]
 	if context != progress_context:
 		progress_context = context
 		progression_view.set_context(context[0], context[1], context[2])
@@ -488,12 +518,46 @@ func _choose_roster_weapon(weapon:int)->void:
 		_select_weapon(weapon)
 
 func _input(event:InputEvent)->void:
+	if event is InputEventKey and event.keycode == KEY_TAB and not event.echo:tab_held = event.pressed
 	if durable_busy:
 		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.keycode == KEY_TAB:
+		get_viewport().set_input_as_handled()
+		if event.echo:return
+		tab_held = event.pressed
+		if event.pressed:
+			_open_tab()
+		elif interaction in [Interaction.TAB,Interaction.TARGET_EDIT]:
+			if interaction == Interaction.TARGET_EDIT:
+				await _apply_target_edit()
+			if interaction == Interaction.TAB:_close_tab()
+		return
+	if event.is_action_pressed("pause") and interaction != Interaction.NONE:
+		if event is InputEventKey and event.echo:return
+		get_viewport().set_input_as_handled()
+		if interaction in [Interaction.TAB,Interaction.TARGET_EDIT]:
+			target_editor.hide()
+			tab_panel.hide()
+			interaction = Interaction.NONE
+			mode = tab_resume_mode
+			_open_pause()
+		elif interaction in [Interaction.RESET_TOOLS,Interaction.RESET_CONFIRM]:
+			_cancel_reset()
+		return
 
 func _unhandled_input(event:InputEvent)->void:
 	if event.is_action_released("shoot"):phase_shoot_held = false
 	if durable_busy or boot_error or boot_notice:return
+	if interaction != Interaction.NONE:return
+	if mode == Mode.COUNTDOWN and intro_session and iris_intro.waiting:
+		if event.is_action_pressed("pause"):_open_pause()
+		elif event.is_action_pressed("shoot") and not phase_shoot_held:
+			_guidance_shot()
+			phase_shoot_held = true
+		Input.action_release("shoot")
+		get_viewport().set_input_as_handled()
+		return
 	if mode == Mode.COUNTDOWN and not event.is_action_pressed("pause"):
 		if event.is_action_pressed("shoot"):phase_shoot_held = true
 		elif event.is_action_released("shoot"):phase_shoot_held = false
@@ -501,10 +565,6 @@ func _unhandled_input(event:InputEvent)->void:
 		measurement_shooting = false
 		burst_remaining = 0
 		mouse_blocked = true
-		return
-	if intro_session and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ENTER:
-		iris_intro.skip()
-		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("pause") and progression_view and (roster_open or progression_view.is_overlay_open()):
 		progression_view.close_overlay()
@@ -541,7 +601,11 @@ func _resume_pause()->void:
 
 func _finish_training(full_time:bool)->void:
 	if iris_intro and iris_intro.is_active():
-		iris_intro.skip()
+		iris_intro.clear()
+	intro_session = false
+	interaction = Interaction.NONE
+	if tab_panel:tab_panel.hide()
+	if target_editor:target_editor.hide()
 	countdown_display.clear()
 	await super._finish_training(full_time)
 
@@ -600,20 +664,476 @@ func _confirm_condition_picker()->void:
 	if condition_weapon.selected >= 3:
 		condition_measure.set_pressed_no_signal(false)
 	if iris_intro and iris_intro.is_active():
-		iris_intro.skip()
+		iris_intro.clear()
+		intro_session = false
 	await super._confirm_condition_picker()
 
+func _guidance_shot()->bool:
+	var test_headless := is_test_mode and OS.get_environment("SLT_TEST_DATA") == "1" and DisplayServer.get_name() == "headless"
+	if mode != Mode.COUNTDOWN or not intro_session or not iris_intro.waiting or not app_focused or (Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not test_headless):return false
+	_play_shot_sound()
+	var hit := _ray_hit()
+	if hit.is_empty() or int(hit.get("index",-1)) != 0:return false
+	_play_hit_sound(0,true)
+	Progression.guidance_hit(data)
+	progress_dirty = true
+	_request_progress_save()
+	_update_progress_ui()
+	iris_intro.open_from(get_viewport().get_visible_rect().size*0.5,bool(data.settings.get("effects_enabled",true)))
+	return true
+
+func _session_card(width:float)->Array:
+	var parts := _modal_overlay(width)
+	ui.add_child(parts[0])
+	var body := V2Interface.column(parts[1],12)
+	parts[0].hide()
+	return [parts[0],body]
+
+func _build_session_controls()->void:
+	var parts := _session_card(610)
+	tab_panel = parts[0]
+	var body:VBoxContainer = parts[1]
+	var grid := GridContainer.new()
+	grid.columns = 5
+	body.add_child(grid)
+	for weapon in 5:
+		var button := V2Interface.button(grid,"",_tab_choose_weapon.bind(weapon))
+		button.custom_minimum_size = Vector2(102,96)
+		button.toggle_mode = true
+		var selected_style := StyleBoxFlat.new()
+		selected_style.bg_color = Color("244950")
+		selected_style.border_color = Color("83d4c8")
+		selected_style.set_border_width_all(2)
+		selected_style.set_corner_radius_all(4)
+		button.add_theme_stylebox_override("pressed",selected_style)
+		button.add_theme_stylebox_override("hover_pressed",selected_style)
+		button.tooltip_text = TrainingCatalog.NAMES[weapon]
+		tab_weapons.append(button)
+	var actions := HBoxContainer.new()
+	body.add_child(actions)
+	var edit := V2Interface.icon_button(actions,"標的編集","target_edit",_open_target_editor)
+	edit.tooltip_text = "標的編集（自由練習のみ・グレネード対象外）"
+	tab_measure = V2Interface.icon_button(actions,"兵士を作る","squad",_tab_start_measurement)
+	tab_measure.tooltip_text = "兵士を作る・固定条件60秒測定（累計100達成で解放）"
+	var stop := V2Interface.icon_button(actions,"練習終了","stop",_tab_stop)
+	stop.tooltip_text = "練習終了・ここまでの成果を保存"
+	for action in actions.get_children():action.custom_minimum_size.y = 64
+	tab_error = V2Interface.label(body,"",17)
+	tab_error.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tab_error.hide()
+	tab_hint = V2Interface.label(hud,"Tab",20)
+	tab_hint.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	tab_hint.offset_left = -90
+	tab_hint.offset_right = -24
+	tab_hint.offset_top = 25
+	tab_hint.offset_bottom = 60
+	tab_hint.tooltip_text = "押している間だけ武器・練習を変更できます"
+	var total := V2Interface.label(body,"Tab",15)
+	total.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	parts = _session_card(620)
+	target_editor = parts[0]
+	body = parts[1]
+	target_values = V2Interface.label(body,"",25)
+	target_values.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target_preview = TargetCurvePreview.new()
+	body.add_child(target_preview)
+	target_slider = HSlider.new()
+	target_slider.min_value = 0.0
+	target_slider.max_value = 1.0
+	target_slider.step = 0.01
+	target_slider.custom_minimum_size = Vector2(480,48)
+	body.add_child(target_slider)
+	target_slider.value_changed.connect(_target_draft_changed)
+	var editor_actions := HBoxContainer.new()
+	body.add_child(editor_actions)
+	var apply := V2Interface.button(editor_actions,"✓",_apply_target_edit,true)
+	apply.tooltip_text = "配点を確定"
+	var cancel := V2Interface.button(editor_actions,"↶",_cancel_target_edit)
+	cancel.tooltip_text = "編集を戻す"
+	parts = _session_card(590)
+	reset_panel = parts[0]
+	body = parts[1]
+	V2Interface.label(body,"検証用操作",25)
+	V2Interface.button(body,"全データを初期化",_request_reset_confirmation)
+	reset_error = V2Interface.label(body,"",17)
+	reset_error.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	V2Interface.button(body,"戻る",_cancel_reset)
+	parts = _session_card(590)
+	reset_confirm = parts[0]
+	body = parts[1]
+	var explanation := V2Interface.label(body,"クレジット、解放、記録、部隊と個人設定をすべて初期化します。\n初期化前のデータは自動読込されない場所へ保全します。",20)
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var cancel_reset := V2Interface.button(body,"キャンセル",_cancel_reset,true)
+	cancel_reset.name = "CancelReset"
+	V2Interface.button(body,"全データを初期化する",_reset_all_data)
+	var tools := V2Interface.icon_button(pause_menu,"検証用操作","tools",_open_reset_tools)
+	tools.tooltip_text = "検証用操作"
+	pause_menu.move_child(tools,pause_menu.get_child_count()-1)
+
+func _stop_training_input()->void:
+	Input.action_release("shoot")
+	measurement_shooting = false
+	burst_remaining = 0
+	next_auto_shot = -1.0
+	next_burst_shot = -1.0
+	phase_shoot_held = false
+	mouse_blocked = true
+	_reset_exit_hold()
+	audio_player.stop()
+	hit_audio_player.stop()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _open_tab()->void:
+	if interaction != Interaction.NONE or mode not in [Mode.TRAINING,Mode.COUNTDOWN] or durable_busy or intro_session:return
+	tab_resume_mode = mode
+	mode_before_pause = mode
+	mode = Mode.PAUSED
+	interaction = Interaction.TAB
+	_stop_training_input()
+	crosshair.hide()
+	countdown_display.clear()
+	_refresh_tab()
+	tab_error.hide()
+	tab_panel.show()
+	_checkpoint_training()
+
+func _refresh_tab()->void:
+	var visible_ids:Array = []
+	for row in Progression.weapon_rows(data):visible_ids.append(int(row.id))
+	for weapon in 5:
+		tab_weapons[weapon].visible = weapon == 0 or (Progression.list_visible(data) and weapon in visible_ids)
+		var unlocked := Progression.unlocked(data,weapon)
+		V2Interface.set_weapon_button(tab_weapons[weapon],weapon,unlocked,weapon == selected_weapon,"")
+		tab_weapons[weapon].text = ""
+		for child in tab_weapons[weapon].get_children():
+			if child is WeaponIcon:
+				child.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+				child.offset_left = -36
+				child.offset_right = 36
+				child.offset_top = -24
+				child.offset_bottom = 24
+		tab_weapons[weapon].disabled = not unlocked
+		tab_weapons[weapon].set_pressed_no_signal(weapon == training_weapon)
+		tab_weapons[weapon].tooltip_text = TrainingCatalog.NAMES[weapon] if unlocked else "累計%d達成で解放" % Progression.THRESHOLDS[weapon]
+	tab_measure.disabled = not Progression.measurement_unlocked(data) or selected_weapon >= 3
+	V2Interface.set_icon_state(tab_measure,"squad" if Progression.measurement_unlocked(data) else "lock",false,tab_measure.disabled)
+
+func _close_tab()->void:
+	if interaction != Interaction.TAB or durable_busy or switch_in_progress:return
+	tab_panel.hide()
+	interaction = Interaction.NONE
+	mode = tab_resume_mode
+	Input.action_release("shoot")
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	mouse_blocked = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	measurement_frame_elapsed = training_elapsed
+	measurement_frame_usec = Time.get_ticks_usec()
+	crosshair.show()
+	if mode == Mode.COUNTDOWN:
+		countdown_display.show_number(clampi(ceili(countdown),1,3))
+		_arm_presentation()
+
+func _tab_choose_weapon(weapon:int)->void:
+	if interaction != Interaction.TAB or not Progression.unlocked(data,weapon) or switch_in_progress:return
+	if weapon == training_weapon:return
+	await _switch_session(weapon,false,training_risk)
+
+func _tab_start_measurement()->void:
+	if interaction != Interaction.TAB or not Progression.measurement_unlocked(data) or selected_weapon >= 3:return
+	await _switch_session(selected_weapon,true,training_risk)
+
+func _switch_session(weapon:int,measured:bool,risk:float)->bool:
+	if switch_in_progress or durable_busy:return false
+	switch_in_progress = true
+	var old_player := player.transform
+	var old_camera := camera.rotation
+	var previous_final := measured_final
+	if training_measurement and measured_final.is_empty():
+		var pending := V2Measurement.new()
+		pending.record = measurement.record.duplicate(true)
+		measured_final = pending.completed(training_elapsed,true,measurement_settings_changed)
+	var record := _completed_record()
+	var candidate := V2Save.transaction_copy(data)
+	V2Ledger.finish(candidate,record,"練習変更",measured_final)
+	candidate.selected_weapon = weapon
+	candidate.selected_measurement = false
+	candidate.target_risk = risk
+	if not await _commit(candidate):
+		measured_final = previous_final
+		switch_in_progress = false
+		target_editor.hide()
+		interaction = Interaction.TAB
+		tab_error.text = "保存に失敗しました。成果と現在の練習を保持しています。再試行できます。"
+		tab_error.show()
+		if not app_focused or not tab_held:
+			tab_panel.hide()
+			interaction = Interaction.NONE
+			mode = Mode.TRAINING
+			_open_pause()
+			pause_warning.text = tab_error.text
+			pause_warning.show()
+		else:tab_panel.show()
+		return false
+	reward_committed = true
+	selected_weapon = weapon
+	selected_measurement = measured
+	_start_training()
+	player.transform = old_player
+	camera.rotation = old_camera
+	mode = Mode.PAUSED
+	mode_before_pause = Mode.TRAINING
+	tab_resume_mode = Mode.TRAINING
+	interaction = Interaction.TAB
+	countdown_display.clear()
+	_stop_training_input()
+	crosshair.hide()
+	_refresh_tab()
+	tab_panel.show()
+	switch_in_progress = false
+	if not app_focused:
+		tab_panel.hide()
+		interaction = Interaction.NONE
+		mode = Mode.TRAINING
+		_open_pause()
+	elif not tab_held:_close_tab()
+	return true
+
+func _tab_stop()->void:
+	if interaction != Interaction.TAB:return
+	tab_panel.hide()
+	interaction = Interaction.NONE
+	await _finish_training(false)
+
+func _open_target_editor()->void:
+	if interaction != Interaction.TAB or training_measurement or training_weapon == 4:return
+	interaction = Interaction.TARGET_EDIT
+	draft_risk = training_risk
+	target_slider.set_value_no_signal(draft_risk)
+	_target_draft_changed(draft_risk)
+	tab_panel.hide()
+	target_editor.show()
+	target_preview.tooltip_text = "1秒の追従。速度・連続加算は別。" if training_weapon == 1 else ("1発の命中。3発撃破時に基礎20点と中心評価を別途加算。速度・連続加算は別。" if training_weapon == 2 else "1発の命中。速度・連続加算は別。")
+
+func _target_draft_changed(value:float)->void:
+	draft_risk = TargetScoring.safe_risk(value)
+	target_values.text = "◎ %.1f     ◯ %.1f" % [_preview_target_points(1.0,draft_risk),_preview_target_points(0.0,draft_risk)]
+	if target_preview:target_preview.configure(Callable(self,"_preview_target_points"),draft_risk)
+
+func _preview_target_points(q:float,risk:float)->float:
+	var weapon := training_weapon
+	var base := 100.0 if weapon == 1 else (15.0 if weapon == 2 else 45.0)
+	var weight := float(Balance.POINT_WEIGHTS[0 if weapon == 3 else clampi(weapon,0,2)])*float(Balance.DIFFICULTY[training_difficulty].reward)
+	return base*weight*TargetScoring.reward_factor(q,risk)
+
+func _apply_target_colors()->void:
+	if training_measurement or training_weapon == 4:return
+	var image := Image.create(256,1,false,Image.FORMAT_RGBA8)
+	var low := TargetScoring.reward_factor(0.0,training_risk)
+	var high := TargetScoring.reward_factor(1.0,training_risk)
+	for index in 256:
+		var points := TargetScoring.reward_factor(float(index)/255.0,training_risk)
+		var ratio := clampf((points-low)/maxf(0.001,high-low),0.0,1.0)
+		image.set_pixel(index,0,Color("2994df").lerp(Color("f15d58"),ratio))
+	var material := ShaderMaterial.new()
+	var shader := Shader.new()
+	shader.code = """
+shader_type spatial;
+render_mode unshaded;
+uniform sampler2D curve : filter_linear, repeat_disable;
+uniform float target_radius;
+varying vec3 world_surface;
+varying vec3 world_center;
+void vertex() {
+	world_surface = (MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;
+	world_center = (MODEL_MATRIX*vec4(0.0,0.0,0.0,1.0)).xyz;
+}
+void fragment() {
+	vec3 origin = INV_VIEW_MATRIX[3].xyz;
+	vec3 ray = normalize(world_surface-origin);
+	vec3 offset = world_center-origin;
+	float radial = length(offset-ray*dot(offset,ray));
+	float q = 1.0-clamp(radial/max(target_radius,0.001),0.0,1.0);
+	ALBEDO = texture(curve,vec2(q,0.5)).rgb;
+}
+"""
+	material.shader = shader
+	material.set_shader_parameter("target_radius",float(Balance.DIFFICULTY[training_difficulty].radius))
+	material.set_shader_parameter("curve",ImageTexture.create_from_image(image))
+	for target in targets:
+		var mesh := target.get_child(0) as MeshInstance3D
+		if mesh:mesh.material_override = material
+		var marker := target.get_node_or_null("CenterMark") as MeshInstance3D
+		if marker:marker.material_override = _material(Color("f15d58"))
+
+func _apply_target_edit()->void:
+	if interaction != Interaction.TARGET_EDIT:return
+	if not is_equal_approx(draft_risk,training_risk):
+		if not await _switch_session(training_weapon,false,draft_risk):return
+		if interaction != Interaction.TAB or not app_focused:return
+	target_editor.hide()
+	interaction = Interaction.TAB
+	if tab_held:tab_panel.show()
+	else:_close_tab()
+
+func _cancel_target_edit()->void:
+	if interaction != Interaction.TARGET_EDIT:return
+	target_editor.hide()
+	interaction = Interaction.TAB
+	if tab_held:tab_panel.show()
+	else:_close_tab()
+
+func _open_reset_tools()->void:
+	if mode != Mode.PAUSED or durable_busy or interaction != Interaction.NONE:return
+	interaction = Interaction.RESET_TOOLS
+	pause_panel.hide()
+	reset_error.text = ""
+	reset_panel.show()
+
+func _request_reset_confirmation()->void:
+	if interaction != Interaction.RESET_TOOLS:return
+	interaction = Interaction.RESET_CONFIRM
+	reset_panel.hide()
+	reset_confirm.show()
+	reset_confirm.find_child("CancelReset",true,false).grab_focus()
+
+func _cancel_reset()->void:
+	if interaction not in [Interaction.RESET_TOOLS,Interaction.RESET_CONFIRM]:return
+	reset_panel.hide()
+	reset_confirm.hide()
+	interaction = Interaction.NONE
+	if reset_partial:
+		reset_partial = false
+		combat.configure(data)
+		_apply_settings()
+		_sync_settings_controls(data.settings)
+		_clear_targets()
+		_clear_extra_visuals()
+		intro_session = false
+		iris_intro.clear()
+		progress_dirty = true
+		_begin_boot()
+		return
+	pause_panel.show()
+	pause_menu.show()
+	settings_page.hide()
+
+func _reset_all_data()->void:
+	if interaction != Interaction.RESET_CONFIRM or durable_busy:return
+	interaction = Interaction.RESETTING
+	durable_busy = true
+	mode = Mode.PAUSED
+	_stop_training_input()
+	reset_confirm.hide()
+	iris_intro.hide()
+	countdown_display.clear()
+	busy_label.text = "初期化前データを保全しています…"
+	busy_panel.show()
+	ui.move_child(busy_panel,ui.get_child_count()-1)
+	await get_tree().process_frame
+	# runningの完了後にqueue/cacheを破棄。旧世代writerが新世代へ戻る経路を消す。
+	while save_worker.running():
+		save_worker.poll()
+		await get_tree().process_frame
+	var outcome:Dictionary
+	if is_test_mode:
+		outcome = {"okay":true,"data":V2Save.defaults()}
+	else:
+		reset_thread = Thread.new()
+		var started := reset_thread.start(V2Save.reset_all)
+		if started != OK:
+			reset_thread = null
+			outcome = {"okay":false,"error":"初期化処理を開始できません。元データは保持しています。"}
+		else:
+			while reset_thread.is_alive():await get_tree().process_frame
+			outcome = reset_thread.wait_to_finish()
+			reset_thread = null
+	busy_panel.hide()
+	durable_busy = false
+	if not bool(outcome.get("okay",false)):
+		interaction = Interaction.RESET_TOOLS
+		reset_error.text = str(outcome.get("error","初期化に失敗しました。"))+"\n"+str(outcome.get("backup",""))
+		reset_panel.show()
+		if outcome.has("new_data"):
+			data = outcome.new_data
+			save_worker = V2SaveWorker.new()
+			save_worker.configure(data)
+			reward_committed = true
+			reset_partial = true
+			training_in_army = false
+		return
+	data = outcome.data
+	save_worker = V2SaveWorker.new()
+	save_worker.configure(data)
+	reward_committed = true
+	training_in_army = false
+	intro_session = false
+	iris_intro.clear()
+	_clear_targets()
+	_clear_extra_visuals()
+	combat.configure(data)
+	interaction = Interaction.NONE
+	tab_held = false
+	pending_weapon = -1
+	selected_weapon = 0
+	selected_difficulty = 0
+	selected_measurement = false
+	session_id = ""
+	measured_final.clear()
+	candidate_record.clear()
+	last_result_record.clear()
+	progression_view.queue_free()
+	progression_view = ProgressionView.new()
+	ui.add_child(progression_view)
+	progression_view.theme = TrainerTheme.create()
+	progression_view.weapon_selected.connect(_choose_roster_weapon)
+	progression_view.closed.connect(_close_progress_overlay)
+	progress_context.clear()
+	progress_dirty = true
+	_apply_settings()
+	_sync_settings_controls(data.settings)
+	_begin_boot()
+	if close_requested:
+		close_requested = false
+		call_deferred("_notification",NOTIFICATION_WM_CLOSE_REQUEST)
+
+func _on_focus_lost()->void:
+	if interaction in [Interaction.TAB,Interaction.TARGET_EDIT]:
+		tab_held = false
+		tab_panel.hide()
+		target_editor.hide()
+		interaction = Interaction.NONE
+		mode = tab_resume_mode
+		_open_pause()
+	super._on_focus_lost()
+
+func _add_point_feedback(before:Dictionary,_display:bool)->void:
+	var after := _training_result()
+	var added := maxi(0,int(after.score)-int(before.get("score",0)))
+	if added <= 0:return
+	if hit_flash <= 0.0:credit_feedback_amount = 0
+	credit_feedback_amount += added
+	hit_label.text = "+%d" % credit_feedback_amount
+	hit_label.add_theme_font_size_override("font_size",28)
+	hit_label.add_theme_color_override("font_color",Color("ffe3a0"))
+	hit_flash = 1.8
+	point_display_timer = 1.4
+
 func _start_training()->void:
+	if selected_measurement and not Progression.measurement_unlocked(data):selected_measurement = false
+	# 三段階の旧難易度は履歴だけに残す。新しい自由練習は共通形状＋編集曲線。
+	if not selected_measurement:selected_difficulty = 0
 	if not Progression.unlocked(data, selected_weapon):
 		return
 	if selected_weapon >= 3:
 		selected_measurement = false
 	intro_session = boot_launching
+	training_risk = TargetScoring.safe_risk(data.get("target_risk",TargetScoring.DEFAULT_RISK))
+	credit_feedback_amount = 0
 	phase_shoot_held = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 	intro_first_spawn = intro_session
 	iris_intro.clear()
 	intro_hint.visible = false
-	intro_hint.text = "中央の標的を撃って開始 ／ Enterでスキップ"
+	intro_hint.text = ""
 	selected_difficulty = TrainingCatalog.safe_difficulty(selected_difficulty)
 	pending_weapon = -1
 	roster_open = false
@@ -633,6 +1153,10 @@ func _start_training()->void:
 	countdown_first_frame = true
 	_arm_presentation()
 	if intro_session:
+		# 既存武器は保持し、誘導用の標的だけを静止させる。
+		if not targets.is_empty():
+			targets[0].position = Vector3(0,1.7,-5)
+			for index in range(1,targets.size()):targets[index].hide()
 		iris_intro.start_wait(get_viewport().get_visible_rect().size * 0.5, 74.0)
 		countdown_display.clear()
 	else:
@@ -646,6 +1170,7 @@ func _start_training()->void:
 		world.add_child(trajectory)
 		_update_trajectory()
 	_update_progress_ui()
+	_apply_target_colors()
 
 func _spawn_targets()->void:
 	if training_weapon >= 3:
@@ -677,7 +1202,7 @@ func _spawn_targets()->void:
 			_relocate_target(index)
 
 func _relocate_target(index:int)->void:
-	if intro_first_spawn and training_weapon == 0:
+	if intro_first_spawn and index == 0:
 		intro_first_spawn = false
 		targets[index].position = Vector3(0.0,1.7,-7.0)
 		target_progress[index] = 0
@@ -689,6 +1214,7 @@ func _relocate_target(index:int)->void:
 	_play_spawn(index)
 
 func _play_spawn(index:int)->void:
+	if intro_session and index != 0:return
 	if spawn_audio and index < targets.size() and training_weapon != 1:
 		spawn_audio.spawn_at(camera.unproject_position(targets[index].global_position))
 
@@ -733,6 +1259,7 @@ func _auto_position(phase:float)->Vector3:
 	return Vector3(-1.8 + sin(phase) * minf(range_x * 0.62, 4.6), 2.45 + sin(phase * 0.63) * 1.15, -7.5 + cos(phase * 0.37) * 1.5)
 
 func _update_targets(delta:float)->void:
+	if intro_session:return
 	if training_weapon < 3:
 		super._update_targets(delta)
 		return
@@ -763,7 +1290,7 @@ func _ray_hit()->Dictionary:
 			distance = fraction
 			# 旧自由練習と同じ100mレイの差分をqへ渡し、浮動小数の端数も維持する。
 			var q := Balance.center_quality(origin, endpoint - origin, targets[index].global_position, radius)
-			result = {"index":index, "q":q, "precision":pow(q, 1.5)}
+			result = {"index":index, "q":q, "precision":TargetScoring.reward_factor(q,training_risk)-1.0 if training_weapon != 4 else pow(q,1.5)}
 	return result
 
 func _fire_shot()->void:
@@ -986,7 +1513,6 @@ func _process_presentation(delta:float)->void:
 		return
 	if intro_session:
 		if iris_intro.waiting:
-			iris_intro.open_from(get_viewport().get_visible_rect().size * 0.5,bool(data.settings.get("effects_enabled",true)))
 			return
 		iris_intro.advance(delta,true)
 		return
@@ -1057,11 +1583,15 @@ func _session_record()->Dictionary:
 	record.progress_kills = int(stats.get("kills", 0))
 	record.progress_tracking_seconds = float(stats.get("track_time", 0.0))
 	record.progress_measurement = training_measurement
+	record.scoring_version = Balance.SCORING_VERSION if training_measurement or training_weapon == 4 else TargetScoring.VERSION
+	record.target_risk = training_risk if not training_measurement and training_weapon != 4 else null
 	if training_weapon >= 3:
 		record.extra = {"rule_version":1, "grid_switches":grid_switches.duplicate(), "grenade_events":grenade_events.duplicate(true), "in_flight":projectiles.size(), "blast_radius":TrainingExtras.BLAST_RADIUS, "blast_damage":TrainingExtras.BLAST_DAMAGE}
 	return record
 
 func _training_result()->Dictionary:
+	if not training_measurement and training_weapon != 4:
+		return TargetScoring.score(0 if training_weapon == 3 else training_weapon,training_difficulty,stats,session_fraction)
 	if training_weapon < 3:
 		return super._training_result()
 	return Balance.score_and_reward(0 if training_weapon == 3 else 2, training_difficulty, stats if training_weapon == 3 else _grenade_score_stats(), 0, 0, training_elapsed, session_fraction)
@@ -1073,14 +1603,26 @@ func _grenade_score_stats()->Dictionary:
 	return values
 
 func _update_hud()->void:
-	super._update_hud()
-	if save_worker.pending() and not save_warning:
-		credit_hud.text += " ／ 保存中"
-	credit_hud.text += " ／ 撃破・追従達成 %d" % Progression.total(data)
-	if training_measurement:
-		credit_hud.text += "（今回分は有効完了時）"
-	elif training_weapon >= 3:
-		credit_hud.text += " ／ 自由練習専用"
+	var result := _training_result()
+	timer_label.text = "%02d" % ceili(maxf(0.0,60.0-training_elapsed)) if training_measurement else Balance.clock_text(training_elapsed)
+	stat_label.text = "+%d" % int(result.score)
+	stat_label.tooltip_text = "今回の獲得クレジット"
+	credit_hud.text = "◎ %.1f%%    ◈ %s    ◉ %d" % [float(result.accuracy)*100.0,BigUInt.format(str(data.credits)),Progression.total(data)]
+	credit_hud.tooltip_text = "命中・追従率 ／ 所持クレジット ／ 累計達成。"+("保存に失敗し再試行しています。" if save_warning else "保存中。" if save_worker.pending() else "")
+	if save_warning:credit_hud.text += " !"
+	exit_hint.hide()
+	if tab_hint:tab_hint.visible = mode == Mode.TRAINING
+
+func _show_prep()->void:
+	selected_measurement = false
+	selected_weapon = TrainingCatalog.safe_index(data.get("selected_weapon",0))
+	if not Progression.unlocked(data,selected_weapon):selected_weapon = 0
+	super._show_prep()
+
+func _sync_navigation()->void:
+	super._sync_navigation()
+	for index in navigation_buttons.size():
+		V2Interface.set_icon_state(navigation_buttons[index],["play","squad","history"][index],navigation_buttons[index].button_pressed)
 
 func _present_result()->void:
 	var weapon := int(last_result_record.get("weapon", 0))
@@ -1139,6 +1681,6 @@ func _open_help()->void:
 		return
 	info_title.text = "撃破・追従達成で次の練習へ"
 	info_review.hide()
-	info_text.text = "ハンドガンから開始。5達成で一覧、累計10／100／500／1,500達成で次の武器を解放します。射撃中は一覧を閲覧し、Escで停止して操作できます。武器を選んだ後の再開で、現在の記録を一度閉じて切り替えます。\n\n達成は標的撃破一体につき一回。追従種目は標的上での有効追従累計1秒につき一回。空撃ち・再現・試射・部隊からは増えません。測定分は60秒の有効完了時だけ反映します。\n\n後半の二種目は自由練習専用。兵士は従来どおり三つの固定枠、計3人。部隊加入は累計クレジット、FPSの練習解放は達成回数で別の条件です。\n\n0.21への番号変更で既存の育成・クレジット・個人設定はリセットしません。"
+	info_text.text = "最初の標的を撃つと訓練場が開き、3・2・1の後に自由練習が始まります。最初の有効命中は生涯一度だけ進行へ反映され、射撃成績には入りません。\n\nTabを押している間だけ練習を停止し、武器・標的編集・兵士作成・終了を操作できます。Tabを離すと再開。武器や配点の変更前後は別記録となり、追加の待ち時間はありません。Escは一時停止と設定です。\n\n標的編集は左が広く低リスク、右が中心へ集中。右ほど中心の報酬が増え、端が減ります。数字は命中1発、アサルトのみ有効追従1秒が単位です。バーストは3発撃破の加点が別途あります。測定とグレネードは編集対象外です。\n\n撃破または有効追従累計1秒が1達成。5達成から次の武器が見え、累計10／100／500／1,500で武器を解放します。100達成で60秒の兵士作成が解放されます。既存の測定利用権は維持します。途中終了した測定は採用できません。\n\n兵士は三つの固定枠。検証用の全データ初期化はEsc内の工具から二段階で実行でき、個人設定も初期値へ戻ります。"
 	info_panel.show()
 	_sync_navigation()

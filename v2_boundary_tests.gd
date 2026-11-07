@@ -15,6 +15,7 @@ func _init()->void:
 func start(weapon:int)->void:
 	game.data = V2Save.defaults()
 	game.data.progression.preserved_weapons = [0, 1, 2]
+	game.data.completed_measurement_ids = ["fixture-measurement-access"]
 	game.data.settings.shot_sound = 3
 	game.data.settings.hit_sound = 3
 	game._show_prep()
@@ -38,6 +39,7 @@ func _run()->void:
 	game.set_physics_process(false)
 	game.set_process_unhandled_input(false)
 	game.get_viewport().focus_exited.disconnect(game._on_focus_lost)
+	game.data.completed_measurement_ids = ["fixture-measurement-access"]
 	game.selected_measurement = true
 	game._start_training()
 	game._presentation_drawn_for_test()
@@ -150,6 +152,7 @@ func _run()->void:
 	check(not game.reward_committed and game.mode == game.Mode.PAUSED and game.pause_warning.visible, "failed close discarded retry state")
 	V2Save.test_fail_step = ""
 	game.is_test_mode = true
+	await _session_controls()
 	game.queue_free()
 	for frame in 3:
 		await process_frame
@@ -160,3 +163,72 @@ func _run()->void:
 		for message in failures:
 			push_error(message)
 		quit(1)
+
+func _session_controls()->void:
+	game.data = V2Save.defaults()
+	Progression.apply_record(game.data,{"weapon":0,"progress_kills":1500})
+	game._show_prep()
+	game.selected_weapon = 0
+	game.selected_measurement = false
+	game._start_training()
+	game.mode = game.Mode.TRAINING
+	game.training_elapsed = 1.25
+	var original_id:String = game.session_id
+	var original_pose:Transform3D = game.targets[0].transform
+	game.tab_held = true
+	game._open_tab()
+	game._process(0.2)
+	check(game.interaction == game.Interaction.TAB and game.mode == game.Mode.PAUSED and game.training_elapsed == 1.25 and game.targets[0].transform == original_pose,"Tab immediately freezes clock and target")
+	game._close_tab()
+	check(game.mode == game.Mode.TRAINING and game.session_id == original_id and game.data.training_history.is_empty(),"opening Tab alone retains original session")
+	game.tab_held = true
+	game._open_tab()
+	await game._tab_choose_weapon(1)
+	check(game.mode == game.Mode.PAUSED and game.training_weapon == 1 and game.session_id != original_id and game.data.training_history.size() == 1,"Tab switch settles once into separate record")
+	var switched_id:String = game.session_id
+	await game._tab_choose_weapon(1)
+	check(game.session_id == switched_id and game.data.training_history.size() == 1,"same weapon click does not settle twice")
+	game._close_tab()
+	check(game.mode == game.Mode.TRAINING and game.data.selected_weapon == 1,"Tab release switches without countdown and remembers weapon")
+	game.training_elapsed = 0.75
+	game.tab_held = true
+	game._open_tab()
+	game._open_target_editor()
+	game._target_draft_changed(0.93)
+	await game._apply_target_edit()
+	check(game.data.training_history.size() == 2 and is_equal_approx(game.training_risk,0.93) and game._session_record().scoring_version == TargetScoring.VERSION,"curve edit separates score conditions")
+	check(is_equal_approx(game.target_preview.center_points(),game._preview_target_points(1.0,0.93)),"editor shares actual weapon curve")
+	game._close_tab()
+	game.tab_held = true
+	game._open_tab()
+	await game._tab_start_measurement()
+	game._close_tab()
+	check(game.training_measurement and game.training_difficulty == 1,"measurement starts fixed conditions through unlocked Tab entry")
+	game.training_elapsed = 0.5
+	game.measurement.shot(0.2,true,1.0,"fixture",Vector3.ZERO,Vector3.FORWARD,Vector3.FORWARD)
+	game.tab_held = true
+	game._open_tab()
+	await game._tab_choose_weapon(0)
+	var interrupted:Dictionary = game.data.training_history[0].measurement
+	check(interrupted.interrupted and not interrupted.valid and game.data.measurement_counts[1] == 0,"measurement weapon switch is interrupted and cannot make soldier")
+	game._close_tab()
+	game.tab_held = true
+	game._open_tab()
+	await game._tab_stop()
+	game.tab_held = false
+	game._close_tab()
+	check(game.mode == game.Mode.RESULT and game.reward_committed and game.interaction == game.Interaction.NONE,"Tab stop cannot restart on release")
+	game.selected_measurement = true
+	game._show_prep()
+	check(not game.selected_measurement and not game.weapon_buttons[0].is_visible_in_tree(),"preparation defaults to free practice and hides weapon selection")
+	game.selected_weapon = 0
+	game._start_training()
+	game.mode = game.Mode.TRAINING
+	game._open_pause()
+	game._open_reset_tools()
+	game._request_reset_confirmation()
+	check(game.reset_confirm.find_child("CancelReset",true,false).has_focus(),"reset confirmation defaults to Cancel")
+	game.data.settings.sensitivity = 8.0
+	await game._reset_all_data()
+	check(game.data.credits == "0" and Progression.total(game.data) == 0 and game.data.settings.sensitivity == V2Save.SETTING_DEFAULTS.sensitivity and game.selected_weapon == 0 and not game.data.guidance_credited,"reset clears progress and personal settings in memory")
+	check(game.intro_session and game.iris_intro.waiting and game.mode == game.Mode.COUNTDOWN,"reset returns to new-play guidance")

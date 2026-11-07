@@ -33,6 +33,7 @@ func snap(name:String)->void:
 func begin(weapon:int, measured:bool)->void:
 	# 0.21の解放境界は専用テストで扱い、ここでは既存三武器を使用済みのfixture。
 	game.data.progression.preserved_weapons = [0, 1, 2]
+	game.data.completed_measurement_ids = ["fixture-measurement-access"]
 	game._show_prep()
 	game.selected_weapon = weapon
 	game.selected_measurement = measured

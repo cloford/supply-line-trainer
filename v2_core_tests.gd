@@ -230,11 +230,41 @@ func _write(path:String, value:String)->void:
 func _clean_test_files()->void:
 	var directory := DirAccess.open("user://")
 	for name in directory.get_files():
-		if name.begins_with("save_v"):
+		if name.begins_with("save_v") or name == "reset_generation.json":
 			directory.remove(name)
 
 func _storage()->void:
 	_clean_test_files()
+	_storage_original()
+	_clean_test_files()
+	_reset_storage()
+
+func _reset_storage()->void:
+	var original := V2Save.defaults()
+	original.credits = "123"
+	original.lifetime_credits = "123"
+	original.settings.sensitivity = 7.5
+	original.selected_weapon = 1
+	Progression.apply_record(original,{"weapon":0,"progress_kills":100})
+	_write(V2Save.LEGACY,JSON.stringify({"settings":{"sensitivity":8.0}}))
+	check(V2Save.save_data(original),"初期化元fixture保存")
+	for step in ["temp","previous","rename"]:
+		V2Save.test_fail_step = step
+		var failed := V2Save.reset_all()
+		check(not bool(failed.get("okay",false)) and V2Save.load_data().credits == "123","初期化保存失敗は元データを保全 "+step)
+	V2Save.test_fail_step = ""
+	var outcome := V2Save.reset_all()
+	check(bool(outcome.get("okay",false)),"全初期化の確定")
+	check(FileAccess.get_sha256(str(outcome.backup)+"/save_v2.json") != "" and JSON.parse_string(FileAccess.get_file_as_string(str(outcome.backup)+"/save_v2.json")).credits == "123","読込対象外の初期化前バックアップ")
+	var fresh := V2Save.load_data()
+	check(fresh.credits == "0" and fresh.lifetime_credits == "0" and Progression.total(fresh) == 0 and fresh.settings.sensitivity == 1.0 and fresh.selected_weapon == 0 and not fresh.intro_seen,"初期化後の設定・進行・初回状態")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(V2Save.PATH))
+	check(V2Save.load_data().credits == "0","primary消失時も新世代previousだけを復元")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(V2Save.PATH))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(V2Save.PREVIOUS))
+	check(bool(V2Save.load_data().get("migration_failed",false)),"旧版設定の自動再移行を世代guardで拒否")
+
+func _storage_original()->void:
 	_write(V2Save.LEGACY,JSON.stringify({"credits":"99999999","lifetime_credits":"99999999","front":80,"recruit":100,"gear":10,"training_history":[{"id":"legacy"}],"active_training":{"id":"legacy-active"},"settings":{"sensitivity":2.3,"fov":98,"dpi":1600,"volume":0.4,"credits":"555","surprise":true}}))
 	var legacy_hash := FileAccess.get_sha256(V2Save.LEGACY)
 	for failure in ["backup","settings_read","temp","rename"]:

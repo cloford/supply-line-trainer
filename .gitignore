@@ -11,6 +11,7 @@ dist/
 *.pck
 captures/
 .test-appdata*/
+*test-appdata*/
 docs/images/*.png.import
 
 # OS・エディター

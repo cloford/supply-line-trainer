@@ -1,0 +1,57 @@
+{
+  "version": "0.25",
+  "exe_sha256": "1b29f5a53436a0345107df603ec58cfd0ee1d6d6b5adbf9b991b55c23640746b",
+  "pck_sha256": "64fb08186130629b4c78f41c82a2cbcb31d851f7f31738a2dda33ba3b677dee5",
+  "reports": [
+    {
+      "boot_phases": [
+        "iris",
+        "3",
+        "2",
+        "1",
+        ""
+      ],
+      "bytecode_hashes": 46,
+      "checks": 429,
+      "draw_frames": 450,
+      "failures": [],
+      "guidance_progress_delta": 1,
+      "phase": "create",
+      "resource_hashes": 98
+    },
+    {
+      "boot_phases": [
+        "iris",
+        "3",
+        "2",
+        "1",
+        ""
+      ],
+      "bytecode_hashes": 46,
+      "checks": 423,
+      "draw_frames": 225,
+      "failures": [],
+      "guidance_progress_delta": 0,
+      "phase": "reload",
+      "reloaded_credits": "187",
+      "reloaded_history": 3,
+      "resource_hashes": 98
+    },
+    {
+      "bytecode_hashes": 46,
+      "checks": 204,
+      "draw_frames": 10,
+      "failures": [],
+      "phase": "reset",
+      "resource_hashes": 98
+    },
+    {
+      "bytecode_hashes": 46,
+      "checks": 201,
+      "draw_frames": 2,
+      "failures": [],
+      "phase": "reset_reload",
+      "resource_hashes": 98
+    }
+  ]
+}

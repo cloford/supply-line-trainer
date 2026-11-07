@@ -1,4 +1,10 @@
-# Aim Runner 0.24の配布
+# Aim Runner 0.25の配布
+
+Tab中の練習変更、指の初回誘導、標的編集と自由練習の配点、アイコンUI、確認付き初期化を反映するWindows版です。新規タグv0.25、ZIPは`SupplyLineTrainer_Windows_v0.25.zip`。過去のタグ・配布物を上書きしません。
+
+[検証・調整値・画像・未確認事項](025-verification.md) ／ [版別の配布・Discussion](versions.md)。通常の更新はセーブを保持します。工具内の全データ初期化は任意の検証用操作で、個人設定も戻します。
+
+## 0.24の配布記録
 
 起動をHG無限自由練習へ直結し、自動開口・3秒表示・非同期の一時停止保存を反映したWindows版です。新規タグv0.24、ZIPは`SupplyLineTrainer_Windows_v0.24.zip`。過去のタグ・配布物を上書きしません。
 

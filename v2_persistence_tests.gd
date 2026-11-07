@@ -32,7 +32,7 @@ func _run()->void:
 		for weapon in 3:
 			check(int(game.data.measurement_counts[weapon]) == 1, "native restart lost completions")
 		check(game.data.training_history.size() == 6, "native restart lost intro plus five-mode history")
-		check(game.intro_session and game.iris_intro.waiting and game.training_weapon == 0 and not game.prep_panel.visible,"native reload did not replay HG boot")
+		check(game.intro_session and game.iris_intro.waiting and game.training_weapon == 4 and not game.prep_panel.visible,"native reload lost last unlocked weapon")
 		check(Progression.total(game.data) >= 1503 and Progression.unlocked(game.data,4), "restart lost progression or five-mode unlock")
 		check(int(game.data.training_history[0].weapon) == 4 and not game.data.training_history[0].extra.grenade_events.is_empty(), "restart lost grenade impact facts")
 		for weapon in 3:
@@ -48,21 +48,27 @@ func _run()->void:
 		check(game.iris_intro.waiting and game.training_elapsed == 0.0,"production boot clock advanced before drawing")
 		game._presentation_drawn_for_test()
 		game._process(0.1)
+		# headlessではマウス取得が提供されないため、誘導入口の検証分岐だけを使う。
+		# 実マウス/描画はupdate_display_testsの独立GPUフローで確認する。
+		game.is_test_mode = true
+		check(game._guidance_shot(),"production guidance did not accept valid target")
+		game.is_test_mode = false
 		for tick in 8:game._process(0.1)
 		game._presentation_drawn_for_test()
 		for tick in 31:game._process(0.1)
 		game.training_elapsed = 0.2
 		game.mouse_blocked = false
-		check(game.mode == game.Mode.TRAINING and game.stats.shots == 0,"native automatic intro/countdown failed")
+		check(game.mode == game.Mode.TRAINING and game.stats.shots == 0,"native guidance/countdown failed")
 		game.camera.look_at(game.targets[0].global_position)
 		await physics_frame
 		game._fire_shot()
 		game._process(0.1)
 		check(game.data.intro_seen and int(game.stats.kills) == 1,"native first-play kill/completion wrong")
 		await game._finish_training(false)
-		check(game.reward_committed and Progression.total(game.data) == 1,"native intro finish lost or duplicated progression")
+		check(game.reward_committed and Progression.total(game.data) == 2,"guidance plus regular kill lost or duplicated progression")
 		# 既存三武器が利用済みの隔離fixture。新規解放は0.21専用テストで確認。
 		game.data.progression.preserved_weapons = [0, 1, 2]
+		game.data.completed_measurement_ids = ["fixture-measurement-access"]
 		for weapon in 3:
 			game._show_prep()
 			game.selected_measurement = true

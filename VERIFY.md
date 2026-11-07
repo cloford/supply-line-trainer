@@ -1,3 +1,7 @@
+# Aim Runner 0.25
+
+[0.25検証・調整値・画像・未確認事項](docs/025-verification.md)。過去の検証は以下に残します。
+
 # Aim Runner 0.24
 
 [0.24検証・未確認](docs/024-verification.md) ／ [Escの計測](docs/024-performance.md)。旧版の報告は以下に残します。
