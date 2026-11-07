@@ -53,6 +53,8 @@ Godot 4.7.2／Windows／RTX4060／OpenGL Compatibilityの実時計で、最終PC
 
 配布ZIPはEXE・PCK・日本語README・CHANGELOG・検証範囲・Godotライセンスの6ファイル。全ファイルを読み戻し、検証済みファイルと照合し、更新器のZIP検証も成功した。38,407,224バイト、SHA-256 `d2a998ec0c5998177a05d22b733085ae78f2f9db25d9163cb2feaa84bff1bfeb`。
 
+2026-11-07に[PUBLICの正式版0.25](https://github.com/cloford/supply-line-trainer/releases/tag/v0.25)を公開した。製品タグは`9307b91`。公開後、最終PCKの`public_release_tests.gd`でAPI/CDNのリダイレクトからZIPを実ダウンロードし、サイズ・SHA-256・内容を照合した。`update_display_tests.gd -- --live`も成功し、「実行中0.25＝最新公開版0.25」、同版の適用ボタン無効を確認した。旧番号を与えた新版検査器の新版検出も確認したが、旧公開EXEの自動差し替えを実施した意味ではない。適用・更新再起動は行っていない。専用[Discussion #17](https://github.com/cloford/supply-line-trainer/discussions/17)を配布・変更履歴・検証結果付きの公開案内へ更新した。
+
 ## 実画像
 
 ![小窓と指の誘導](images/025-normal-boot-guide-1280x720.png)
