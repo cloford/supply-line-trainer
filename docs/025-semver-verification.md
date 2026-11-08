@@ -33,6 +33,8 @@ Windows・Godot 4.7.2・RTX 4060・OpenGL Compatibilityで、配布PCKを1280×7
 
 Windows ZIPはEXE・PCK・README・変更履歴・検証範囲・Godotライセンスの6ファイル。全ファイルの読み戻しと更新器の受入を確認した。38,402,203バイト、SHA-256 `ec186d66a24e2c67811cf21862151a0e8ce64a54fe309c5e9bdd40b021c2411f`。
 
+公開タグ `v0.2.5` は `a1f8d4f`。公開後、配布PCKからGitHub APIとCDNを経由してZIPを実取得し、サイズ・SHA-256・内容を照合した。実行中と最新公開版がいずれもv0.2.5で、同版の更新適用ボタンが無効であることも確認した。[正式リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.2.5)
+
 入力はGodot内の自動イベント、画面操作の呼び出し、フォーカス通知の注入で確認した。人による試遊、OSの物理キー配送、実際のOSフォーカス切り替え、実音声、高DPI・別PC・電源断は未確認。将来の正式な新体系リリースへの自動差し替え全工程は、テスト用EXEでの再起動補助確認と区別する。
 
 ## 実画像
