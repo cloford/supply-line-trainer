@@ -12,57 +12,6 @@ static func button(parent:Node, text:String, action:Callable, primary:bool = fal
 	parent.add_child(control)
 	return control
 
-static func icon_button(parent:Node, text:String, icon_id:String, action:Callable, primary:bool = false, tooltip:String = "")->Button:
-	var control := button(parent, text, action, primary)
-	control.tooltip_text = tooltip if not tooltip.is_empty() else text
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color", "font_hover_pressed_color"]:
-		control.add_theme_color_override(state, Color(0,0,0,0))
-	var icon := UIIcon.new()
-	icon.icon_id = icon_id
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	icon.offset_left = -32
-	icon.offset_right = 32
-	icon.offset_top = -32
-	icon.offset_bottom = 32
-	control.add_child(icon)
-	return control
-
-static func set_icon_state(control:Button, icon_id:String, selected:bool = false, disabled:bool = false)->void:
-	for child in control.get_children():
-		if child is UIIcon:
-			child.icon_id = icon_id
-			child.selected = selected
-			child.disabled = disabled
-			return
-
-static func _decorate_icon(control:Button, icon_id:String, tooltip:String, left_aligned:bool = true)->void:
-	control.tooltip_text = tooltip
-	var icon := UIIcon.new()
-	icon.icon_id = icon_id
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER_LEFT if left_aligned else Control.PRESET_CENTER)
-	if left_aligned:
-		icon.offset_left = 9
-		icon.offset_right = 45
-		icon.offset_top = -18
-		icon.offset_bottom = 18
-		for state in ["normal", "hover", "pressed", "disabled", "hover_pressed", "focus"]:
-			var old_style := control.get_theme_stylebox(state)
-			if old_style == null:
-				continue
-			var style := old_style.duplicate() as StyleBox
-			style.content_margin_left = maxf(style.content_margin_left, 52.0)
-			control.add_theme_stylebox_override(state, style)
-	else:
-		for state in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color", "font_focus_color", "font_hover_pressed_color"]:
-			control.add_theme_color_override(state, Color(0,0,0,0))
-		icon.offset_left = -24
-		icon.offset_right = 24
-		icon.offset_top = -24
-		icon.offset_bottom = 24
-	control.add_child(icon)
-
 static func set_weapon_button(control: Button, weapon: int, unlocked: bool, selected: bool, display_text: String = "") -> void:
 	# Locked choices deliberately reveal neither their names nor silhouettes with detail.
 	control.text = ("✓ " if selected else "") + (display_text if unlocked else "???\n累計%d達成で解放" % Progression.THRESHOLDS[weapon])
@@ -145,7 +94,6 @@ static func build(g)->void:
 	g.setting_sections[2].add_child(g.effects_check)
 	label(g.setting_sections[0], "60秒測定中の設定適用は現在の測定を途中終了し、新条件で測定を開始します。", 14)
 	g._build_navigation()
-	_decorate_navigation(g)
 	g._build_info_panel()
 	g._build_condition_picker()
 	g.condition_measure = CheckBox.new()
@@ -168,12 +116,11 @@ static func _build_prep(g)->void:
 	body.add_child(center)
 	var content := column(center)
 	content.custom_minimum_size.x = 880
-	label(content, "一つ撃つところから、次の練習へ", 26)
 	var modes := HBoxContainer.new()
 	content.add_child(modes)
-	g.free_button = icon_button(modes, "自由練習 — 無制限", "play", g._select_measurement.bind(false), true, "自由練習")
+	g.free_button = button(modes, "自由練習 — 無制限", g._select_measurement.bind(false), true)
 	g.free_button.custom_minimum_size = Vector2(112, 92)
-	g.measure_button = icon_button(modes, "兵士を作る — 60秒測定", "lock", g._select_measurement.bind(true), false, "兵士の60秒測定。解放後に選べます")
+	g.measure_button = button(modes, "兵士を作る — 60秒測定", g._select_measurement.bind(true), false)
 	g.measure_button.custom_minimum_size = Vector2(76, 64)
 	# The prep screen presents one large play action; the measurement entry lives in Tab.
 	modes.hide()
@@ -197,7 +144,7 @@ static func _build_prep(g)->void:
 	g.difficulty_row.hide()
 	g.difficulty_info = label(content, "", 14)
 	g.difficulty_info.hide()
-	g.start_button = icon_button(content, "自由練習を開始", "play", g._request_start, true, "自由練習を開始")
+	g.start_button = button(content, "自由練習を開始", g._request_start, true)
 	g.start_button.custom_minimum_size.y = 88
 	g.condition_label = label(content, "", 15)
 	g.condition_label.hide()
@@ -208,23 +155,6 @@ static func _build_prep(g)->void:
 	g.migration_ack = button(body, "説明を確認して続ける", g._ack_migration)
 	g.update_hint = button(body, "更新の準備ができました — 更新情報へ", g._open_update_info)
 	g.update_hint.hide()
-
-static func _decorate_navigation(g)->void:
-	var nav_icons := ["play", "squad", "history"]
-	var nav_tips := ["練習へ", "部隊と戦線", "練習記録"]
-	for i in mini(g.navigation_buttons.size(), nav_icons.size()):
-		var control:Button = g.navigation_buttons[i]
-		control.custom_minimum_size = Vector2(126, 56)
-		control.add_theme_font_size_override("font_size", 14)
-		_decorate_icon(control, nav_icons[i], nav_tips[i], false)
-	var row:HBoxContainer = g.navigation.get_child(0)
-	var controls:Array = row.get_children()
-	if controls.size() >= 7:
-		for index in [4, 5, 6]:
-			controls[index].custom_minimum_size = Vector2(56, 56)
-		_decorate_icon(controls[4], "settings", "設定", false)
-		_decorate_icon(controls[5], "help", "ヘルプと操作方法", false)
-		_decorate_icon(controls[6], "feedback", "意見を送る", false)
 
 static func _build_army(g)->void:
 	g.army_panel = page(g)
@@ -280,13 +210,13 @@ static func _build_army(g)->void:
 	right.add_child(g.diorama)
 	var actions := HBoxContainer.new()
 	right.add_child(actions)
-	g.retry_battle_button = icon_button(actions, "無料で再挑戦", "play", g._retry_battle, true, "この戦線へ再挑戦")
+	g.retry_battle_button = button(actions, "無料で再挑戦", g._retry_battle, true)
 	g.retry_battle_button.custom_minimum_size = Vector2(72, 58)
 	g.continue_button = button(actions, "継続戦線へ進む", g._continue_battle)
 	label(right, "実戦：記録の発射リズム × 実測命中率。短期の命中率は毎回変わります。", 14)
-	g.army_resume = icon_button(right, "同じ練習に戻る", "play", g._resume_from_army, true, "同じ練習に戻る")
+	g.army_resume = button(right, "同じ練習に戻る", g._resume_from_army, true)
 	g.army_resume.custom_minimum_size = Vector2(72, 58)
-	g.army_end = icon_button(right, "この練習を終了して結果へ", "stop", g._finish_from_army, false, "この練習を終了して結果を見る")
+	g.army_end = button(right, "この練習を終了して結果へ", g._finish_from_army, false)
 	g.army_end.custom_minimum_size = Vector2(64, 52)
 
 static func _build_hud(g)->void:
@@ -353,7 +283,7 @@ static func _build_result(g)->void:
 	left.add_child(g.replay_diorama)
 	var replay_actions := HBoxContainer.new()
 	left.add_child(replay_actions)
-	g.replay_button = icon_button(replay_actions, "記録を再生", "play", g._restart_replay, false, "記録を再生")
+	g.replay_button = button(replay_actions, "記録を再生", g._restart_replay, false)
 	g.replay_button.custom_minimum_size = Vector2(68, 54)
 	g.skip_replay_button = button(replay_actions, "再現をスキップ", g._skip_replay)
 	g.trial_button = button(left, "兵士の試射：現在と候補を比較", g._start_trial)
@@ -367,7 +297,7 @@ static func _build_result(g)->void:
 	g.result_wallet = label(right, "", 14)
 	button(right, "詳細・計算条件", g._open_v2_result_details)
 	g.result_flavor = label(body, "", 17)
-	g.adopt_button = icon_button(body, "この記録を採用", "squad", g._adopt_result, true, "この記録から兵士を作る")
+	g.adopt_button = button(body, "この記録を採用", g._adopt_result, true)
 	g.adopt_button.custom_minimum_size.y = 64
 	g.result_message = label(body, "", 14)
 	var actions := HBoxContainer.new()

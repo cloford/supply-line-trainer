@@ -16,21 +16,6 @@ func _draw() -> void:
 	var color := Color("030608") if locked else INK
 	var center := size * 0.5
 	var line := 3.0
-	if locked:
-		# Use one generic silhouette so the outline does not identify a specific weapon.
-		var silhouette := PackedVector2Array([
-			center + Vector2(-23, -4), center + Vector2(4, -4),
-			center + Vector2(10, -8), center + Vector2(20, -8),
-			center + Vector2(25, -4), center + Vector2(17, 1),
-			center + Vector2(10, 2), center + Vector2(4, 12),
-			center + Vector2(-3, 12), center + Vector2(-1, 4),
-			center + Vector2(-23, 4)
-		])
-		var outline := PackedVector2Array(silhouette)
-		outline.append(silhouette[0])
-		draw_polyline(outline, MUTED, line + 2.0, true)
-		draw_colored_polygon(silhouette, color)
-		return
 	match weapon_id:
 		0: # Compact sidearm
 			_draw_body([Vector2(-22, -3), Vector2(-5, -3), Vector2(1, -7), Vector2(15, -7), Vector2(20, -3), Vector2(11, 1), Vector2(7, 4), Vector2(2, 13), Vector2(-5, 13), Vector2(-3, 3), Vector2(-22, 3)], color, line)

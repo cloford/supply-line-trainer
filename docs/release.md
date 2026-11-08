@@ -1,4 +1,8 @@
-# Aim Runner 0.25の配布
+# Aim Runner 0.2.5の配布
+
+タグは `v0.2.5`、ZIPは `SupplyLineTrainer_Windows_v0.2.5.zip`。0.25からはゲームを終了し、ZIP全体を別フォルダーへ展開してEXEを起動する。既存の保存先をそのまま使用する。[検証・実画像](025-semver-verification.md) ／ [Discussion #18](https://github.com/cloford/supply-line-trainer/discussions/18)
+
+## 0.25の配布記録
 
 Tab中の練習変更、指の初回誘導、標的編集と自由練習の配点、アイコンUI、確認付き初期化を反映するWindows版です。新規タグv0.25、ZIPは`SupplyLineTrainer_Windows_v0.25.zip`。過去のタグ・配布物を上書きしません。
 

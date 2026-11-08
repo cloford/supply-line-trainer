@@ -14,12 +14,16 @@ func _init() -> void:
 	check(Updater.newer("v0.21", "2.0.0"), "new numbering epoch wins over legacy major")
 	check(not Updater.newer("v2.99.0", "0.21"), "never select legacy release again")
 	check(Updater.newer("0.30", "0.29"), "integer sequence comparison")
+	check(Updater.newer("v0.2.5", "0.25"), "three-part epoch wins over the old sequence")
+	check(Updater.newer("v0.2.5", "2.0.0"), "three-part epoch wins over legacy major")
+	check(Updater.newer("v0.2.10", "0.2.9"), "three-part epoch compares numeric patches")
 	for version in ["1.4.0-beta", "1.4.0+dev", "01.4.0", "1.4", "1.4.0\n", "https://bad", "9999999999999999999.0.0"]:
 		check(Updater.version_parts(version).is_empty(), "invalid stable version " + version)
 	var asset := {"name": "SupplyLineTrainer_Windows_v1.4.0.zip", "browser_download_url": Updater.DOWNLOAD_PREFIX + "v1.4.0/SupplyLineTrainer_Windows_v1.4.0.zip", "size": 40000000, "digest": "sha256:" + "a".repeat(64)}
 	check(Updater.valid_asset(asset, "v1.4.0"), "trusted GitHub release asset")
-	var sequence_asset := {"name":"SupplyLineTrainer_Windows_v0.21.zip","browser_download_url":Updater.DOWNLOAD_PREFIX+"v0.21/SupplyLineTrainer_Windows_v0.21.zip","size":40000000,"digest":"sha256:"+"a".repeat(64)}
-	check(Updater.valid_asset(sequence_asset,"v0.21"),"new sequence archive/tag naming")
+	var release_asset := {"name":"SupplyLineTrainer_Windows_v0.2.5.zip","browser_download_url":Updater.DOWNLOAD_PREFIX+"v0.2.5/SupplyLineTrainer_Windows_v0.2.5.zip","size":40000000,"digest":"sha256:"+"a".repeat(64)}
+	check(Updater.valid_asset(release_asset,"v0.2.5"),"three-part archive/tag naming")
+	check(not Updater.valid_asset(release_asset,"v0.25"),"old sequence does not match the three-part archive")
 	for field in ["name", "browser_download_url", "digest"]:
 		var invalid: Dictionary = asset.duplicate()
 		invalid[field] = "https://evil.invalid/asset.zip"
@@ -69,15 +73,16 @@ func _async_checks() -> void:
 	check("最新公開版 v" + Updater.current_version() + " と同じです" == none.status and not none.ready, "same current release no update")
 	var current_version := Updater.current_version()
 	check(Updater.running_version_text()=="実行中 v"+current_version,"running version label must use project setting")
-	ProjectSettings.set_setting("application/config/version","1.5.0")
-	var patch_tag := "v1.6.0"
-	var patch_asset := {"name":"SupplyLineTrainer_Windows_v1.6.0.zip","browser_download_url":Updater.DOWNLOAD_PREFIX+patch_tag+"/SupplyLineTrainer_Windows_v1.6.0.zip","size":40000000,"digest":"sha256:"+"a".repeat(64)}
+	var patch_tag := "v0.2.10"
+	var patch_asset := {"name":"SupplyLineTrainer_Windows_v0.2.10.zip","browser_download_url":Updater.DOWNLOAD_PREFIX+patch_tag+"/SupplyLineTrainer_Windows_v0.2.10.zip","size":40000000,"digest":"sha256:"+"a".repeat(64)}
 	var newer_release := {"tag_name":patch_tag,"draft":false,"prerelease":false,"assets":[patch_asset]}
 	var update := await _transport_case(200,JSON.stringify(newer_release).to_utf8_buffer(),"check","",{})
-	check(update.status=="v1.6.0 が利用できます" and not update.ready,"older running build must offer newer release, not claim latest")
-	check(Updater.running_version_text()=="実行中 v1.5.0","project version changed but label stayed fixed")
-	var current_parts:=Updater.version_parts(current_version)
-	ProjectSettings.set_setting("application/config/version","0.%d" % maxi(22,current_parts[1]+1))
+	check(update.status=="v0.2.10 が利用できます" and not update.ready and Updater.valid_asset(update.asset,patch_tag),"current build must select the future three-part archive")
+	var legacy_release := {"tag_name":"v0.25","draft":false,"prerelease":false,"assets":[]}
+	var legacy := await _transport_case(200,JSON.stringify(legacy_release).to_utf8_buffer(),"check","",{})
+	check("実行中の方が新しい" in legacy.status and legacy.asset.is_empty(),"current build must not select the old sequence")
+	ProjectSettings.set_setting("application/config/version","0.2.9")
+	check(Updater.running_version_text()=="実行中 v0.2.9","project version changed but label stayed fixed")
 	var ahead := await _transport_case(200,JSON.stringify(latest).to_utf8_buffer(),"check","",{})
 	check("実行中の方が新しい" in ahead.status and not ahead.ready,"ahead build must not call older public release equal")
 	ProjectSettings.set_setting("application/config/version","invalid")
@@ -134,7 +139,7 @@ func _transport_case(code: int, body: PackedByteArray, phase: String, directory:
 		peer.disconnect_from_host()
 	else: check(false, "HTTP fixture accepted connection")
 	server.stop()
-	var outcome := {"ready": node.ready_to_apply, "status": node.status}
+	var outcome := {"ready": node.ready_to_apply, "status": node.status, "asset": node._asset}
 	print("TRANSPORT_FIXTURE ", code, " ", phase, " ", outcome)
 	check(node._phase.is_empty(), "HTTP fixture finishes " + phase)
 	node.queue_free()

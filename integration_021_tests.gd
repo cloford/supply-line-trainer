@@ -138,7 +138,7 @@ func _run()->void:
 			game.progression_view._process(0.4)
 			await capture("02-first-achievement")
 		if kill == 3:
-			check(Progression.list_visible(game.data) and game.data.progression.list_seen, "5 did not show/save roster intro")
+			check(game.data.progression.achievements.has("five_progress") and not game.tab_panel.visible and not game.progression_view._roster_panel.visible, "5 must grant the achievement without opening the roster")
 			game.progression_view._process(0.4)
 			await capture("03-five-achievements")
 		if kill == 7:
@@ -355,7 +355,8 @@ func _run()->void:
 		var retained_progress:int = Progression.total(game.data)
 		var remembered_weapon:int = game.data.selected_weapon
 		game._begin_boot()
-		check(game.iris_intro.waiting and game.training_weapon == remembered_weapon and not game.training_measurement and not game.prep_panel.visible,"repeat boot lost selected weapon")
+		check(game.iris_intro.waiting and game.training_weapon == 0 and not game.training_measurement and not game.prep_panel.visible,"repeat boot did not enter handgun free practice")
+		check(int(game.data.selected_weapon) == remembered_weapon,"boot rewrote the stored weapon before saving")
 		check(game.data.training_history.size() == retained and Progression.unlocked(game.data,4),"boot reset records/unlocks")
 		await capture("iris-wait-%dx%d" % [dimensions.x,dimensions.y])
 		game._presentation_drawn_for_test()
@@ -373,6 +374,14 @@ func _run()->void:
 		check(game.mode == game.Mode.TRAINING and not game.iris_intro.is_active(),"boot left black overlay")
 		await capture("iris-done-%dx%d" % [dimensions.x,dimensions.y])
 		game._finish_training(false)
+	game.data = V2Save.defaults()
+	game._begin_boot()
+	var skip := InputEventKey.new()
+	skip.keycode = KEY_ENTER
+	skip.pressed = true
+	game._unhandled_input(skip)
+	check(not game.intro_session and not game.iris_intro.is_active() and game.mode == game.Mode.COUNTDOWN and game.countdown == 3.0 and Progression.total(game.data) == 0, "Enter must skip guidance without granting progress")
+	await game._finish_training(false)
 	# freshには確認操作を挟まず、真の移行/復旧と失敗だけ専用説明へ進む。
 	game.data = V2Save.defaults()
 	game.data.legacy_backup = "user://fixture-preserved-v1.json"

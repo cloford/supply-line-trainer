@@ -1,0 +1,98 @@
+[
+  {
+    "measurement": false,
+    "pop_count": 1,
+    "size": "(1280, 720)",
+    "transitions": [
+      {
+        "ms": 160,
+        "phase": "guide"
+      },
+      {
+        "ms": 528,
+        "phase": "iris"
+      },
+      {
+        "ms": 1295,
+        "phase": "3"
+      },
+      {
+        "ms": 2361,
+        "phase": "2"
+      },
+      {
+        "ms": 3361,
+        "phase": "1"
+      },
+      {
+        "ms": 4361,
+        "phase": "training"
+      }
+    ],
+    "weapon": 0
+  },
+  {
+    "measurement": false,
+    "pop_count": 1,
+    "size": "(1920, 1080)",
+    "transitions": [
+      {
+        "ms": 63,
+        "phase": "guide"
+      },
+      {
+        "ms": 521,
+        "phase": "iris"
+      },
+      {
+        "ms": 1287,
+        "phase": "3"
+      },
+      {
+        "ms": 2387,
+        "phase": "2"
+      },
+      {
+        "ms": 3387,
+        "phase": "1"
+      },
+      {
+        "ms": 4387,
+        "phase": "training"
+      }
+    ],
+    "weapon": 0
+  },
+  {
+    "measurement": false,
+    "pop_count": 1,
+    "size": "(1024, 768)",
+    "transitions": [
+      {
+        "ms": 64,
+        "phase": "guide"
+      },
+      {
+        "ms": 528,
+        "phase": "iris"
+      },
+      {
+        "ms": 1294,
+        "phase": "3"
+      },
+      {
+        "ms": 2361,
+        "phase": "2"
+      },
+      {
+        "ms": 3344,
+        "phase": "1"
+      },
+      {
+        "ms": 4344,
+        "phase": "training"
+      }
+    ],
+    "weapon": 0
+  }
+]

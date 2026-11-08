@@ -30,54 +30,41 @@ func configure(curve: Callable, value: float) -> void:
 	queue_redraw()
 
 func center_points() -> float:
-	return _points_at(1.0)
+	return _points_at(1.0, risk)
 
 func edge_points() -> float:
-	return _points_at(0.0)
+	return _points_at(0.0, risk)
 
-func _points_at(q: float) -> float:
+func _points_at(q: float, risk_value: float) -> float:
 	if not score_curve.is_valid():
 		return 0.0
-	return maxf(0.0, float(score_curve.call(q, risk)))
+	return maxf(0.0, float(score_curve.call(q, risk_value)))
 
 func _draw() -> void:
 	var center := Vector2(minf(size.x * 0.29, size.y * 0.48), size.y * 0.5)
 	var radius := minf(size.y * 0.39, size.x * 0.25)
-	var segments := 96
-	var rings := 24
+	var rings := 48
 	var edge_color := Color("2994df")
 	var center_color := Color("f15d58")
-	var edge_value := _points_at(0.0)
-	var center_value := _points_at(1.0)
-	var low := minf(edge_value, center_value)
-	var high := maxf(edge_value, center_value)
-	# Concentric smooth bands keep the target's center red and its edge blue.
-	for band in rings:
-		var r0 := radius * float(band) / float(rings)
-		var r1 := radius * float(band + 1) / float(rings)
-		var q := 1.0 - (float(band) + 0.5) / float(rings)
-		var points := _points_at(q)
-		var t := clampf((points - low) / maxf(0.001, high - low), 0.0, 1.0)
-		var color := edge_color.lerp(center_color, t)
-		for i in segments:
-			var a0 := TAU * float(i) / float(segments)
-			var a1 := TAU * float(i + 1) / float(segments)
-			var cell := PackedVector2Array([
-				center + Vector2.from_angle(a0) * r0,
-				center + Vector2.from_angle(a0) * r1,
-				center + Vector2.from_angle(a1) * r1,
-				center + Vector2.from_angle(a1) * r0
-			])
-			draw_colored_polygon(cell, color)
+	var edge_value := edge_points()
+	var center_value := center_points()
+	# 編集位置に関係なく、同じ参考点は同じ色になる。
+	var high := maxf(0.001, _points_at(1.0, 1.0))
+	for band in range(rings, 0, -1):
+		var radial := float(band) / float(rings)
+		var q := 1.0 - radial
+		var points := _points_at(q, risk)
+		var color := edge_color.lerp(center_color, clampf(points / high, 0.0, 1.0))
+		draw_circle(center, radius * radial, color, true, -1.0, true)
 	draw_arc(center, radius, 0.0, TAU, 64, Color("e5eff0"), 2.0, true)
 	draw_circle(center, 3.0, Color("fff6e8"))
 	var label_x := minf(size.x * 0.56, center.x + radius + 18.0)
 	var color_text := Color("dce8eb")
-	var center_label := "%.1f" % center_points()
-	var edge_label := "%.1f" % edge_points()
-	_draw_text("CENTER", Vector2(label_x, center.y - 12.0), color_text, 13)
+	var center_label := "%.1f" % center_value
+	var edge_label := "%.1f" % edge_value
+	_draw_text("中心", Vector2(label_x, center.y - 12.0), color_text, 15)
 	_draw_text(center_label, Vector2(label_x, center.y + 14.0), center_color, 24)
-	_draw_text("EDGE", Vector2(label_x, center.y + 47.0), color_text, 13)
+	_draw_text("端", Vector2(label_x, center.y + 47.0), color_text, 15)
 	_draw_text(edge_label, Vector2(label_x, center.y + 71.0), edge_color, 24)
 
 func _draw_text(value: String, position: Vector2, color: Color, font_size: int) -> void:

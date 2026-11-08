@@ -83,6 +83,9 @@ func _boot_flow()->void:
 			if not game.targets[0].is_visible_in_tree():_boot_problem("boot target hidden")
 			if not game.crosshair.is_visible_in_tree():_boot_problem("boot crosshair hidden")
 			if game.camera.global_transform!=camera_pose or game.targets[0].global_position!=target_pose or game.camera.fov!=fov:_boot_problem("boot camera/target/FOV jumped")
+			if game.iris_intro.waiting:
+				var projected:Vector2=game.camera.unproject_position(game.targets[0].global_position)
+				if not game.iris_intro._aim_prompt.target_position.is_equal_approx(projected):_boot_problem("finger target projection differs")
 			var phase:String=("guide" if game.iris_intro.waiting else "iris") if game.intro_session else (str(game.countdown_display.number_label.text) if game.countdown_display.is_visible_in_tree() else "training")
 			if phase!=phase_previous:
 				transitions.append({"phase":phase,"ms":Time.get_ticks_msec()-started})
@@ -109,8 +112,7 @@ func _boot_flow()->void:
 			for index in range(2,5):
 				var duration:int=int(transitions[index+1].ms)-int(transitions[index].ms)
 				if duration<800 or duration>1400:_boot_problem("countdown not about one second: "+str(duration))
-		var expected_weapon:int=0 if dimensions.x==1280 else (1 if dimensions.x==1920 else 2)
-		if game.training_weapon!=expected_weapon or game.training_measurement or game.stats.shots!=0 or game.training_elapsed>0.15:_boot_problem("normal boot did not enter last unlocked free practice")
+		if game.training_weapon!=0 or game.training_measurement or game.stats.shots!=0 or game.training_elapsed>0.15:_boot_problem("normal boot did not enter handgun free practice")
 		if Progression.total(game.data)!=progress_before+(1 if dimensions.x==1280 else 0):_boot_problem("guidance progression was lost or granted again")
 		if game.spawn_audio.play_count!=1:_boot_problem("normal boot pop was not exactly once")
 		if dimensions.x!=1280:
@@ -119,10 +121,14 @@ func _boot_flow()->void:
 		summaries.append({"size":str(dimensions),"transitions":transitions,"pop_count":game.spawn_audio.play_count,"weapon":game.training_weapon,"measurement":game.training_measurement})
 		game.tab_held=true
 		game._open_tab()
-		await process_frame
+		await create_timer(0.22).timeout
 		if not game.tab_panel.is_visible_in_tree():_boot_problem("Tab panel missing")
+		if not is_equal_approx(game.tab_panel.panel.get_global_rect().end.x,float(dimensions.x)):_boot_problem("Tab tray not aligned to right edge")
 		for weapon in game.tab_weapons.size():
-			if game.tab_weapons[weapon].button_pressed!=(weapon==game.training_weapon):_boot_problem("current weapon selection not represented")
+			var button:Button=game.tab_weapons[weapon]
+			if not button.is_visible_in_tree():_boot_problem("Tab weapon row missing")
+			if button.button_pressed!=(weapon==game.training_weapon):_boot_problem("current weapon selection not represented")
+			if dimensions.x==1280 and weapon!=0 and (not button.disabled or not button.text.begins_with("???")):_boot_problem("locked weapon row exposed")
 		_boot_bounds(game.tab_panel,dimensions)
 		if not output.is_empty():
 			await RenderingServer.frame_post_draw
@@ -140,6 +146,14 @@ func _boot_flow()->void:
 		game.tab_held=false
 		game._close_tab()
 		await game._finish_training(false)
+		game._show_prep()
+		game._open_main_target_editor()
+		await process_frame
+		_boot_bounds(game.target_editor, dimensions)
+		if not output.is_empty():
+			await RenderingServer.frame_post_draw
+			root.get_texture().get_image().save_png(output.path_join("main-editor-%dx%d.png"%[dimensions.x,dimensions.y]))
+		game._cancel_target_edit()
 		game.queue_free()
 		for frame in 5:await process_frame
 	if not output.is_empty():

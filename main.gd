@@ -364,7 +364,7 @@ func _sync_navigation()->void:
 	navigation.visible=mode in [Mode.PREP,Mode.ARMY,Mode.RECORDS] and not training_in_army and (not info_panel or not info_panel.visible)
 	for index in navigation_buttons.size():
 		var selected:bool=mode==[Mode.PREP,Mode.ARMY,Mode.RECORDS][index]
-		navigation_buttons[index].text=("✓ " if selected else "")+["訓練","部隊","記録"][index]
+		navigation_buttons[index].text=("✓ " if selected else "")+["メイン画面","部隊","記録"][index]
 		navigation_buttons[index].set_pressed_no_signal(selected)
 
 func _build_info_panel()->void:

@@ -188,10 +188,11 @@ func _completed(result: int, code: int, headers: PackedStringArray, body: Packed
 			_fail("実行中のバージョン番号を確認できないため、更新を中止しました")
 			return
 		if not newer(tag, current):
+			var published_version := ReleaseVersion.display(tag)
 			if ReleaseVersion.same(tag,current):
-				_set_status("最新公開版 v%s と同じです" % tag.trim_prefix("v"))
+				_set_status("最新公開版 v%s と同じです" % published_version)
 			else:
-				_set_status("最新公開版は v%s（実行中の方が新しい版です）" % tag.trim_prefix("v"))
+				_set_status("最新公開版は v%s（実行中の方が新しい版です）" % published_version)
 			return
 		_asset = {}
 		for item in data.get("assets", []):
@@ -201,7 +202,7 @@ func _completed(result: int, code: int, headers: PackedStringArray, body: Packed
 		if _asset.is_empty():
 			_fail("検証可能なWindows配布ファイルがありません。あとで再試行できます")
 			return
-		release_version = tag.trim_prefix("v")
+		release_version = ReleaseVersion.display(tag)
 		_set_status("v%s が利用できます" % release_version)
 		if _auto_download: download.call_deferred()
 	elif _phase == "download":

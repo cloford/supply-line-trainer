@@ -178,6 +178,7 @@ func _session_controls()->void:
 	game.tab_held = true
 	game._open_tab()
 	game._process(0.2)
+	check(game.data.tab_guide_seen, "first valid Tab open acknowledges hint before any hit")
 	check(game.interaction == game.Interaction.TAB and game.mode == game.Mode.PAUSED and game.training_elapsed == 1.25 and game.targets[0].transform == original_pose,"Tab immediately freezes clock and target")
 	game._close_tab()
 	check(game.mode == game.Mode.TRAINING and game.session_id == original_id and game.data.training_history.is_empty(),"opening Tab alone retains original session")
@@ -221,6 +222,16 @@ func _session_controls()->void:
 	game.selected_measurement = true
 	game._show_prep()
 	check(not game.selected_measurement and not game.weapon_buttons[0].is_visible_in_tree(),"preparation defaults to free practice and hides weapon selection")
+	var history_count:int = game.data.training_history.size()
+	var saved_risk:float = game.data.target_risk
+	game._open_main_target_editor()
+	game.target_slider.value = 0.12
+	game._cancel_target_edit()
+	check(game.mode == game.Mode.PREP and game.data.target_risk == saved_risk, "main editor cancel discards the draft")
+	game._open_main_target_editor()
+	game.target_slider.value = 0.31
+	await game._apply_target_edit()
+	check(game.mode == game.Mode.PREP and not game.target_editor.visible and is_equal_approx(game.data.target_risk, 0.31) and game.data.training_history.size() == history_count, "main editor apply saves without starting or splitting a session")
 	game.selected_weapon = 0
 	game._start_training()
 	game.mode = game.Mode.TRAINING
@@ -232,3 +243,4 @@ func _session_controls()->void:
 	await game._reset_all_data()
 	check(game.data.credits == "0" and Progression.total(game.data) == 0 and game.data.settings.sensitivity == V2Save.SETTING_DEFAULTS.sensitivity and game.selected_weapon == 0 and not game.data.guidance_credited,"reset clears progress and personal settings in memory")
 	check(game.intro_session and game.iris_intro.waiting and game.mode == game.Mode.COUNTDOWN,"reset returns to new-play guidance")
+	check(not game.data.tab_guide_seen, "reset re-arms the Tab hint")

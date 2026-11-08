@@ -40,10 +40,11 @@ function Sha256([string]$path) {
     finally { $hash.Dispose(); $stream.Dispose() }
 }
 function ValidVersion([string]$version) {
-    # Match ReleaseVersion: legacy three-part versions, or 0.21 onward.
-    if ($version -cmatch '^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\z') { return $true }
-    if ($version -cmatch '^0\.([1-9][0-9]{0,8})\z') { return [long]$Matches[1] -ge 21 }
-    return $false
+    # Only canonical versions in the current ReleaseVersion epoch can be applied.
+    if ($version -cnotmatch '^0\.([1-9][0-9]?)\.(0|[1-9][0-9]{0,8})\z') { return $false }
+    $minor = [int]$Matches[1]
+    $patch = [int]$Matches[2]
+    return $minor -lt 21 -and ($minor -gt 2 -or ($minor -eq 2 -and $patch -ge 5))
 }
 try {
     AssertPlain $stage

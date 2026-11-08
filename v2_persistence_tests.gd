@@ -32,7 +32,8 @@ func _run()->void:
 		for weapon in 3:
 			check(int(game.data.measurement_counts[weapon]) == 1, "native restart lost completions")
 		check(game.data.training_history.size() == 6, "native restart lost intro plus five-mode history")
-		check(game.intro_session and game.iris_intro.waiting and game.training_weapon == 4 and not game.prep_panel.visible,"native reload lost last unlocked weapon")
+		check(game.intro_session and game.iris_intro.waiting and game.training_weapon == 0 and not game.prep_panel.visible,"native reload did not launch handgun practice")
+		check(Progression.unlocked(game.data, 4) and int(game.data.selected_weapon) == 4, "boot altered stored weapon unlock or selection")
 		check(Progression.total(game.data) >= 1503 and Progression.unlocked(game.data,4), "restart lost progression or five-mode unlock")
 		check(int(game.data.training_history[0].weapon) == 4 and not game.data.training_history[0].extra.grenade_events.is_empty(), "restart lost grenade impact facts")
 		for weapon in 3:

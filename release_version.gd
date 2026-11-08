@@ -1,10 +1,9 @@
 class_name ReleaseVersion
 extends RefCounted
 
-# 0.21以降は連番体系。旧0.xの三要素タグを新体系と推測しない。
-const PUBLIC := "0.25"
-const INTERNAL := "0.25.0"
-const FEEDBACK_URL := "https://github.com/cloford/supply-line-trainer/discussions/17"
+const PUBLIC := "0.2.5"
+const INTERNAL := PUBLIC
+const FEEDBACK_URL := "https://github.com/cloford/supply-line-trainer/discussions/18"
 
 static func parse(value:String)->Dictionary:
 	var regex := RegEx.new()
@@ -20,12 +19,12 @@ static func parse(value:String)->Dictionary:
 	var third := found.get_string(3)
 	if major == 0 and minor >= 21 and third.is_empty():
 		return {"epoch":1,"parts":[0,minor,0],"public":"0.%d" % minor}
-	# 内部版は現在ビルドだけを明示的に許可。任意の旧0.x.yは旧体系。
-	if value.trim_prefix("v") == INTERNAL:
-		return {"epoch":1,"parts":[0,int(PUBLIC.get_slice(".",1)),0],"public":PUBLIC}
 	if third.is_empty():
 		return {}
-	return {"epoch":0,"parts":[major,minor,int(third)],"public":"%d.%d.%d" % [major,minor,int(third)]}
+	var patch := int(third)
+	# 0.2.5からの三要素版。旧0.21～0.25の内部版と旧1.x/2.xを区別する。
+	var epoch := 2 if major == 0 and minor < 21 and (minor > 2 or (minor == 2 and patch >= 5)) else 0
+	return {"epoch":epoch,"parts":[major,minor,patch],"public":"%d.%d.%d" % [major,minor,patch]}
 
 static func parts(value:String)->Array[int]:
 	var parsed := parse(value)

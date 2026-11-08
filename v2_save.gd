@@ -11,7 +11,7 @@ static var last_error := ""
 static var test_fail_step := ""
 
 static func defaults()->Dictionary:
-	return {"version":V2Rules.SAVE_VERSION,"scoring_version":TargetScoring.VERSION,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0,"intro_seen":false,"guidance_credited":false,"target_risk":TargetScoring.DEFAULT_RISK,"progression":Progression.defaults()}
+	return {"version":V2Rules.SAVE_VERSION,"scoring_version":TargetScoring.VERSION,"migration":"settings_only_v2","migration_notice":true,"credits":"0","lifetime_credits":"0","credit_fraction":0.0,"practice_totals":TrainingLedger.totals(),"training_history":[],"active_training":{},"settled_training_ids":[],"completed_measurement_ids":[],"measurement_counts":[0,0,0],"armor":[false,false,false],"protection":[0,0,0],"profiles":[{},{},{}],"previous_profiles":[{},{},{}],"names":["ハンドガン兵","アサルト兵","バースト兵"],"deployed":[true,true,true],"front":0,"battle_status":"fighting","expedition_complete":false,"settings":SETTING_DEFAULTS.duplicate(true),"selected_weapon":0,"selected_difficulty":0,"selected_duration":0,"help_seen":false,"v2_notice_seen":false,"selected_measurement":false,"last_save":0,"intro_seen":false,"guidance_credited":false,"tab_guide_seen":false,"target_risk":TargetScoring.DEFAULT_RISK,"progression":Progression.defaults()}
 
 static func validate_settings(source:Variant)->Dictionary:
 	var result := SETTING_DEFAULTS.duplicate(true)
@@ -169,6 +169,7 @@ static func load_data()->Dictionary:
 			data.intro_seen = true
 		# 既存進行へ後日の誘導一発を追加しない。旧難易度の履歴は不変、未設定の曲線は初期値へ。
 		if not data.has("guidance_credited"):data.guidance_credited = bool(data.intro_seen) or Progression.total(data) > 0
+		data.tab_guide_seen = data.get("tab_guide_seen", false) == true
 		data.target_risk = TargetScoring.safe_risk(data.get("target_risk",TargetScoring.DEFAULT_RISK))
 		data.settings = validate_settings(data.settings)
 		data.training_history.resize(mini(data.training_history.size(),V2Rules.HISTORY_LIMIT))

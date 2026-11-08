@@ -1,11 +1,12 @@
 # Aim Runner バージョン別の更新内容・Discussion
 
-旧称はSupply Line Trainerです。0.21以降は0.22、0.23…という公開番号を使います。旧1.x／2.xとの数値の大小だけで新旧を判断しないでください。
+旧称はSupply Line Trainerです。旧0.21〜0.25は二要素の公開番号を使いました。0.2.5からは三要素を整数比較します。0.2.5は0.25より新しく、0.2.9の次は0.2.10です。
 
 各版のDiscussionはその版専用です。今後も公開ごとに専用スレッドを用意します。過去の配布物とタグは保持しています。
 
 | 公開版 | 配布・詳細 | 感想・不具合報告 |
 | --- | --- | --- |
+| 0.2.5 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.2.5) | [Discussion #18](https://github.com/cloford/supply-line-trainer/discussions/18) |
 | 0.25 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.25) | [Discussion #17](https://github.com/cloford/supply-line-trainer/discussions/17) |
 | 0.24 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.24) | [Discussion #16](https://github.com/cloford/supply-line-trainer/discussions/16) |
 | 0.23 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.23) | [Discussion #15](https://github.com/cloford/supply-line-trainer/discussions/15) |
@@ -31,6 +32,10 @@
 - 1.xから初めてv2系へ移る場合：v2.0.0で導入した設定のみの移行が適用されます。旧育成をv2育成に換算するものではありません。
 
 ## 各版で変わったこと
+
+### 0.2.5
+
+ハンドガン固定起動、標的中心を指す誘導、0.24の球体外観、日本語操作、メイン画面からの配点編集、五行の右側一覧、3命中のTab案内を追加。0.25からの移行は手動でZIPを展開する。[検証・実画像](025-semver-verification.md)
 
 ### 0.25
 

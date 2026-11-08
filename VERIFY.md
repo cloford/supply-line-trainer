@@ -1,3 +1,7 @@
+# Aim Runner 0.2.5
+
+[0.2.5検証・実画像・未確認事項](docs/025-semver-verification.md)
+
 # Aim Runner 0.25
 
 [0.25検証・調整値・画像・未確認事項](docs/025-verification.md)。過去の検証は以下に残します。
