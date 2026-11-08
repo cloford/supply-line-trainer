@@ -17,9 +17,22 @@ func _run()->void:
 		updater._completed(HTTPRequest.RESULT_SUCCESS,200,[],JSON.stringify({"tag_name":"v"+SupplyLineUpdater.current_version(),"draft":false,"prerelease":false,"assets":[]}).to_utf8_buffer())
 	var expected:=SupplyLineUpdater.running_version_text()+"　最新公開版 v"+SupplyLineUpdater.current_version()+" と同じです"
 	for label in game.update_labels:
-		if label.text!=expected:failures.append("version status mismatch: "+label.text)
+		if not label.text.begins_with(expected+"　確認 ") or updater.last_checked_at.is_empty():
+			failures.append("version status mismatch: "+label.text)
 	for button in game.update_buttons:
 		if not button.disabled:failures.append("same version enabled apply")
+	game._show_prep()
+	updater.ready_to_apply = true
+	updater.release_version = "0.2.7"
+	if game._can_auto_apply_update():failures.append("auto apply must be opt-in")
+	game.data.settings.auto_apply_update = true
+	if not game._can_auto_apply_update():failures.append("safe main screen did not allow auto apply")
+	game._open_main_target_editor()
+	if game._can_auto_apply_update():failures.append("auto apply interrupts target editing")
+	game._cancel_target_edit()
+	game.auto_apply_attempted_version = updater.release_version
+	if game._can_auto_apply_update():failures.append("auto apply retries repeatedly")
+	updater.ready_to_apply = false
 	var output:=OS.get_environment("SLT_CAPTURE_OUTPUT")
 	if not output.is_empty():DirAccess.make_dir_recursive_absolute(output)
 	for dimensions in [Vector2i(1280,720),Vector2i(1920,1080)]:

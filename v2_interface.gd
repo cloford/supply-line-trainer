@@ -153,8 +153,7 @@ static func _build_prep(g)->void:
 	g.migration_label = label(body, "", 15)
 	g.migration_retry = button(body, "設定引継ぎ・保存を再試行", g._retry_migration)
 	g.migration_ack = button(body, "説明を確認して続ける", g._ack_migration)
-	g.update_hint = button(body, "更新の準備ができました — 更新情報へ", g._open_update_info)
-	g.update_hint.hide()
+	g._build_update_controls(body)
 
 static func _build_army(g)->void:
 	g.army_panel = page(g)

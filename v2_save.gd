@@ -6,7 +6,7 @@ const TEMP := "user://save_v2.tmp"
 const PREVIOUS := "user://save_v2.previous.json"
 const LEGACY := "user://save_v1.json"
 const RESET_GUARD := "user://reset_generation.json"
-const SETTING_DEFAULTS := {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true,"show_training_goal":false,"goal_notifications":true,"effects_enabled":true}
+const SETTING_DEFAULTS := {"sensitivity":1.0,"sensitivity_game":0,"dpi":800.0,"fov":90.0,"crosshair_color":"66e8ff","crosshair_size":10.0,"crosshair_shape":1,"crosshair_outline":true,"volume":0.75,"shot_sound":0,"shot_volume":0.55,"hit_sound":0,"hit_volume":0.55,"hit_pitch_combo":true,"score_details":false,"auto_update":true,"auto_apply_update":false,"show_training_goal":false,"goal_notifications":true,"effects_enabled":true}
 static var last_error := ""
 static var test_fail_step := ""
 

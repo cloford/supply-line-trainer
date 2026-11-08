@@ -1,10 +1,14 @@
-# Aim Runner — 0.2.5
+# Aim Runner — 0.2.6
 
 Windows向けのエイム練習ゲームです。訓練場で練習しながら種目を切り替え、射撃記録から三人の部隊を作れます。
 
 ## ダウンロードと起動
 
-**0.25からの更新は手動です。** ゲームを終了し、0.2.5のZIP全体を別フォルダーへ展開して `SupplyLineTrainer.exe` を起動してください。同じ場所のPCKが必要です。Windows 10/11 64bit、Godot Compatibility rendererを使用します。[0.2.5正式リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.2.5)
+**0.2.5からはゲーム内で更新できます。** 練習を終了してメイン画面に戻り、設定の「更新／情報」で「更新を確認」を押します。取得が済んだら「再起動して更新」を選びます。
+
+0.25以前から移る場合や初めて遊ぶ場合は、最新ZIP全体を別フォルダーへ展開し、`SupplyLineTrainer.exe` を起動してください。同じ場所のPCKが必要です。[0.2.6正式リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.2.6)
+
+0.2.6ではメイン画面と「更新／情報」に、実行中の版・公開最新版との比較結果・確認時刻が表示されます。「メイン画面に戻ったときに自動で更新・再起動」を有効にして設定を適用すると、次回以降は取得と検証を済ませた更新をメイン画面で自動適用します。練習や編集中の操作を終えるまで待機します。
 
 通常起動では保存と個人設定を読み、準備画面を経由せず訓練場へ入ります。小さな円の中の静止標的を、指の案内に合わせて通常の射撃で撃つと開口し、大きな **3・2・1** の後に無限自由練習を開始します。誘導の一発は通常の射撃成績や60秒測定へ混ぜません。初回に限り達成と実績へ一度反映し、再起動で繰り返し取得できません。
 
@@ -53,6 +57,6 @@ Esc内の「検証用操作」から全データを初期化できます。**感
 
 ## 検証とフィードバック
 
-[0.2.5の検証・実画像・未確認事項](docs/025-semver-verification.md) ／ [全変更履歴](CHANGELOG.md) ／ [版別の更新内容とDiscussion](docs/versions.md)
+[0.2.6の検証](docs/026-verification.md) ／ [全変更履歴](CHANGELOG.md) ／ [版別の更新内容とDiscussion](docs/versions.md)
 
-実行中の版番号・武器・達成数・Windows環境・表示サイズ・再現手順を添えてお寄せください。[0.2.5専用Discussion](https://github.com/cloford/supply-line-trainer/discussions/18)
+実行中の版番号・Windows環境・再現手順を添えてお寄せください。[0.2.6専用Discussion](https://github.com/cloford/supply-line-trainer/discussions/19)

@@ -11,6 +11,7 @@ const MAX_ENTRIES := 128
 const PAYLOAD := ["SupplyLineTrainer.exe", "SupplyLineTrainer.pck"]
 
 var ready_to_apply := false
+var last_checked_at := ""
 var release_version := ""
 var status := "更新は未確認です"
 var _request: HTTPRequest
@@ -129,6 +130,7 @@ func check(auto_download: bool = true) -> void:
 		_set_status("v%s を適用できます。再起動して更新してください" % release_version)
 		return
 	_auto_download = auto_download
+	last_checked_at = ""
 	_phase = "check"
 	_request.download_file = ""
 	_request.body_size_limit = 1048576
@@ -187,6 +189,7 @@ func _completed(result: int, code: int, headers: PackedStringArray, body: Packed
 		if version_parts(current).size() != 3:
 			_fail("実行中のバージョン番号を確認できないため、更新を中止しました")
 			return
+		last_checked_at = Time.get_datetime_string_from_system(false, true)
 		if not newer(tag, current):
 			var published_version := ReleaseVersion.display(tag)
 			if ReleaseVersion.same(tag,current):

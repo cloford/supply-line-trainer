@@ -6,7 +6,7 @@ func _run()->void:
 	if OS.get_environment("SLT_TEST_DATA")!="1":quit(1);return
 	var expected:=SupplyLineUpdater.current_version()
 	var updater:=SupplyLineUpdater.new();root.add_child(updater)
-	ProjectSettings.set_setting("application/config/version","1.8.0")
+	ProjectSettings.set_setting("application/config/version","0.2.5")
 	updater._auto_download=false;updater._phase="check"
 	updater._request.timeout=25
 	if updater._request.request(SupplyLineUpdater.RELEASE_API,["Accept: application/vnd.github+json","User-Agent: SupplyLineTrainer-ReleaseTest"])!=OK:quit(1);return
@@ -14,7 +14,7 @@ func _run()->void:
 	while not updater._phase.is_empty() and Time.get_ticks_msec()<deadline:await process_frame
 	ProjectSettings.set_setting("application/config/version",expected)
 	if updater.release_version!=expected or updater._asset.is_empty():push_error("published update not detected: "+updater.status);quit(1);return
-	print("PUBLIC_UPDATE_DETECTED: v1.8.0 -> v",updater.release_version)
+	print("PUBLIC_UPDATE_DETECTED: v0.2.5 -> v",updater.release_version)
 	updater._stage=ProjectSettings.globalize_path("user://public-release-verification")
 	DirAccess.make_dir_recursive_absolute(updater._stage)
 	updater._phase="download";updater._redirects=0

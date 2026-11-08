@@ -1,4 +1,8 @@
-# Aim Runner 0.2.5の配布
+# Aim Runner 0.2.6の配布
+
+直前の配布版からのゲーム内更新を今後のWindows公開の必須条件とする。配布候補を隔離して差し替え、再起動、セーブ保持、旧ファイルの保全を確認する。公開後は実際のリリースAPI・ZIPを使って再確認する。[検証](026-verification.md) ／ [開発時のルール](../AGENTS.md)
+
+## 0.2.5の配布記録
 
 タグは `v0.2.5`、ZIPは `SupplyLineTrainer_Windows_v0.2.5.zip`。0.25からはゲームを終了し、ZIP全体を別フォルダーへ展開してEXEを起動する。既存の保存先をそのまま使用する。[検証・実画像](025-semver-verification.md) ／ [Discussion #18](https://github.com/cloford/supply-line-trainer/discussions/18)
 

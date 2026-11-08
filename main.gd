@@ -552,7 +552,7 @@ func _build_update_controls(parent:Node)->void:
 	var status:=_label(SupplyLineUpdater.running_version_text()+"　更新は未確認です",14);status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;parent.add_child(status);update_labels.append(status)
 	var row:=HBoxContainer.new();parent.add_child(row)
 	var check:=Button.new();check.text="更新を確認";check.pressed.connect(func():if updater:updater.check(true));row.add_child(check)
-	var apply:=Button.new();apply.text="再起動して更新";apply.disabled=true;apply.pressed.connect(_apply_update);row.add_child(apply);update_buttons.append(apply)
+	var apply:=Button.new();apply.text="保存して再起動・更新";apply.tooltip_text="練習中は先に練習を終了して結果を保存します";apply.disabled=true;apply.pressed.connect(_apply_update);row.add_child(apply);update_buttons.append(apply)
 
 func _update_status(message:String)->void:
 	for label in update_labels:label.text=SupplyLineUpdater.running_version_text()+"　"+message

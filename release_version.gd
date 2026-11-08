@@ -1,9 +1,9 @@
 class_name ReleaseVersion
 extends RefCounted
 
-const PUBLIC := "0.2.5"
+const PUBLIC := "0.2.6"
 const INTERNAL := PUBLIC
-const FEEDBACK_URL := "https://github.com/cloford/supply-line-trainer/discussions/18"
+const FEEDBACK_URL := "https://github.com/cloford/supply-line-trainer/discussions/19"
 
 static func parse(value:String)->Dictionary:
 	var regex := RegEx.new()

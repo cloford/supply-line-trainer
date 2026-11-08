@@ -64,6 +64,8 @@ var switch_in_progress := false
 var credit_feedback_amount := 0
 var tab_error:Label
 var tab_hint:Label
+var auto_apply_update_check:CheckBox
+var auto_apply_attempted_version := ""
 var reset_partial := false
 
 func _ready()->void:
@@ -77,6 +79,10 @@ func _ready()->void:
 
 func _build_ui()->void:
 	super._build_ui()
+	auto_apply_update_check = CheckBox.new()
+	auto_apply_update_check.text = "メイン画面に戻ったときに自動で更新・再起動"
+	auto_apply_update_check.toggled.connect(func(_enabled): _settings_changed())
+	setting_sections[3].add_child(auto_apply_update_check)
 	var prep_actions := HBoxContainer.new()
 	start_button.get_parent().add_child(prep_actions)
 	start_button.get_parent().move_child(prep_actions, start_button.get_index() + 1)
@@ -1454,6 +1460,10 @@ func _process(delta:float)->void:
 		async_save_warning = false
 	if durable_busy:
 		return
+	if _can_auto_apply_update():
+		auto_apply_attempted_version = updater.release_version
+		_apply_update()
+		return
 	if mode == Mode.PAUSED and not boot_error and not boot_notice and pending_weapon < 0:
 		if not save_worker.error.is_empty():
 			pause_warning.text = "成果の保存に失敗しました。画面に保持して再試行中です。" if save_worker.pending() else "成果の保存に失敗しました。操作を再試行できます。"
@@ -1539,13 +1549,53 @@ func _notification(what:int)->void:
 		return
 	get_tree().quit()
 
+func _draft_settings()->Dictionary:
+	var draft := super._draft_settings()
+	draft.auto_apply_update = auto_apply_update_check != null and auto_apply_update_check.button_pressed
+	return draft
+
+func _sync_settings_controls(source:Dictionary)->void:
+	if auto_apply_update_check:
+		auto_apply_update_check.set_pressed_no_signal(bool(source.get("auto_apply_update", false)))
+	super._sync_settings_controls(source)
+
+func _update_status(message:String)->void:
+	if updater and not updater.last_checked_at.is_empty():
+		message += "　確認 " + updater.last_checked_at
+	super._update_status(message)
+
+func _can_auto_apply_update()->bool:
+	return mode == Mode.PREP and app_focused and not durable_busy and not _training_session_open() \
+		and interaction == Interaction.NONE and not info_panel.visible \
+		and bool(data.settings.get("auto_apply_update", false)) \
+		and updater != null and updater.ready_to_apply and not updater.is_applying() \
+		and updater.release_version != auto_apply_attempted_version
+
 func _apply_update()->void:
-	if not updater or not updater.ready_to_apply or _training_session_open() or durable_busy:
+	if not updater or not updater.ready_to_apply or updater.is_applying() or durable_busy:
 		return
-	if not await _flush_current():
+	if settings_page.is_visible_in_tree() and settings_dirty:
+		_update_status("設定を適用するか取り消してから更新してください")
+		return
+	if _training_session_open():
+		await _finish_training(false)
+		if not reward_committed:
+			_update_status("練習を保存できなかったため、更新を中止しました")
+			return
+	elif not await _flush_current():
 		_update_status("保存に失敗したため更新を中止しました")
 		return
-	updater.apply_update()
+	durable_busy = true
+	busy_label.text = "更新を準備しています…"
+	busy_panel.show()
+	ui.move_child(busy_panel, ui.get_child_count() - 1)
+	await updater.apply_update()
+	if not updater.is_applying():
+		durable_busy = false
+		busy_panel.hide()
+		if close_requested:
+			close_requested = false
+			call_deferred("_notification", NOTIFICATION_WM_CLOSE_REQUEST)
 
 func _maybe_progress_checkpoint()->void:
 	if training_measurement or mode != Mode.TRAINING or training_elapsed <= 0.0:
