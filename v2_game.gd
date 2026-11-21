@@ -41,6 +41,7 @@ var diorama:Control
 var replay_diorama:Control
 var slot_buttons:Array[Button] = []
 var profile_name:LineEdit
+var profile_name_slot := -1
 var soldier_summary:Label
 var soldier_flavor:Label
 var armor_summary:Label
@@ -185,6 +186,7 @@ func _show_prep()->void:
 	_update_battle_view()
 
 func _show_army()->void:
+	profile_name_slot = -1
 	super._show_army()
 	_stop_replay()
 	_refresh_army_runtime()
@@ -217,8 +219,9 @@ func _refresh_army_runtime()->void:
 		slot_buttons[weapon].text = ("✓ " if weapon == selected_soldier else "") + ["HG", "AR", "BR"][weapon] + (" 1枠" if V2Profiles.unlocked(data, weapon) else " 未加入")
 		slot_buttons[weapon].set_pressed_no_signal(weapon == selected_soldier)
 	var profile := V2Profiles.current(data, selected_soldier)
-	if not profile_name.has_focus():
+	if profile_name_slot != selected_soldier:
 		profile_name.text = str(data.names[selected_soldier])
+		profile_name_slot = selected_soldier
 	soldier_summary.text = "%s\nRPM %.0f ／ 命中 %.1f%%\n命中時クリティカル %.1f%%" % [profile.label, float(profile.rpm), float(profile.p) * 100.0, float(profile.c) * 100.0]
 	soldier_flavor.text = str(profile.flavor)
 	var level := int(data.protection[selected_soldier])
@@ -241,11 +244,15 @@ func _refresh_army_runtime()->void:
 	_update_battle_view()
 
 func _save_name()->void:
+	var name_slot := selected_soldier
 	var candidate := V2Save.transaction_copy(data)
-	candidate.names[selected_soldier] = profile_name.text.strip_edges().left(24)
-	if str(candidate.names[selected_soldier]).is_empty():
-		candidate.names[selected_soldier] = ["ハンドガン兵", "アサルト兵", "バースト兵"][selected_soldier]
-	army_message.text = "名前を保存しました（能力は変わりません）" if await _commit(candidate) else "名前を保存できませんでした。"
+	candidate.names[name_slot] = profile_name.text.strip_edges().left(24)
+	if str(candidate.names[name_slot]).is_empty():
+		candidate.names[name_slot] = ["ハンドガン兵", "アサルト兵", "バースト兵"][name_slot]
+	var saved:bool = await _commit(candidate)
+	if saved and selected_soldier == name_slot:
+		profile_name.text = str(data.names[name_slot])
+	army_message.text = "名前を保存しました（能力は変わりません）" if saved else "名前を保存できませんでした。"
 
 func _purchase_protection()->void:
 	var candidate := V2Save.transaction_copy(data)

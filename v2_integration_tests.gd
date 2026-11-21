@@ -221,7 +221,7 @@ func _run()->void:
 	game.data.armor = [true, true, true]
 	game.data.measurement_counts = [3, 3, 3]
 	game.combat.configure(game.data, 75)
-	for dimensions in [Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(2560, 1440)]:
+	for dimensions in [Vector2i(1280, 720), Vector2i(1024, 768), Vector2i(1920, 1080), Vector2i(2560, 1440)]:
 		root.size = dimensions
 		root.content_scale_size = dimensions
 		game._show_prep()

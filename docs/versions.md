@@ -6,6 +6,7 @@
 
 | 公開版 | 配布・詳細 | 感想・不具合報告 |
 | --- | --- | --- |
+| 0.2.7 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.2.7) | [Discussion #20](https://github.com/cloford/supply-line-trainer/discussions/20) |
 | 0.2.6 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.2.6) | [Discussion #19](https://github.com/cloford/supply-line-trainer/discussions/19) |
 | 0.2.5 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.2.5) | [Discussion #18](https://github.com/cloford/supply-line-trainer/discussions/18) |
 | 0.25 | [リリース](https://github.com/cloford/supply-line-trainer/releases/tag/v0.25) | [Discussion #17](https://github.com/cloford/supply-line-trainer/discussions/17) |

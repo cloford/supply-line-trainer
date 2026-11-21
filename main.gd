@@ -416,6 +416,7 @@ func _modal_overlay(card_width:float)->Array:
 	var margin:=MarginContainer.new(); margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT); margin.add_theme_constant_override("margin_left",24); margin.add_theme_constant_override("margin_right",24); margin.add_theme_constant_override("margin_top",24); margin.add_theme_constant_override("margin_bottom",24); overlay.add_child(margin)
 	var center:=CenterContainer.new(); margin.add_child(center)
 	var card:=_panel(); card.custom_minimum_size.x=card_width; card.size_flags_horizontal=Control.SIZE_SHRINK_CENTER; card.size_flags_vertical=Control.SIZE_SHRINK_CENTER; center.add_child(card)
+	overlay.resized.connect(func():card.custom_minimum_size.x=minf(card_width,maxf(0.0,overlay.size.x-48.0)))
 	return [overlay,card]
 
 func _build_army_screen()->void:
@@ -496,8 +497,8 @@ func _build_pause_panel()->Control:
 	v.add_child(_label("感度基準ゲーム",15));sensitivity_game=OptionButton.new()
 	for preset in Balance.SENSITIVITY_PRESETS:sensitivity_game.add_item(preset.name)
 	sensitivity_game.item_selected.connect(func(_value):_settings_changed());v.add_child(sensitivity_game)
-	v.add_child(_label("ゲーム内感度",15));sensitivity_edit=LineEdit.new();sensitivity_edit.text_changed.connect(func(_value):_settings_changed());v.add_child(sensitivity_edit)
-	sensitivity_slider=HSlider.new();sensitivity_slider.min_value=0.001;sensitivity_slider.max_value=10;sensitivity_slider.step=0.001;sensitivity_slider.value_changed.connect(_sensitivity_slider_changed);v.add_child(sensitivity_slider)
+	v.add_child(_label("ゲーム内感度",15));sensitivity_edit=LineEdit.new();sensitivity_edit.text_changed.connect(_sensitivity_text_changed);v.add_child(sensitivity_edit)
+	sensitivity_slider=HSlider.new();sensitivity_slider.min_value=0.001;sensitivity_slider.max_value=100;sensitivity_slider.step=0.000001;sensitivity_slider.exp_edit=true;sensitivity_slider.value_changed.connect(_sensitivity_slider_changed);v.add_child(sensitivity_slider)
 	v.add_child(_label("DPI（表示計算用）",15));dpi_spin=SpinBox.new();dpi_spin.min_value=100;dpi_spin.max_value=64000;dpi_spin.step=50;dpi_spin.value_changed.connect(func(_value):_settings_changed());v.add_child(dpi_spin)
 	cm_label=_label("",14);v.add_child(cm_label)
 	v.add_child(_label("水平FOV（4:3基準）",15));fov_spin=SpinBox.new();fov_spin.min_value=75;fov_spin.max_value=110;fov_spin.step=0.1;fov_spin.value_changed.connect(_fov_spin_changed);v.add_child(fov_spin)
@@ -573,7 +574,14 @@ func _settings_changed()->void:
 	if not crosshair_preview:return
 	settings_dirty=_draft_settings()!=settings_snapshot
 	var d:=_draft_settings();crosshair_preview.set_appearance(d.crosshair_color,d.crosshair_size,d.crosshair_shape,d.crosshair_outline);cm_label.text="実効係数 %.3f°/count　%.2f cm/360%s"%[Balance.effective_coefficient(d.sensitivity_game)*d.sensitivity,Balance.cm_per_360(d.sensitivity_game,d.sensitivity,d.dpi),"（互換用候補）" if not Balance.SENSITIVITY_PRESETS[d.sensitivity_game].official else ""]
-func _sensitivity_slider_changed(value:float)->void:sensitivity_edit.text="%.3f"%value
+func _sensitivity_text_changed(value:String)->void:
+	if value.is_valid_float() and is_finite(float(value)):
+		sensitivity_slider.set_value_no_signal(clampf(float(value),0.001,100.0))
+	_settings_changed()
+
+func _sensitivity_slider_changed(value:float)->void:
+	sensitivity_edit.text=str(value)
+	_settings_changed()
 func _fov_spin_changed(value:float)->void:fov_slider.set_value_no_signal(value);_settings_changed()
 func _fov_slider_changed(value:float)->void:fov_spin.set_value_no_signal(value);_settings_changed()
 func _size_spin_changed(value:float)->void:size_slider.set_value_no_signal(value);_settings_changed()

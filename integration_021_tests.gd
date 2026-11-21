@@ -67,6 +67,129 @@ func grant_all()->void:
 	Progression.mark_list_seen(game.data)
 	game.progress_dirty = true
 
+func pointer_button(point:Vector2, pressed:bool)->void:
+	var event := InputEventMouseButton.new()
+	event.position = point
+	event.global_position = point
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = pressed
+	Input.parse_input_event(event)
+
+func check_ui_edits()->void:
+	game._show_prep()
+	game._open_settings_from_screen()
+	await frames()
+	game.sensitivity_edit.text = "2"
+	game.sensitivity_edit.text_changed.emit("2")
+	check(is_equal_approx(game.sensitivity_slider.value,2.0) and game.settings_dirty, "typed sensitivity did not synchronize")
+	var conversion:String = game.cm_label.text
+	game.sensitivity_slider.value = 3.125
+	check(is_equal_approx(float(game.sensitivity_edit.text),3.125) and game.cm_label.text != conversion, "slider conversion stale")
+	game.sensitivity_edit.text = "2."
+	game.sensitivity_edit.caret_column = 2
+	game.sensitivity_edit.text_changed.emit("2.")
+	check(game.sensitivity_edit.text == "2." and game.sensitivity_edit.caret_column == 2, "partial input was rewritten")
+	game._cancel_settings_changes()
+	var slider_rect:Rect2 = game.sensitivity_slider.get_global_rect()
+	pointer_button(Vector2(slider_rect.position.x+1,slider_rect.get_center().y),true)
+	pointer_button(Vector2(slider_rect.position.x+1,slider_rect.get_center().y),false)
+	await frames()
+	check(float(game.sensitivity_edit.text) < 0.01, "slider left click missed")
+	pointer_button(Vector2(slider_rect.end.x-1,slider_rect.get_center().y),true)
+	pointer_button(Vector2(slider_rect.end.x-1,slider_rect.get_center().y),false)
+	await frames()
+	check(float(game.sensitivity_edit.text) > 99.0, "slider right click missed")
+	game._cancel_settings_changes()
+	var retained:Dictionary = game.data.settings.duplicate(true)
+	game.data.settings.sensitivity = 12.3456789
+	game._sync_settings_controls(game.data.settings)
+	check(is_equal_approx(float(game.sensitivity_edit.text),12.3456789), "stored sensitivity lost precision")
+	check(absf(game.sensitivity_slider.value-12.3456789) < 0.000001, "sensitivity above ten clamped")
+	game.sensitivity_edit.text = "13.25"
+	game.sensitivity_edit.text_changed.emit("13.25")
+	await game._apply_settings_draft()
+	check(is_equal_approx(float(game.data.settings.sensitivity),13.25), "sensitivity apply failed")
+	game.sensitivity_edit.text = "15"
+	game.sensitivity_edit.text_changed.emit("15")
+	game._cancel_settings_changes()
+	check(is_equal_approx(float(game.sensitivity_edit.text),13.25), "sensitivity cancel failed")
+	game.sensitivity_edit.grab_focus()
+	await frames()
+	var tab := InputEventKey.new()
+	tab.keycode = KEY_TAB
+	tab.pressed = true
+	Input.parse_input_event(tab)
+	await frames()
+	check(root.gui_get_focus_owner() != game.sensitivity_edit, "settings Tab was swallowed")
+	tab = tab.duplicate()
+	tab.pressed = false
+	Input.parse_input_event(tab)
+	await frames()
+	tab = tab.duplicate()
+	tab.pressed = true
+	tab.shift_pressed = true
+	Input.parse_input_event(tab)
+	await frames()
+	check(root.gui_get_focus_owner() == game.sensitivity_edit, "settings Shift+Tab failed")
+	for step in 30:
+		tab = tab.duplicate()
+		tab.pressed = false
+		Input.parse_input_event(tab)
+		tab = tab.duplicate()
+		tab.pressed = true
+		tab.shift_pressed = false
+		Input.parse_input_event(tab)
+		await frames(1)
+		check(game.pause_panel.is_ancestor_of(root.gui_get_focus_owner()), "settings focus escaped modal")
+	tab = tab.duplicate()
+	tab.pressed = false
+	Input.parse_input_event(tab)
+	game.data.settings = retained
+	game._sync_settings_controls(retained)
+	game._settings_back()
+	game._show_army()
+	game.profile_name.text = "日本語の新しい兵士名"
+	game.profile_name.grab_focus()
+	await frames()
+	var save_button:Button = game.profile_name.get_parent().get_child(1)
+	var save_point := save_button.get_global_rect().get_center()
+	pointer_button(save_point, true)
+	await frames()
+	for tick in 5:game._refresh_army_runtime()
+	check(game.profile_name.text == "日本語の新しい兵士名", "unfocused army name overwritten")
+	pointer_button(save_point, false)
+	await frames()
+	check(game.data.names[0] == "日本語の新しい兵士名", "army name save lost draft")
+	game.profile_name.text = "別枠へ移る前の下書き"
+	game._select_soldier(1)
+	check(game.data.names[1] != "別枠へ移る前の下書き", "army draft saved to another slot")
+	game._select_soldier(0)
+	check(game.profile_name.text == "日本語の新しい兵士名", "slot switch failed to restore saved name")
+	begin(0)
+	tab = InputEventKey.new()
+	tab.keycode = KEY_TAB
+	tab.pressed = true
+	Input.parse_input_event(tab)
+	await frames()
+	check(game.interaction == game.Interaction.TAB and game.data.tab_guide_seen, "early Tab did not open or mark guide seen")
+	tab = tab.duplicate()
+	tab.echo = true
+	Input.parse_input_event(tab)
+	check(game.interaction == game.Interaction.TAB, "Tab repeat toggled panel")
+	game._open_target_editor()
+	tab = tab.duplicate()
+	tab.echo = false
+	tab.pressed = false
+	Input.parse_input_event(tab)
+	await frames()
+	check(game.interaction == game.Interaction.TARGET_EDIT, "Tab release closed editor")
+	game._cancel_target_edit()
+	check(game.interaction == game.Interaction.NONE and game.mode == game.Mode.TRAINING, "editor did not resume after Tab release")
+	await game._finish_training(false)
+	game.data = V2Save.defaults()
+	game.combat.set_data(game.data)
+	game._show_prep()
+
 func _run()->void:
 	if OS.get_environment("SLT_TEST_DATA") != "1":
 		quit(2)
@@ -85,6 +208,7 @@ func _run()->void:
 	game.get_viewport().focus_exited.disconnect(game._on_focus_lost)
 	game.data.settings.shot_sound = 3
 	game.data.settings.hit_sound = 3
+	await check_ui_edits()
 	check(Progression.total(game.data) == 0 and Progression.unlocked(game.data,0) and not Progression.unlocked(game.data,1), "new game locks wrong")
 	check(game.slot_buttons.size() == 3 and game.data.profiles.size() == 3, "army slots expanded")
 	await capture("01-first-preparation")
@@ -344,9 +468,26 @@ func _run()->void:
 		await capture("roster-%dx%d" % [dimensions.x,dimensions.y])
 		game.progression_view.close_overlay()
 		game._open_settings_page()
-		await capture("settings-%dx%d" % [dimensions.x,dimensions.y])
+		for category in 4:
+			game._select_settings_tab(category)
+			if category == 3:
+				game._update_status("最新版の照会に失敗しました。通信状態を確認して、しばらく待ってから再試行してください。保存済みの成果は保持しています。")
+			await capture("settings-%d-%dx%d" % [category,dimensions.x,dimensions.y])
 		game._settings_back()
 		game._finish_training(false)
+		game._show_prep()
+		game._open_main_target_editor()
+		await capture("target-editor-%dx%d" % [dimensions.x,dimensions.y])
+		for label in game.target_preview.find_children("*", "Label", true, false):
+			check(game.target_preview.get_global_rect().encloses(label.get_global_rect()), "target text overflow")
+		game._cancel_target_edit()
+		game._show_army()
+		await capture("army-%dx%d" % [dimensions.x,dimensions.y])
+		game._show_records()
+		while game.data.training_history.size() < 200:
+			game.data.training_history.append(game.data.training_history[0].duplicate(true))
+		game.records_view.open(game.data)
+		await capture("records-%dx%d" % [dimensions.x,dimensions.y])
 	# 再起動も有効命中待ち。後日の誘導は進行を追加しない。
 	for dimensions in [Vector2i(1920,1080),Vector2i(1024,768)]:
 		root.size = dimensions

@@ -526,14 +526,18 @@ func _input(event:InputEvent)->void:
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.keycode == KEY_TAB:
-		get_viewport().set_input_as_handled()
-		if event.echo:return
-		tab_held = event.pressed
-		if event.pressed:
-			_open_tab()
-		elif interaction == Interaction.TAB:
-			_close_tab()
-		return
+		if interaction == Interaction.TAB:
+			get_viewport().set_input_as_handled()
+			if not event.echo and not event.pressed:
+				_close_tab()
+			return
+		if interaction == Interaction.NONE and mode in [Mode.TRAINING, Mode.COUNTDOWN] and not intro_session and not boot_error and not boot_notice:
+			get_viewport().set_input_as_handled()
+			if event.pressed and not event.echo:
+				_open_tab()
+			return
+		if event.pressed and not event.echo:
+			_prepare_form_focus()
 	if event.is_action_pressed("pause") and interaction != Interaction.NONE:
 		if event is InputEventKey and event.echo:return
 		get_viewport().set_input_as_handled()
@@ -548,6 +552,27 @@ func _input(event:InputEvent)->void:
 		elif interaction in [Interaction.RESET_TOOLS,Interaction.RESET_CONFIRM]:
 			_cancel_reset()
 		return
+
+func _prepare_form_focus()->void:
+	var scope:Node = ui
+	if pause_panel.is_visible_in_tree():
+		scope = discard_confirm if discard_confirm.is_visible_in_tree() else pause_panel
+	if condition_panel.is_visible_in_tree():
+		scope = condition_panel
+	if info_panel.is_visible_in_tree():
+		scope = info_panel
+	for overlay in [target_editor, reset_panel, reset_confirm]:
+		if overlay.is_visible_in_tree():
+			scope = overlay
+	var fields:Array[Control] = []
+	for control in scope.find_children("*", "Control", true, false):
+		if control.is_visible_in_tree() and control.focus_mode == Control.FOCUS_ALL:
+			if control is BaseButton and control.disabled:
+				continue
+			fields.append(control)
+	for index in fields.size():
+		fields[index].focus_next = fields[index].get_path_to(fields[(index + 1) % fields.size()])
+		fields[index].focus_previous = fields[index].get_path_to(fields[(index - 1 + fields.size()) % fields.size()])
 
 func _unhandled_input(event:InputEvent)->void:
 	if event.is_action_released("shoot"):phase_shoot_held = false
